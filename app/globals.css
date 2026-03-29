@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@theme {
+  --color-navy-50: #eef4fd;
+  --color-navy-100: #d0daea;
+  --color-navy-200: #a8bdd6;
+  --color-navy-300: #7b9cc2;
+  --color-navy-400: #4a7ab0;
+  --color-navy-500: #1a6de3;
+  --color-navy-600: #0b3d7a;
+  --color-navy-700: #09326a;
+  --color-navy-800: #071e3d;
+  --color-navy-900: #050f23;
+
+  --color-success: #22c55e;
+  --color-danger: #e74c3c;
+  --color-warning: #f59e0b;
+
+  --font-heading: "Bebas Neue", cursive;
+  --font-body: "Poppins", sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    font-family: var(--font-body);
+    color: #1a1a2e;
+    line-height: 1.65;
+    overflow-x: hidden;
+  }
+
+  body.menu-open {
+    overflow: hidden;
+  }
+
+}
+
+@layer utilities {
+  .font-heading {
+    font-family: var(--font-heading);
+  }
+
+  .hover-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+  }
+
+  .hover-scale {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .hover-scale:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  }
+  .hover-scale:active {
+    transform: scale(0.97);
+  }
+}

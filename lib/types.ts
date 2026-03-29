@@ -1,0 +1,125 @@
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  sort_order: number;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  research_description: string | null;
+  category_id: string;
+  category?: Category;
+  price: number;
+  original_price: number | null;
+  badge: string | null;
+  size: string;
+  purity: string | null;
+  images: string[];
+  featured: boolean;
+  active: boolean;
+  stock_quantity: number;
+  low_stock_threshold: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CoaDocument {
+  id: string;
+  product_id: string;
+  product?: Product;
+  purity_percentage: number;
+  batch_number: string;
+  pdf_url: string | null;
+  test_date: string | null;
+  created_at: string;
+}
+
+export interface Profile {
+  id: string;
+  email: string;
+  full_name: string | null;
+  phone: string | null;
+  role: "customer" | "admin";
+  created_at: string;
+}
+
+export interface Address {
+  id: string;
+  user_id: string;
+  full_name: string;
+  line1: string;
+  line2: string | null;
+  city: string;
+  province_state: string;
+  postal_code: string;
+  country: string;
+  is_default: boolean;
+}
+
+export type OrderStatus =
+  | "pending"
+  | "processing"
+  | "shipped"
+  | "delivered"
+  | "cancelled"
+  | "refunded";
+
+export interface Order {
+  id: string;
+  order_number: string;
+  user_id: string | null;
+  guest_email: string | null;
+  status: OrderStatus;
+  subtotal: number;
+  shipping_cost: number;
+  tax: number;
+  total: number;
+  currency: string;
+  shipping_name: string;
+  shipping_line1: string;
+  shipping_line2: string | null;
+  shipping_city: string;
+  shipping_province: string;
+  shipping_postal: string;
+  shipping_country: string;
+  tracking_number: string | null;
+  shipping_label_url: string | null;
+  easypost_shipment_id: string | null;
+  carrier: string | null;
+  payment_method: string | null;
+  stripe_payment_intent_id: string | null;
+  paypal_order_id: string | null;
+  created_at: string;
+  updated_at: string;
+  items?: OrderItem[];
+}
+
+export interface OrderItem {
+  id: string;
+  order_id: string;
+  product_id: string;
+  product_name: string;
+  quantity: number;
+  unit_price: number;
+  purchase_type: "one-time" | "subscription";
+}
+
+export interface CartItem {
+  productId: string;
+  name: string;
+  slug: string;
+  price: number;
+  size: string;
+  image: string | null;
+  quantity: number;
+  purchaseType: "one-time" | "subscription";
+}
+
+export interface SiteSetting {
+  key: string;
+  value: unknown;
+}

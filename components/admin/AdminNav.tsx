@@ -1,0 +1,69 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  LayoutDashboard,
+  Package,
+  Tags,
+  FileCheck,
+  ShoppingBag,
+  Warehouse,
+  Settings,
+  ArrowLeft,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const navItems = [
+  { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { label: "Products", href: "/admin/products", icon: Package },
+  { label: "Categories", href: "/admin/categories", icon: Tags },
+  { label: "COA Documents", href: "/admin/coa", icon: FileCheck },
+  { label: "Orders", href: "/admin/orders", icon: ShoppingBag },
+  { label: "Inventory", href: "/admin/inventory", icon: Warehouse },
+  { label: "Settings", href: "/admin/settings", icon: Settings },
+];
+
+export default function AdminNav() {
+  const pathname = usePathname();
+
+  function isActive(href: string) {
+    if (href === "/admin") return pathname === "/admin";
+    return pathname.startsWith(href);
+  }
+
+  return (
+    <nav className="flex flex-1 flex-col justify-between px-3 py-2">
+      <ul className="space-y-1">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const active = isActive(item.href);
+          return (
+            <li key={item.href}>
+              <Link
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-300",
+                  active
+                    ? "bg-[#1a6de3]/10 font-semibold text-[#0b3d7a]"
+                    : "text-gray-600 hover:bg-[#1a6de3]/10 hover:text-[#0b3d7a] hover:translate-x-1"
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                {item.label}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+
+      <Link
+        href="/"
+        className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-500 transition-all duration-300 hover:bg-gray-100 hover:text-[#0b3d7a] hover:translate-x-1"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to Site
+      </Link>
+    </nav>
+  );
+}
