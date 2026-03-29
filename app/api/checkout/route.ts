@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { generateOrderNumber } from "@/lib/utils";
 
 const CartItemSchema = z.object({
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
 
     // Create Stripe PaymentIntent if paying by card
     if (paymentMethod === "stripe") {
-      const paymentIntent = await stripe.paymentIntents.create({
+      const paymentIntent = await getStripe().paymentIntents.create({
         amount: Math.round(total * 100), // cents
         currency: "cad",
         metadata: { orderNumber, email },
