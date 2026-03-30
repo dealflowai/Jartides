@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Check, Minus, Plus, Shield, Package, AlertTriangle, XCircle } from "lucide-react";
-import { cn, formatPrice, subscriptionPrice } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 import { MAX_QUANTITY } from "@/lib/constants";
 import { useCart } from "@/hooks/useCart";
 import Button from "@/components/ui/Button";
@@ -13,10 +13,8 @@ interface ProductDetailProps {
   product: Product;
 }
 
-type PurchaseType = "one-time" | "subscription";
-
 const FEATURES = [
-  "99%+ Purity — Third-Party Verified",
+  "99%+ Purity, Third-Party Verified",
   "Certificate of Analysis Included",
   "Same-Day Processing",
   "3-8 Business Day Delivery",
@@ -57,7 +55,6 @@ function getStockStatus(product: Product) {
 
 export default function ProductDetail({ product }: ProductDetailProps) {
   const { addItem, openCart } = useCart();
-  const [purchaseType, setPurchaseType] = useState<PurchaseType>("one-time");
   const [quantity, setQuantity] = useState(1);
   const [mainImage, setMainImage] = useState(0);
 
@@ -68,10 +65,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
   const StockIcon = stockStatus.icon;
   const isOutOfStock = product.stock_quantity <= 0;
 
-  const displayPrice =
-    purchaseType === "subscription"
-      ? subscriptionPrice(product.price)
-      : product.price;
+  const displayPrice = product.price;
 
   const handleAddToCart = () => {
     if (isOutOfStock) return;
@@ -82,7 +76,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
       price: displayPrice,
       size: product.size,
       image: hasImages ? images[0] : null,
-      purchaseType,
+      purchaseType: "one-time",
       quantity,
     });
     openCart();
@@ -211,64 +205,28 @@ export default function ProductDetail({ product }: ProductDetailProps) {
           )}
         </div>
 
-        {/* Purchase Type Toggle */}
+        {/* Purchase Type */}
         <div className="mt-6 flex flex-col gap-2">
-          <button
-            onClick={() => setPurchaseType("one-time")}
-            className={cn(
-              "flex items-center gap-3 rounded-lg border-2 px-4 py-3 text-left transition-all",
-              purchaseType === "one-time"
-                ? "border-[#0b3d7a] bg-[#0b3d7a]/5"
-                : "border-gray-200 hover:border-gray-300"
-            )}
-          >
-            <span
-              className={cn(
-                "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition",
-                purchaseType === "one-time"
-                  ? "border-[#0b3d7a] bg-[#0b3d7a]"
-                  : "border-gray-300"
-              )}
-            >
-              {purchaseType === "one-time" && (
-                <span className="h-2 w-2 rounded-full bg-white" />
-              )}
+          <div className="flex items-center gap-3 rounded-lg border-2 border-[#0b3d7a] bg-[#0b3d7a]/5 px-4 py-3">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-[#0b3d7a] bg-[#0b3d7a]">
+              <span className="h-2 w-2 rounded-full bg-white" />
             </span>
             <span className="font-medium text-gray-900 font-[family-name:var(--font-body)]">
               One-Time Purchase
             </span>
-          </button>
+          </div>
 
-          <button
-            onClick={() => setPurchaseType("subscription")}
-            className={cn(
-              "flex items-center gap-3 rounded-lg border-2 px-4 py-3 text-left transition-all",
-              purchaseType === "subscription"
-                ? "border-[#0b3d7a] bg-[#0b3d7a]/5"
-                : "border-gray-200 hover:border-gray-300"
-            )}
-          >
-            <span
-              className={cn(
-                "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition",
-                purchaseType === "subscription"
-                  ? "border-[#0b3d7a] bg-[#0b3d7a]"
-                  : "border-gray-300"
-              )}
-            >
-              {purchaseType === "subscription" && (
-                <span className="h-2 w-2 rounded-full bg-white" />
-              )}
-            </span>
+          <div className="flex items-center gap-3 rounded-lg border-2 border-gray-200 bg-gray-50 px-4 py-3 opacity-60 cursor-not-allowed">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-gray-300" />
             <span className="flex flex-col font-[family-name:var(--font-body)]">
-              <span className="font-medium text-gray-900">
-                Subscribe &amp; Save 15%
+              <span className="font-medium text-gray-500">
+                Subscribe &amp; Save
               </span>
-              <span className="text-xs font-semibold text-green-600">
-                Save 15%
+              <span className="text-xs font-semibold text-gray-400">
+                Coming Soon
               </span>
             </span>
-          </button>
+          </div>
         </div>
 
         {/* Quantity Selector */}
