@@ -4,7 +4,8 @@ import { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { X, Mail, Instagram, Twitter } from "lucide-react";
+import { X, Mail, Globe } from "lucide-react";
+import { SOCIAL_LINKS, CONTACT_EMAIL } from "@/lib/constants";
 
 const NAV_LINKS = [
   { href: "/shop", label: "Shop" },
@@ -123,25 +124,27 @@ export default function MobileNav({ isOpen, onClose }: MobileNavProps) {
         >
           <div className="flex items-center justify-center gap-4 mb-4">
             <a
-              href="https://instagram.com"
+              href={SOCIAL_LINKS.instagram}
               target="_blank"
               rel="noopener noreferrer"
               className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-[#0b3d7a] hover:text-white transition-colors"
               aria-label="Instagram"
             >
-              <Instagram className="h-4 w-4" />
+              <Globe className="h-4 w-4" />
             </a>
             <a
-              href="https://twitter.com"
+              href={SOCIAL_LINKS.tiktok}
               target="_blank"
               rel="noopener noreferrer"
               className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-[#0b3d7a] hover:text-white transition-colors"
-              aria-label="Twitter"
+              aria-label="TikTok"
             >
-              <Twitter className="h-4 w-4" />
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05A6.34 6.34 0 0 0 3.15 15a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.6a8.22 8.22 0 0 0 4.76 1.51V6.69h-1z" />
+              </svg>
             </a>
             <a
-              href="mailto:support@jartides.com"
+              href={`mailto:${CONTACT_EMAIL}`}
               className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-[#0b3d7a] hover:text-white transition-colors"
               aria-label="Email"
             >
