@@ -30,10 +30,10 @@ const supportLinks = [
 ];
 
 const policyLinks = [
-  { label: "Privacy Policy", href: "#" },
-  { label: "Terms of Service", href: "#" },
-  { label: "Refund Policy", href: "#" },
-  { label: "Shipping Policy", href: "#" },
+  { label: "Privacy Policy", href: "/policies/privacy" },
+  { label: "Terms of Service", href: "/policies/terms" },
+  { label: "Refund Policy", href: "/policies/refund" },
+  { label: "Shipping Policy", href: "/policies/shipping" },
 ];
 
 function PaymentIcon({ name }: { name: string }) {

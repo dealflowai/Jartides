@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "My Account",
+  description: "Manage your Jartides account, orders, and addresses.",
+};
 import { createClient } from "@/lib/supabase/server";
 import type { Order } from "@/lib/types";
 import { Package, MapPin, ShoppingBag, Shield } from "lucide-react";
