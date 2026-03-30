@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
   CONTACT_EMAIL,
@@ -6,6 +8,7 @@ import {
   PAYMENT_METHODS,
   SITE_DESCRIPTION,
 } from "@/lib/constants";
+import EditableText from "@/components/admin/EditableText";
 
 const shopLinks = [
   { label: "All Products", href: "/shop" },
@@ -58,7 +61,9 @@ export default function Footer() {
               </p>
             </div>
             <p className="mb-6 text-sm leading-relaxed text-white/60">
-              {SITE_DESCRIPTION}
+              <EditableText settingKey="footer_description">
+                {SITE_DESCRIPTION}
+              </EditableText>
             </p>
 
             {/* Social links */}

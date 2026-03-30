@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Button from "@/components/ui/Button";
+import EditableText from "@/components/admin/EditableText";
 
 export default function Hero() {
   return (
@@ -21,10 +22,14 @@ export default function Hero() {
       <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-12 md:py-16">
         <div className="max-w-3xl mx-auto text-center">
           <h1 className="font-[family-name:var(--font-heading)] text-6xl sm:text-7xl md:text-8xl lg:text-9xl text-white leading-[1] mb-3 tracking-wide">
-            JARTIDES
+            <EditableText settingKey="hero_heading">
+              JARTIDES
+            </EditableText>
           </h1>
           <p className="font-[family-name:var(--font-heading)] text-base sm:text-lg md:text-xl text-white/90 mb-10 leading-relaxed tracking-wider">
-            Uncompromising Purity. Precision Peptides<br className="hidden sm:inline" /> for Research. Lab-Tested Excellence.
+            <EditableText settingKey="hero_subheading">
+              Uncompromising Purity. Precision Peptides for Research. Lab-Tested Excellence.
+            </EditableText>
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button variant="blue" size="sm" href="/shop" className="px-8 py-3.5 text-sm">

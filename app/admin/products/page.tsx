@@ -1,19 +1,24 @@
 import Link from "next/link";
 import Image from "next/image";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { formatPrice } from "@/lib/utils";
 import Button from "@/components/ui/Button";
 import type { Product } from "@/lib/types";
+import CategoriesSection from "./CategoriesSection";
 
 export default async function AdminProductsPage() {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
-  const { data: products } = await supabase
-    .from("products")
-    .select("*, category:categories(*)")
-    .order("created_at", { ascending: false });
+  const [productsRes, categoriesRes] = await Promise.all([
+    supabase
+      .from("products")
+      .select("*, category:categories(*)")
+      .order("created_at", { ascending: false }),
+    supabase.from("categories").select("*").order("sort_order"),
+  ]);
 
-  const items = (products ?? []) as Product[];
+  const items = (productsRes.data ?? []) as Product[];
+  const categories = categoriesRes.data ?? [];
 
   return (
     <div>
@@ -24,7 +29,8 @@ export default async function AdminProductsPage() {
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-gray-200">
+      {/* Products Table */}
+      <div className="overflow-x-auto rounded-xl border border-gray-200 mb-10">
         <table className="w-full text-left text-sm">
           <thead className="border-b bg-gray-50 text-xs uppercase text-gray-500">
             <tr>
@@ -100,6 +106,9 @@ export default async function AdminProductsPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Categories Section */}
+      <CategoriesSection initialCategories={categories} />
     </div>
   );
 }

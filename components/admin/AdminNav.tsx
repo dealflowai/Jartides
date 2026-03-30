@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Package,
-  Tags,
   FileCheck,
   ShoppingBag,
   Warehouse,
@@ -17,7 +16,6 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { label: "Products", href: "/admin/products", icon: Package },
-  { label: "Categories", href: "/admin/categories", icon: Tags },
   { label: "COA Documents", href: "/admin/coa", icon: FileCheck },
   { label: "Orders", href: "/admin/orders", icon: ShoppingBag },
   { label: "Inventory", href: "/admin/inventory", icon: Warehouse },
