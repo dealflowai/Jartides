@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/ui/PageHeader";
 import Button from "@/components/ui/Button";
-import { FileText, FlaskConical, Info } from "lucide-react";
+import CoaExplanation from "@/components/coa/CoaExplanation";
+import { FileText, FlaskConical } from "lucide-react";
 
 export const metadata = {
   title: "Certificates of Analysis | Jartides",
@@ -40,6 +41,8 @@ export default async function CoaPage() {
         title="CERTIFICATES OF ANALYSIS"
         description="Every product batch is independently tested for purity and identity."
         breadcrumbs={[{ label: "Certificates of Analysis" }]}
+        titleKey="coa_title"
+        descriptionKey="coa_description"
       />
 
       <section className="mx-auto max-w-7xl px-6 py-16">
@@ -115,54 +118,7 @@ export default async function CoaPage() {
         )}
 
         {/* Understanding Our COAs */}
-        <div className="mt-16 rounded-xl border border-[#dde2ea] bg-white p-8">
-          <div className="mb-4 flex items-center gap-3">
-            <Info className="h-5 w-5 text-[#0b3d7a]" />
-            <h2 className="text-xl font-bold text-[#0b3d7a] font-[family-name:var(--font-heading)]">
-              Understanding Our COAs
-            </h2>
-          </div>
-
-          <div className="space-y-4 text-sm text-gray-700 font-[family-name:var(--font-body)]">
-            <p>
-              A Certificate of Analysis (COA) is a document issued by an
-              independent third-party laboratory that confirms the identity,
-              purity, and quality of a specific product batch. Each COA
-              typically includes:
-            </p>
-            <ul className="list-disc space-y-2 pl-5">
-              <li>
-                <strong>HPLC Analysis</strong> - High-Performance Liquid
-                Chromatography measures the purity percentage of the peptide.
-              </li>
-              <li>
-                <strong>Mass Spectrometry (MS)</strong> - Confirms the
-                molecular identity of the peptide by measuring its molecular
-                weight.
-              </li>
-              <li>
-                <strong>Batch Number</strong> - A unique identifier
-                linking the COA to a specific production batch.
-              </li>
-              <li>
-                <strong>Appearance &amp; Solubility</strong> - Physical
-                characteristics of the product as observed during testing.
-              </li>
-            </ul>
-            <p>
-              We are committed to transparency and quality. If you have any
-              questions about our testing or would like a COA for a specific
-              product, please{" "}
-              <a
-                href="/contact"
-                className="font-semibold text-[#1a6de3] underline hover:text-[#0b3d7a]"
-              >
-                contact us
-              </a>
-              .
-            </p>
-          </div>
-        </div>
+        <CoaExplanation />
       </section>
     </>
   );

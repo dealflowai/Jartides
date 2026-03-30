@@ -44,6 +44,8 @@ export default async function ShopPage() {
         title="SHOP ALL PRODUCTS"
         description="Browse our complete collection of research peptides, blends, nasal sprays, and laboratory supplies."
         breadcrumbs={[{ label: "Shop" }]}
+        titleKey="shop_title"
+        descriptionKey="shop_description"
       />
 
       <ShopContent products={products} categories={categories} />

@@ -8,6 +8,7 @@ import {
   FileCheck,
   ShoppingBag,
   Warehouse,
+  MessageCircleQuestion,
   Settings,
   ArrowLeft,
 } from "lucide-react";
@@ -19,6 +20,7 @@ const navItems = [
   { label: "COA Documents", href: "/admin/coa", icon: FileCheck },
   { label: "Orders", href: "/admin/orders", icon: ShoppingBag },
   { label: "Inventory", href: "/admin/inventory", icon: Warehouse },
+  { label: "FAQ Manager", href: "/admin/faq", icon: MessageCircleQuestion },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 

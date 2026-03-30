@@ -1,17 +1,24 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
+import EditableText from "@/components/admin/EditableText";
 
 interface PageHeaderProps {
   title: string;
   description?: string;
   breadcrumbs?: { label: string; href?: string }[];
+  titleKey?: string;
+  descriptionKey?: string;
 }
 
 export default function PageHeader({
   title,
   description,
   breadcrumbs,
+  titleKey,
+  descriptionKey,
 }: PageHeaderProps) {
   return (
     <section className="relative overflow-hidden mx-4 sm:mx-6 lg:mx-8 my-4 rounded-2xl">
@@ -57,13 +64,21 @@ export default function PageHeader({
 
         {/* Title */}
         <h1 className="text-4xl md:text-5xl font-bold tracking-wide uppercase text-white font-[family-name:var(--font-heading)]">
-          {title}
+          {titleKey ? (
+            <EditableText settingKey={titleKey}>{title}</EditableText>
+          ) : (
+            title
+          )}
         </h1>
 
         {/* Description */}
         {description && (
           <p className="mt-3 max-w-2xl text-base text-white/80 font-[family-name:var(--font-body)]">
-            {description}
+            {descriptionKey ? (
+              <EditableText settingKey={descriptionKey}>{description}</EditableText>
+            ) : (
+              description
+            )}
           </p>
         )}
       </div>

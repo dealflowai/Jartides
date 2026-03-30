@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Minus } from "lucide-react";
 import EditableText from "@/components/admin/EditableText";
 
@@ -16,10 +16,44 @@ interface FaqSection {
 
 interface FaqAccordionProps {
   sections: FaqSection[];
+  /** When true, tries to load FAQ data from site_settings and falls back to `sections` prop */
+  useDynamic?: boolean;
 }
 
-export default function FaqAccordion({ sections }: FaqAccordionProps) {
+export default function FaqAccordion({
+  sections: defaultSections,
+  useDynamic = false,
+}: FaqAccordionProps) {
   const [openKey, setOpenKey] = useState<string | null>(null);
+  const [sections, setSections] = useState<FaqSection[]>(defaultSections);
+
+  useEffect(() => {
+    if (!useDynamic) return;
+
+    async function loadDynamic() {
+      try {
+        const res = await fetch("/api/admin/settings");
+        if (!res.ok) return;
+        const data = await res.json();
+        const faqSetting = data.find(
+          (item: { key: string; value: unknown }) => item.key === "faq_data"
+        );
+        if (faqSetting?.value) {
+          const parsed =
+            typeof faqSetting.value === "string"
+              ? JSON.parse(faqSetting.value)
+              : faqSetting.value;
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setSections(parsed);
+          }
+        }
+      } catch {
+        // Keep defaults on error
+      }
+    }
+
+    loadDynamic();
+  }, [useDynamic]);
 
   function toggle(key: string) {
     setOpenKey((prev) => (prev === key ? null : key));

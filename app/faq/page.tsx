@@ -81,10 +81,12 @@ export default function FaqPage() {
         title="FREQUENTLY ASKED QUESTIONS"
         description="Everything you need to know about our research peptides."
         breadcrumbs={[{ label: "FAQ" }]}
+        titleKey="faq_title"
+        descriptionKey="faq_description"
       />
 
       <section className="mx-auto max-w-3xl px-6 py-16">
-        <FaqAccordion sections={faqSections} />
+        <FaqAccordion sections={faqSections} useDynamic />
 
         {/* CTA */}
         <div className="mt-16 rounded-xl border border-[#dde2ea] bg-[#0b3d7a]/5 p-8 text-center">
