@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import ProductForm from "@/components/admin/ProductForm";
 import DeleteProductButton from "@/components/admin/DeleteProductButton";
