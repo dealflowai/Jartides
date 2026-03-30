@@ -37,6 +37,7 @@ export default function RegisterPage() {
       password,
       options: {
         data: { full_name: fullName },
+        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
       },
     });
 
@@ -52,15 +53,37 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="text-center">
-        <h1 className="text-3xl font-[family-name:var(--font-heading)] tracking-wide text-[#0b3d7a] mb-4">
+      <div className="text-center py-4">
+        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[#1a6de3]/10">
+          <svg className="h-8 w-8 text-[#1a6de3]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+          </svg>
+        </div>
+        <h1 className="text-3xl font-[family-name:var(--font-heading)] tracking-wide text-[#0b3d7a] mb-3">
           Check Your Email
         </h1>
-        <p className="text-gray-600 text-sm leading-relaxed">
+        <p className="text-gray-600 text-sm leading-relaxed mb-6">
           We&apos;ve sent a confirmation link to{" "}
-          <span className="font-semibold">{email}</span>. Click the link in the
-          email to activate your account.
+          <span className="font-semibold text-[#0b3d7a]">{email}</span>.
+          <br />
+          Click the link in the email to activate your account.
         </p>
+        <div className="rounded-lg bg-blue-50 border border-blue-100 p-4 text-xs text-gray-500 leading-relaxed">
+          Didn&apos;t receive the email? Check your spam folder or{" "}
+          <button
+            onClick={() => setSuccess(false)}
+            className="text-[#1a6de3] hover:underline font-medium"
+          >
+            try again
+          </button>
+          .
+        </div>
+        <Link
+          href="/login"
+          className="inline-block mt-5 text-sm text-[#1a6de3] hover:underline font-medium"
+        >
+          Go to Sign In
+        </Link>
       </div>
     );
   }
