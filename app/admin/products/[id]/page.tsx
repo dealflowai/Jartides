@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { notFound } from "next/navigation";
+import { createAdminClient } from "@/lib/supabase/admin";
 import ProductForm from "@/components/admin/ProductForm";
 import DeleteProductButton from "@/components/admin/DeleteProductButton";
 import type { Product, Category } from "@/lib/types";
@@ -10,7 +11,7 @@ export default async function EditProductPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const [productRes, categoriesRes] = await Promise.all([
     supabase.from("products").select("*").eq("id", id).single<Product>(),

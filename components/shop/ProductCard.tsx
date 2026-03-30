@@ -6,6 +6,7 @@ import type { Product } from "@/lib/types";
 import { formatPrice, calculateSavings } from "@/lib/utils";
 import { useCart } from "@/hooks/useCart";
 import { ShoppingCart } from "lucide-react";
+import { useState } from "react";
 
 interface ProductCardProps {
   product: Product;
@@ -13,9 +14,11 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCart();
+  const [hovered, setHovered] = useState(false);
 
   const savings = calculateSavings(product.price, product.original_price);
   const image = product.images?.[0] ?? null;
+  const hoverImage = product.images?.[1] ?? null;
 
   function handleAddToCart() {
     addItem({
@@ -30,7 +33,16 @@ export default function ProductCard({ product }: ProductCardProps) {
   }
 
   return (
-    <div className="group relative flex flex-col rounded-xl border border-gray-200 bg-white hover-lift">
+    <div
+      className="group relative flex flex-col rounded-xl border border-gray-200 bg-white"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        transition: "transform 0.3s ease, box-shadow 0.3s ease",
+        transform: hovered ? "translateY(-4px)" : "translateY(0)",
+        boxShadow: hovered ? "0 12px 24px rgba(0, 0, 0, 0.1)" : "none",
+      }}
+    >
       {/* Badge */}
       {product.badge && (
         <span className="absolute top-3 left-3 z-10 rounded-md bg-[#1a6de3] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
@@ -38,17 +50,37 @@ export default function ProductCard({ product }: ProductCardProps) {
         </span>
       )}
 
-      {/* Image */}
+      {/* Savings badge */}
+      {savings && (
+        <span className="absolute top-3 right-3 z-10 rounded-md bg-green-500 px-2 py-1 text-[11px] font-bold text-white">
+          -{savings}%
+        </span>
+      )}
+
+      {/* Image with hover swap */}
       <Link href={`/shop/${product.slug}`} className="block">
         <div className="relative h-[220px] w-full overflow-hidden rounded-t-xl bg-gray-100">
           {image ? (
-            <Image
-              src={image}
-              alt={product.name}
-              fill
-              className="object-contain p-4"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            />
+            <>
+              <Image
+                src={image}
+                alt={product.name}
+                fill
+                className="object-contain p-4 transition-opacity duration-300"
+                style={{ opacity: hovered && hoverImage ? 0 : 1 }}
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              />
+              {hoverImage && (
+                <Image
+                  src={hoverImage}
+                  alt={`${product.name} - Certificate of Analysis`}
+                  fill
+                  className="object-contain p-2 transition-opacity duration-300"
+                  style={{ opacity: hovered ? 1 : 0 }}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                />
+              )}
+            </>
           ) : (
             <div className="flex h-full items-center justify-center text-gray-300">
               <ShoppingCart className="h-12 w-12" />
@@ -78,11 +110,6 @@ export default function ProductCard({ product }: ProductCardProps) {
           {product.original_price && product.original_price > product.price && (
             <span className="text-sm text-gray-400 line-through">
               {formatPrice(product.original_price)}
-            </span>
-          )}
-          {savings && (
-            <span className="text-xs font-semibold text-green-600">
-              -{savings}%
             </span>
           )}
         </div>

@@ -9,7 +9,8 @@ async function requireAdmin() {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: profile } = await supabase
+  const adminDb = createAdminClient();
+  const { data: profile } = await adminDb
     .from("profiles")
     .select("role")
     .eq("id", user.id)
