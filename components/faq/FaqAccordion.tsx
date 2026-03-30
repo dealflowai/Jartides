@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Plus, Minus } from "lucide-react";
+import EditableText from "@/components/admin/EditableText";
 
 interface FaqItem {
   question: string;
@@ -24,12 +25,17 @@ export default function FaqAccordion({ sections }: FaqAccordionProps) {
     setOpenKey((prev) => (prev === key ? null : key));
   }
 
+  // Map section index to a slug for setting keys
+  const sectionSlugs = ["general", "orders", "subscriptions"];
+
   return (
     <div className="space-y-10">
-      {sections.map((section, si) => (
+      {sections.map((section, si) => {
+        const slug = sectionSlugs[si] || `section_${si + 1}`;
+        return (
         <div key={si}>
           <h2 className="mb-4 text-xl font-bold text-[#0b3d7a] font-[family-name:var(--font-heading)]">
-            {section.title}
+            <EditableText settingKey={`faq_${slug}_heading`}>{section.title}</EditableText>
           </h2>
 
           <div className="divide-y divide-[#dde2ea] rounded-xl border border-[#dde2ea] bg-white">
@@ -45,7 +51,9 @@ export default function FaqAccordion({ sections }: FaqAccordionProps) {
                     className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left text-sm font-semibold text-gray-800 transition-colors hover:bg-gray-50 font-[family-name:var(--font-body)]"
                     aria-expanded={isOpen}
                   >
-                    <span>{item.question}</span>
+                    <span>
+                      <EditableText settingKey={`faq_${slug}_${qi + 1}_q`}>{item.question}</EditableText>
+                    </span>
                     {isOpen ? (
                       <Minus className="h-4 w-4 shrink-0 text-[#1a6de3]" />
                     ) : (
@@ -61,7 +69,7 @@ export default function FaqAccordion({ sections }: FaqAccordionProps) {
                     }}
                   >
                     <p className="px-5 pb-4 text-sm leading-relaxed text-gray-600 font-[family-name:var(--font-body)]">
-                      {item.answer}
+                      <EditableText settingKey={`faq_${slug}_${qi + 1}_a`}>{item.answer}</EditableText>
                     </p>
                   </div>
                 </div>
@@ -69,7 +77,8 @@ export default function FaqAccordion({ sections }: FaqAccordionProps) {
             })}
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

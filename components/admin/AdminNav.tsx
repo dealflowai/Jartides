@@ -41,10 +41,10 @@ export default function AdminNav() {
               <Link
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-300",
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200",
                   active
-                    ? "bg-[#1a6de3]/10 font-semibold text-[#0b3d7a]"
-                    : "text-gray-600 hover:bg-[#1a6de3]/10 hover:text-[#0b3d7a] hover:translate-x-1"
+                    ? "bg-[#1a6de3]/10 font-semibold text-[#0b3d7a] border-l-[3px] border-[#0b3d7a]"
+                    : "text-gray-600 border-l-[3px] border-transparent hover:border-[#1a6de3] hover:bg-[#1a6de3]/5 hover:text-[#0b3d7a] hover:translate-x-1 hover:shadow-sm"
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -57,7 +57,7 @@ export default function AdminNav() {
 
       <Link
         href="/"
-        className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-500 transition-all duration-300 hover:bg-gray-100 hover:text-[#0b3d7a] hover:translate-x-1"
+        className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-500 border-l-[3px] border-transparent transition-all duration-200 hover:border-gray-400 hover:bg-gray-100 hover:text-[#0b3d7a] hover:translate-x-1 hover:shadow-sm"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Site

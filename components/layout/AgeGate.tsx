@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import EditableText from "@/components/admin/EditableText";
 
 const STORAGE_KEY = "jartides_age_verified";
 
@@ -61,7 +62,7 @@ export default function AgeGate() {
         ) : (
           <>
             <h1 className="mb-1 text-3xl font-bold tracking-wider text-[#0b3d7a]">
-              JARTIDES
+              <EditableText settingKey="agegate_heading">JARTIDES</EditableText>
             </h1>
             <p className="mb-6 text-xs font-semibold tracking-[0.2em] text-[#1a6de3] uppercase">
               Research Peptides
@@ -69,8 +70,8 @@ export default function AgeGate() {
 
             <div className="mb-8">
               <p className="text-sm leading-relaxed text-gray-600">
-                This website contains products intended for laboratory research
-                use only. You must be 21 years of age or older to enter.
+                <EditableText settingKey="agegate_description">This website contains products intended for laboratory research
+                use only. You must be 21 years of age or older to enter.</EditableText>
               </p>
             </div>
 

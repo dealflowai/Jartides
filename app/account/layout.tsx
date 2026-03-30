@@ -61,7 +61,7 @@ export default async function AccountLayout({
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="block rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-white hover:text-[#0b3d7a] transition-colors"
+                  className="block rounded-lg px-3 py-2 text-sm text-gray-700 border-l-[3px] border-transparent transition-all duration-200 hover:border-[#0b3d7a] hover:bg-white hover:text-[#0b3d7a] hover:translate-x-1 hover:shadow-sm"
                 >
                   {link.label}
                 </Link>

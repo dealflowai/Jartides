@@ -1,16 +1,14 @@
+"use client";
+
 import PageHeader from "@/components/ui/PageHeader";
 import ContactForm from "@/components/layout/ContactForm";
+import EditableText from "@/components/admin/EditableText";
 import { Mail, MapPin, Clock, Package } from "lucide-react";
 import {
   CONTACT_EMAIL,
   BUSINESS_ADDRESS,
   BUSINESS_HOURS,
 } from "@/lib/constants";
-
-export const metadata = {
-  title: "Contact Us | Jartides",
-  description: "We're here to help with any questions about our research peptides.",
-};
 
 export default function ContactPage() {
   return (
@@ -26,11 +24,11 @@ export default function ContactPage() {
           {/* LEFT — Contact Info */}
           <div>
             <h2 className="text-xl font-bold text-[#0b3d7a] font-[family-name:var(--font-heading)]">
-              Get in Touch
+              <EditableText settingKey="contact_heading">Get in Touch</EditableText>
             </h2>
             <p className="mt-2 text-sm text-gray-600 font-[family-name:var(--font-body)]">
-              Have a question about an order, a product, or anything else?
-              We&apos;d love to hear from you.
+              <EditableText settingKey="contact_description">Have a question about an order, a product, or anything else?
+              We&apos;d love to hear from you.</EditableText>
             </p>
 
             <div className="mt-8 space-y-6">
@@ -41,7 +39,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-gray-800 font-[family-name:var(--font-body)]">
-                    Email
+                    <EditableText settingKey="contact_email_label">Email</EditableText>
                   </h3>
                   <a
                     href={`mailto:${CONTACT_EMAIL}`}
@@ -59,7 +57,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-gray-800 font-[family-name:var(--font-body)]">
-                    Location
+                    <EditableText settingKey="contact_location_label">Location</EditableText>
                   </h3>
                   <p className="text-sm text-gray-600 font-[family-name:var(--font-body)]">
                     {BUSINESS_ADDRESS}
@@ -74,7 +72,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-gray-800 font-[family-name:var(--font-body)]">
-                    Business Hours
+                    <EditableText settingKey="contact_hours_label">Business Hours</EditableText>
                   </h3>
                   <p className="text-sm text-gray-600 font-[family-name:var(--font-body)]">
                     {BUSINESS_HOURS}
@@ -88,7 +86,7 @@ export default function ContactPage() {
               <div className="flex items-center gap-3">
                 <Package className="h-5 w-5 text-[#0b3d7a]" />
                 <h3 className="text-sm font-bold text-[#0b3d7a] font-[family-name:var(--font-heading)]">
-                  Wholesale Inquiries
+                  <EditableText settingKey="contact_wholesale_heading">Wholesale Inquiries</EditableText>
                 </h3>
               </div>
               <p className="mt-2 text-sm text-gray-600 font-[family-name:var(--font-body)]">
@@ -106,7 +104,7 @@ export default function ContactPage() {
           {/* RIGHT — Contact Form */}
           <div className="rounded-xl border border-[#dde2ea] bg-white p-6 shadow-sm lg:p-8">
             <h2 className="mb-6 text-xl font-bold text-[#0b3d7a] font-[family-name:var(--font-heading)]">
-              Send Us a Message
+              <EditableText settingKey="contact_form_heading">Send Us a Message</EditableText>
             </h2>
             <ContactForm />
           </div>

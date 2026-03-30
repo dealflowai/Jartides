@@ -2,6 +2,7 @@
 
 import { Shield, Truck, FlaskConical, Award } from "lucide-react";
 import { useState } from "react";
+import EditableText from "@/components/admin/EditableText";
 
 const items = [
   {
@@ -26,7 +27,7 @@ const items = [
   },
 ];
 
-function TrustItem({ item }: { item: (typeof items)[number] }) {
+function TrustItem({ item, index }: { item: (typeof items)[number]; index: number }) {
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -59,8 +60,12 @@ function TrustItem({ item }: { item: (typeof items)[number] }) {
         />
       </div>
       <div>
-        <h3 className="text-sm font-semibold text-gray-900">{item.title}</h3>
-        <p className="mt-1 text-xs text-gray-500 leading-relaxed">{item.description}</p>
+        <h3 className="text-sm font-semibold text-gray-900">
+          <EditableText settingKey={`trust_${index + 1}_title`}>{item.title}</EditableText>
+        </h3>
+        <p className="mt-1 text-xs text-gray-500 leading-relaxed">
+          <EditableText settingKey={`trust_${index + 1}_desc`}>{item.description}</EditableText>
+        </p>
       </div>
     </div>
   );
@@ -71,8 +76,8 @@ export default function TrustStrip() {
     <section className="bg-[#f7f9fc] py-10 md:py-14">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-          {items.map((item) => (
-            <TrustItem key={item.title} item={item} />
+          {items.map((item, index) => (
+            <TrustItem key={item.title} item={item} index={index} />
           ))}
         </div>
       </div>

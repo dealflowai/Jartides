@@ -1,13 +1,10 @@
+"use client";
+
 import PageHeader from "@/components/ui/PageHeader";
 import Button from "@/components/ui/Button";
 import FaqAccordion from "@/components/faq/FaqAccordion";
+import EditableText from "@/components/admin/EditableText";
 import { MessageCircle } from "lucide-react";
-
-export const metadata = {
-  title: "FAQ | Jartides",
-  description:
-    "Everything you need to know about our research peptides.",
-};
 
 const faqSections = [
   {
@@ -93,11 +90,11 @@ export default function FaqPage() {
         <div className="mt-16 rounded-xl border border-[#dde2ea] bg-[#0b3d7a]/5 p-8 text-center">
           <MessageCircle className="mx-auto mb-3 h-8 w-8 text-[#0b3d7a]" />
           <h3 className="text-lg font-bold text-[#0b3d7a] font-[family-name:var(--font-heading)]">
-            Still have questions?
+            <EditableText settingKey="faq_cta_heading">Still have questions?</EditableText>
           </h3>
           <p className="mt-2 text-sm text-gray-600 font-[family-name:var(--font-body)]">
-            Our team is happy to help. Reach out and we&apos;ll get back to you
-            as soon as possible.
+            <EditableText settingKey="faq_cta_description">Our team is happy to help. Reach out and we&apos;ll get back to you
+            as soon as possible.</EditableText>
           </p>
           <div className="mt-5">
             <Button href="/contact" variant="fill">
