@@ -5,6 +5,7 @@ import CartProvider from "@/components/cart/CartProvider";
 import AgeGate from "@/components/layout/AgeGate";
 import SiteShell from "@/components/layout/SiteShell";
 import { SITE_NAME, SITE_DESCRIPTION } from "@/lib/constants";
+import StructuredData from "@/components/layout/StructuredData";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -20,6 +21,9 @@ const bebasNeue = Bebas_Neue({
   display: "swap",
 });
 
+const BASE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL || "https://jartides.vercel.app";
+
 export const metadata: Metadata = {
   title: {
     default: SITE_NAME,
@@ -33,6 +37,19 @@ export const metadata: Metadata = {
     "peptide supplier",
     "lab research",
   ],
+  openGraph: {
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    url: BASE_URL,
+    siteName: SITE_NAME,
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+  },
 };
 
 export default function RootLayout({
@@ -43,6 +60,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${poppins.variable} ${bebasNeue.variable}`}>
       <body className="font-[family-name:var(--font-body)] text-[#1a1a2e] bg-white leading-relaxed overflow-x-hidden">
+        <StructuredData />
         <CartProvider>
           <AgeGate />
           <SiteShell>{children}</SiteShell>

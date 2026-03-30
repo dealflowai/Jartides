@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Check, Minus, Plus } from "lucide-react";
+import { Check, Minus, Plus, Shield, Package, AlertTriangle, XCircle } from "lucide-react";
 import { cn, formatPrice, subscriptionPrice } from "@/lib/utils";
 import { MAX_QUANTITY } from "@/lib/constants";
 import { useCart } from "@/hooks/useCart";
@@ -24,6 +24,37 @@ const FEATURES = [
   "For Research Use Only",
 ];
 
+function getStockStatus(product: Product) {
+  const qty = product.stock_quantity ?? 0;
+  const threshold = product.low_stock_threshold ?? 10;
+
+  if (qty <= 0) {
+    return {
+      label: "Out of Stock",
+      color: "text-red-600",
+      bgColor: "bg-red-50",
+      borderColor: "border-red-200",
+      icon: XCircle,
+    };
+  }
+  if (qty <= threshold) {
+    return {
+      label: "Low Stock",
+      color: "text-amber-600",
+      bgColor: "bg-amber-50",
+      borderColor: "border-amber-200",
+      icon: AlertTriangle,
+    };
+  }
+  return {
+    label: "In Stock",
+    color: "text-green-600",
+    bgColor: "bg-green-50",
+    borderColor: "border-green-200",
+    icon: Package,
+  };
+}
+
 export default function ProductDetail({ product }: ProductDetailProps) {
   const { addItem, openCart } = useCart();
   const [purchaseType, setPurchaseType] = useState<PurchaseType>("one-time");
@@ -33,6 +64,9 @@ export default function ProductDetail({ product }: ProductDetailProps) {
   const sku = `JRT-${product.id.slice(0, 4).toUpperCase()}`;
   const images = product.images?.length ? product.images : [];
   const hasImages = images.length > 0;
+  const stockStatus = getStockStatus(product);
+  const StockIcon = stockStatus.icon;
+  const isOutOfStock = product.stock_quantity <= 0;
 
   const displayPrice =
     purchaseType === "subscription"
@@ -40,6 +74,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
       : product.price;
 
   const handleAddToCart = () => {
+    if (isOutOfStock) return;
     addItem({
       productId: product.id,
       name: product.name,
@@ -48,7 +83,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
       size: product.size,
       image: hasImages ? images[0] : null,
       purchaseType,
-    quantity,
+      quantity,
     });
     openCart();
   };
@@ -77,19 +112,26 @@ export default function ProductDetail({ product }: ProductDetailProps) {
               No image available
             </div>
           )}
+
+          {/* Badge overlay */}
+          {product.badge && (
+            <span className="absolute left-3 top-3 rounded-full bg-[#0b3d7a] px-3 py-1 text-xs font-semibold text-white shadow-sm">
+              {product.badge}
+            </span>
+          )}
         </div>
 
         {/* Thumbnails */}
         {images.length > 1 && (
-          <div className="mt-3 flex gap-2">
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
             {images.map((img, i) => (
               <button
                 key={i}
                 onClick={() => setMainImage(i)}
                 className={cn(
-                  "relative h-16 w-16 overflow-hidden rounded-lg border-2 transition",
+                  "relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border-2 transition",
                   mainImage === i
-                    ? "border-[#0b3d7a]"
+                    ? "border-[#0b3d7a] ring-1 ring-[#0b3d7a]/20"
                     : "border-transparent hover:border-gray-300"
                 )}
               >
@@ -98,7 +140,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
                   alt={`${product.name} ${i + 1}`}
                   fill
                   className="object-contain p-1"
-                  sizes="64px"
+                  sizes="80px"
                 />
               </button>
             ))}
@@ -112,21 +154,48 @@ export default function ProductDetail({ product }: ProductDetailProps) {
           {product.name}
         </h1>
 
-        <p className="mt-2 text-sm text-gray-500 font-[family-name:var(--font-body)]">
-          SKU: {sku}
-        </p>
+        <div className="mt-2 flex flex-wrap items-center gap-3">
+          <p className="text-sm text-gray-500 font-[family-name:var(--font-body)]">
+            SKU: {sku}
+          </p>
+
+          {/* Purity Badge */}
+          {product.purity && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 border border-blue-200 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+              <Shield className="h-3 w-3" />
+              {product.purity} Purity
+            </span>
+          )}
+
+          {/* Stock Status */}
+          <span
+            className={cn(
+              "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold",
+              stockStatus.bgColor,
+              stockStatus.borderColor,
+              stockStatus.color
+            )}
+          >
+            <StockIcon className="h-3 w-3" />
+            {stockStatus.label}
+          </span>
+        </div>
 
         {/* Description */}
         <p className="mt-4 text-base leading-relaxed text-gray-700 font-[family-name:var(--font-body)]">
           {product.description}
         </p>
 
-        {/* Research Description */}
+        {/* Research Description (rich text HTML) */}
         {product.research_description && (
           <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50/50 p-4">
-            <p className="text-sm leading-relaxed text-gray-700 font-[family-name:var(--font-body)]">
-              {product.research_description}
-            </p>
+            <h3 className="mb-2 text-sm font-semibold text-[#0b3d7a] font-[family-name:var(--font-heading)]">
+              Research Description
+            </h3>
+            <div
+              className="prose prose-sm max-w-none text-gray-700 font-[family-name:var(--font-body)] prose-headings:text-gray-900 prose-a:text-[#1a6de3]"
+              dangerouslySetInnerHTML={{ __html: product.research_description }}
+            />
           </div>
         )}
 
@@ -242,10 +311,14 @@ export default function ProductDetail({ product }: ProductDetailProps) {
         <Button
           variant="fill"
           size="lg"
-          className="mt-6 w-full text-base"
+          className={cn(
+            "mt-6 w-full text-base",
+            isOutOfStock && "opacity-50 cursor-not-allowed"
+          )}
           onClick={handleAddToCart}
+          disabled={isOutOfStock}
         >
-          Add to Cart
+          {isOutOfStock ? "Out of Stock" : "Add to Cart"}
         </Button>
 
         {/* Features */}
@@ -260,6 +333,16 @@ export default function ProductDetail({ product }: ProductDetailProps) {
             </li>
           ))}
         </ul>
+
+        {/* Related Products Placeholder */}
+        <div className="mt-10 border-t border-gray-200 pt-8">
+          <h3 className="text-lg font-semibold text-gray-900 font-[family-name:var(--font-heading)]">
+            Related Products
+          </h3>
+          <p className="mt-2 text-sm text-gray-500 font-[family-name:var(--font-body)]">
+            Related products coming soon.
+          </p>
+        </div>
       </div>
     </div>
   );

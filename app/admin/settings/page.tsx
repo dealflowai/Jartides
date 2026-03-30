@@ -278,7 +278,7 @@ export default function AdminSettingsPage() {
             <textarea
               className={INPUT_CLS}
               rows={4}
-              placeholder={"Free shipping on orders over $50\nNew arrivals every week\nFollow us on Instagram!"}
+              placeholder={"We ship worldwide\nSame-day processing\n99%+ purity guaranteed"}
               value={form.ticker_items}
               onChange={(e) => updateField("ticker_items", e.target.value)}
             />

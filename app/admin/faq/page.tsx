@@ -66,7 +66,7 @@ const DEFAULT_FAQ_DATA: FaqSection[] = [
       {
         question: "Is packaging discreet?",
         answer:
-          "Yes, all orders ship in plain, unmarked packaging. Your privacy is important to us. No external branding or product descriptions are visible on the outside.",
+          "Yes, all orders ship in plain, unmarked packaging. Your privacy is important to us.",
       },
       {
         question: "What payment methods do you accept?",

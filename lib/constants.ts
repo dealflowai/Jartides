@@ -9,7 +9,7 @@ export const BUSINESS_HOURS = "Mon–Fri: 9:00 AM – 5:00 PM EST";
 
 export const SOCIAL_LINKS = {
   instagram: "https://instagram.com/jartides",
-  tiktok: "https://tiktok.com/@jartides",
+  tiktok: "https://www.tiktok.com/@labratrayan?_r=1&_t=ZS-955W64LHZRf",
 };
 
 export const SHIPPING_INFO = {

@@ -3,6 +3,7 @@
 import { Microscope, FlaskConical, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import EditableText from "@/components/admin/EditableText";
+import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
 const steps = [
   {
@@ -67,9 +68,11 @@ function StepCard({ step, index }: { step: (typeof steps)[number]; index: number
 }
 
 export default function HowPeptidesWork() {
+  const animRef = useScrollAnimation();
+
   return (
     <section className="bg-[#f7f9fc] py-16 md:py-20">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div ref={animRef} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="font-[family-name:var(--font-heading)] text-3xl md:text-4xl text-gray-900">
             <EditableText settingKey="how_heading">HOW PEPTIDES WORK</EditableText>

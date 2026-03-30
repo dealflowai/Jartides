@@ -307,6 +307,23 @@ returns void as $$
   update products set stock_quantity = greatest(stock_quantity - p_quantity, 0) where id = p_product_id;
 $$ language sql security definer;
 
+-- ===== Discount Codes =====
+CREATE TABLE discount_codes (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  code TEXT UNIQUE NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('percentage', 'fixed')),
+  value NUMERIC(10,2) NOT NULL,
+  min_order_amount NUMERIC(10,2) DEFAULT 0,
+  max_uses INT,
+  used_count INT DEFAULT 0,
+  active BOOLEAN DEFAULT true,
+  expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE discount_codes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public read active codes" ON discount_codes FOR SELECT USING (active = true);
+CREATE POLICY "Admin manage codes" ON discount_codes FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+
 -- ===== Storage Buckets =====
 -- Run these in Supabase Dashboard > Storage:
 -- 1. Create bucket "product-images" (public)

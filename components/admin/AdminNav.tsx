@@ -9,6 +9,7 @@ import {
   ShoppingBag,
   Warehouse,
   MessageCircleQuestion,
+  Ticket,
   Settings,
   ArrowLeft,
 } from "lucide-react";
@@ -20,6 +21,7 @@ const navItems = [
   { label: "COA Documents", href: "/admin/coa", icon: FileCheck },
   { label: "Orders", href: "/admin/orders", icon: ShoppingBag },
   { label: "Inventory", href: "/admin/inventory", icon: Warehouse },
+  { label: "Discounts", href: "/admin/discounts", icon: Ticket },
   { label: "FAQ Manager", href: "/admin/faq", icon: MessageCircleQuestion },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];

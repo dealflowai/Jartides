@@ -3,6 +3,7 @@
 import { Shield, Truck, FlaskConical, Award } from "lucide-react";
 import { useState } from "react";
 import EditableText from "@/components/admin/EditableText";
+import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 
 const items = [
   {
@@ -72,9 +73,11 @@ function TrustItem({ item, index }: { item: (typeof items)[number]; index: numbe
 }
 
 export default function TrustStrip() {
+  const animRef = useScrollAnimation();
+
   return (
     <section className="bg-[#f7f9fc] py-10 md:py-14">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div ref={animRef} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
           {items.map((item, index) => (
             <TrustItem key={item.title} item={item} index={index} />

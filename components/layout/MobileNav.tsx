@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { X } from "lucide-react";
+import { X, Mail, Instagram, Twitter } from "lucide-react";
 
 const NAV_LINKS = [
   { href: "/shop", label: "Shop" },
@@ -42,14 +42,16 @@ export default function MobileNav({ isOpen, onClose }: MobileNavProps) {
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        className={`absolute inset-0 bg-black/50 backdrop-blur-md transition-opacity duration-300 ${
+          isOpen ? "opacity-100" : "opacity-0"
+        }`}
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Panel */}
       <div
-        className={`absolute top-0 right-0 h-full w-full max-w-sm bg-white shadow-2xl transition-transform duration-300 ease-in-out ${
+        className={`absolute top-0 right-0 h-full w-full max-w-sm bg-white shadow-2xl transition-transform duration-300 ease-in-out flex flex-col ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -76,7 +78,7 @@ export default function MobileNav({ isOpen, onClose }: MobileNavProps) {
         </div>
 
         {/* Nav Links */}
-        <nav className="px-6 py-6">
+        <nav className="flex-1 px-6 py-6 overflow-y-auto">
           <ul className="space-y-1">
             {NAV_LINKS.map((link, i) => {
               const isActive =
@@ -112,13 +114,40 @@ export default function MobileNav({ isOpen, onClose }: MobileNavProps) {
           </ul>
         </nav>
 
-        {/* Footer area */}
+        {/* Footer area with social links */}
         <div
-          className={`absolute bottom-0 left-0 right-0 border-t border-gray-100 px-6 py-6 transition-all duration-300 ease-out ${
+          className={`border-t border-gray-100 px-6 py-6 transition-all duration-300 ease-out ${
             isOpen ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
           }`}
           style={{ transitionDelay: isOpen ? "400ms" : "0ms" }}
         >
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <a
+              href="https://instagram.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-[#0b3d7a] hover:text-white transition-colors"
+              aria-label="Instagram"
+            >
+              <Instagram className="h-4 w-4" />
+            </a>
+            <a
+              href="https://twitter.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-[#0b3d7a] hover:text-white transition-colors"
+              aria-label="Twitter"
+            >
+              <Twitter className="h-4 w-4" />
+            </a>
+            <a
+              href="mailto:support@jartides.com"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-[#0b3d7a] hover:text-white transition-colors"
+              aria-label="Email"
+            >
+              <Mail className="h-4 w-4" />
+            </a>
+          </div>
           <p className="text-xs text-gray-400 text-center">
             Premium Canadian Research Peptides
           </p>
