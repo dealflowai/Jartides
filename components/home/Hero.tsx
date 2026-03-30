@@ -36,7 +36,7 @@ export default function Hero() {
               Shop Peptides
             </Button>
             <Button variant="white" size="sm" href="/subscribe" className="px-8 py-3.5 text-sm">
-              Subscribe &amp; Save
+              Subscribe
             </Button>
           </div>
         </div>

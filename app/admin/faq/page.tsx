@@ -88,7 +88,7 @@ const DEFAULT_FAQ_DATA: FaqSection[] = [
     title: "Subscriptions",
     items: [
       {
-        question: "When will Subscribe & Save be available?",
+        question: "When will Subscribe be available?",
         answer:
           "Our subscription service is coming soon! We're working hard to bring you the best monthly delivery experience with savings up to 20%. Stay tuned for updates.",
       },

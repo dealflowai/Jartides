@@ -7,9 +7,9 @@ export default function SubscribePage() {
   return (
     <>
       <PageHeader
-        title="SUBSCRIBE & SAVE"
+        title="SUBSCRIBE"
         description="Monthly research peptide deliveries at a discounted rate."
-        breadcrumbs={[{ label: "Subscribe & Save" }]}
+        breadcrumbs={[{ label: "Subscribe" }]}
       />
 
       <section className="mx-auto max-w-7xl px-6 py-16">

@@ -10,7 +10,7 @@ import MobileNav from "./MobileNav";
 
 const NAV_LINKS = [
   { href: "/shop", label: "Shop" },
-  { href: "/subscribe", label: "Subscribe & Save" },
+  { href: "/subscribe", label: "Subscribe" },
   { href: "/coa", label: "COAs" },
   { href: "/faq", label: "FAQ" },
   { href: "/fda", label: "FDA" },
@@ -68,7 +68,7 @@ export default function Header() {
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-1">
+            <nav className="hidden lg:flex flex-1 justify-center items-center gap-1">
               {NAV_LINKS.map((link) => {
                 const isActive =
                   pathname === link.href ||

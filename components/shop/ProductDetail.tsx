@@ -220,7 +220,7 @@ export default function ProductDetail({ product }: ProductDetailProps) {
             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-gray-300" />
             <span className="flex flex-col font-[family-name:var(--font-body)]">
               <span className="font-medium text-gray-500">
-                Subscribe &amp; Save
+                Subscribe
               </span>
               <span className="text-xs font-semibold text-gray-400">
                 Coming Soon

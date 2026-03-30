@@ -9,7 +9,7 @@ import { SOCIAL_LINKS, CONTACT_EMAIL } from "@/lib/constants";
 
 const NAV_LINKS = [
   { href: "/shop", label: "Shop" },
-  { href: "/subscribe", label: "Subscribe & Save" },
+  { href: "/subscribe", label: "Subscribe" },
   { href: "/coa", label: "COAs" },
   { href: "/faq", label: "FAQ" },
   { href: "/fda", label: "FDA" },
