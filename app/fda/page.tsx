@@ -88,7 +88,7 @@ export default function FdaPage() {
 
         <p className="mt-8 text-center text-xs text-gray-400 font-[family-name:var(--font-body)]">
           Last updated: March 2026. This disclaimer applies to all products
-          sold on jartides.com.
+          sold on jartides.ca.
         </p>
       </section>
     </>

@@ -28,7 +28,7 @@ export default function RefundPolicyPage() {
               1. Scope
             </h2>
             <p className="mt-2 text-sm leading-relaxed">
-              This Refund Policy applies to all orders placed through jartides.com. By placing an order,
+              This Refund Policy applies to all orders placed through jartides.ca. By placing an order,
               you agree to the terms of this policy. This policy forms part of and should be read
               together with our{" "}
               <a href="/policies/terms" className="text-[#1a6de3] hover:underline">
@@ -50,8 +50,7 @@ export default function RefundPolicyPage() {
             <ul className="mt-2 space-y-1.5 text-sm leading-relaxed list-disc pl-5">
               <li>
                 <strong>Damaged in Transit:</strong> The product arrived physically damaged, broken, or
-                compromised during shipping (e.g., cracked vials, leaking containers, crushed packaging
-                affecting product integrity).
+                compromised during shipping (e.g., cracked vials, leaking containers).
               </li>
               <li>
                 <strong>Wrong Product Shipped:</strong> You received a product that is different from
@@ -63,8 +62,8 @@ export default function RefundPolicyPage() {
               </li>
             </ul>
             <p className="mt-2 text-sm leading-relaxed">
-              Claims must be submitted within 30 calendar days of the delivery date. Claims submitted
-              after 30 days will not be accepted.
+              Claims must be submitted within 3 calendar days of the delivery date. Claims submitted
+              after 3 days will not be accepted.
             </p>
           </div>
 
@@ -100,10 +99,10 @@ export default function RefundPolicyPage() {
               4. Verification Process
             </h2>
             <p className="mt-2 text-sm leading-relaxed">
-              No return of products is required. Upon receiving your claim and supporting photographs,
+              Return of the product is required. Upon receiving your claim and supporting photographs,
               we will review the evidence and determine whether the claim meets the eligibility criteria
-              in Section 2. Our determination is based on the photographic evidence provided and our
-              internal order records.
+              in Section 2. You are responsible for return shipping costs upfront; however, if your
+              claim is approved, you will be fully reimbursed for the return shipping cost.
             </p>
             <p className="mt-2 text-sm leading-relaxed">
               If the claim is approved, you will be notified by email and offered the choice of a
@@ -162,7 +161,7 @@ export default function RefundPolicyPage() {
               <li>
                 Issues caused by improper storage, handling, or use of the product after delivery.
               </li>
-              <li>Claims submitted more than 30 calendar days after the delivery date.</li>
+              <li>Claims submitted more than 3 calendar days after the delivery date.</li>
               <li>Products purchased from unauthorized resellers or third-party sources.</li>
               <li>
                 Delays in delivery caused by carrier issues, customs processing, or events beyond our

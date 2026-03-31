@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: `Jartides Contact <noreply@${process.env.RESEND_DOMAIN || "jartides.com"}>`,
+          from: `Jartides Contact <noreply@${process.env.RESEND_DOMAIN || "jartides.ca"}>`,
           to: ["jartidesofficial@gmail.com"],
           reply_to: email,
           subject: `[${safeCategory}] Contact from ${name}`,

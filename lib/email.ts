@@ -29,7 +29,7 @@ export async function sendEmail(options: {
     return { success: false, error: "RESEND_API_KEY not configured" };
   }
 
-  const domain = process.env.RESEND_DOMAIN || "jartides.com";
+  const domain = process.env.RESEND_DOMAIN || "jartides.ca";
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -344,6 +344,8 @@ export async function sendShippingNotification(
   const carrier = order.carrier ? escapeHtml(order.carrier) : null;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://jartides.ca";
 
+  const trackingUrlProvider = order.tracking_url_provider || null;
+
   const trackingBlock = trackingNumber
     ? `
       <tr>
@@ -351,7 +353,8 @@ export async function sendShippingNotification(
           <div style="background:#f0f4ff;border:1px solid #d0daea;border-radius:8px;padding:20px;">
             <h3 style="margin:0 0 8px;font-size:14px;color:#0b3d7a;">Tracking Information</h3>
             ${carrier ? `<p style="margin:0 0 4px;font-size:14px;color:#555;">Carrier: <strong>${carrier}</strong></p>` : ""}
-            <p style="margin:0;font-size:14px;color:#555;">Tracking Number: <strong style="font-family:monospace;">${trackingNumber}</strong></p>
+            <p style="margin:0 0 12px;font-size:14px;color:#555;">Tracking Number: <strong style="font-family:monospace;">${trackingNumber}</strong></p>
+            ${trackingUrlProvider ? `<a href="${escapeHtml(trackingUrlProvider)}" style="display:inline-block;background:#0b3d7a;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:bold;">Track with ${carrier || "Carrier"}</a>` : ""}
           </div>
         </td>
       </tr>`

@@ -4,6 +4,7 @@ import { requireAdminPage } from "@/lib/admin";
 import { formatPrice } from "@/lib/utils";
 import OrderStatusUpdater from "@/components/admin/OrderStatusUpdater";
 import OrderNotes from "@/components/admin/OrderNotes";
+import ShippingLabelGenerator from "@/components/admin/ShippingLabelGenerator";
 import type { Order, OrderItem, OrderStatus } from "@/lib/types";
 
 const statusColors: Record<OrderStatus, string> = {
@@ -174,13 +175,19 @@ export default async function AdminOrderDetailPage({
       {/* Status update & actions */}
       <div className="flex flex-wrap items-end gap-4 mb-6">
         <OrderStatusUpdater orderId={order.id} currentStatus={order.status} />
-        <button
-          disabled
-          className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-400"
-          title="Coming soon"
-        >
-          Generate Shipping Label
-        </button>
+      </div>
+
+      {/* Shipping Label */}
+      <div className="mb-6">
+        <ShippingLabelGenerator
+          orderId={order.id}
+          hasLabel={!!order.shipping_label_url}
+          existingLabelUrl={order.shipping_label_url}
+          existingTrackingNumber={order.tracking_number}
+          existingTrackingUrl={order.tracking_url_provider}
+          existingCarrier={order.carrier}
+          rateId={order.shippo_rate_id}
+        />
       </div>
 
       {/* Internal Notes */}

@@ -28,7 +28,7 @@ export default function ShippingPolicyPage() {
               1. Scope
             </h2>
             <p className="mt-2 text-sm leading-relaxed">
-              This Shipping Policy applies to all orders placed through jartides.com. By placing an
+              This Shipping Policy applies to all orders placed through jartides.ca. By placing an
               order, you agree to the terms of this policy. This policy forms part of and should be read
               together with our{" "}
               <a href="/policies/terms" className="text-[#1a6de3] hover:underline">

@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Elements } from "@stripe/react-stripe-js";
 import { stripePromise } from "@/lib/stripe-client";
 import { useCart } from "@/hooks/useCart";
 import { formatPrice } from "@/lib/utils";
-import { SHIPPING_COST, TAX_RATE } from "@/lib/constants";
+import { TAX_RATE } from "@/lib/constants";
 import StripePaymentForm from "@/components/checkout/StripePaymentForm";
 import {
   CreditCard,
@@ -18,6 +18,7 @@ import {
   Shield,
   Lock,
   AlertTriangle,
+  Package,
 } from "lucide-react";
 
 interface ShippingForm {
@@ -29,6 +30,16 @@ interface ShippingForm {
   province: string;
   postalCode: string;
   country: string;
+}
+
+interface ShippingRate {
+  id: string;
+  carrier: string;
+  service: string;
+  rate: number;
+  currency: string;
+  delivery_days: string;
+  shipment_id: string;
 }
 
 const INITIAL_SHIPPING: ShippingForm = {
@@ -69,16 +80,82 @@ export default function CheckoutPage() {
   const [applyingDiscount, setApplyingDiscount] = useState(false);
   const [discountError, setDiscountError] = useState<string | null>(null);
 
+  // Shipping rates state
+  const [shippingRates, setShippingRates] = useState<ShippingRate[]>([]);
+  const [selectedRate, setSelectedRate] = useState<ShippingRate | null>(null);
+  const [loadingRates, setLoadingRates] = useState(false);
+  const [ratesError, setRatesError] = useState<string | null>(null);
+  const [ratesFetched, setRatesFetched] = useState(false);
+
+  const shippingCost = selectedRate?.rate ?? 0;
   const discountAmount = discountData?.discount ?? 0;
   const discountedSubtotal = Math.max(0, subtotal - discountAmount);
   const tax = Math.round(discountedSubtotal * TAX_RATE * 100) / 100;
-  const total = Math.round((discountedSubtotal + SHIPPING_COST + tax) * 100) / 100;
+  const total = Math.round((discountedSubtotal + shippingCost + tax) * 100) / 100;
 
   useEffect(() => {
     if (items.length === 0 && !clientSecret && !orderId) {
       router.push("/shop");
     }
   }, [items, router, clientSecret, orderId]);
+
+  const fetchShippingRates = useCallback(async () => {
+    if (!shipping.city || !shipping.country || !shipping.postalCode || !shipping.line1) return;
+
+    setLoadingRates(true);
+    setRatesError(null);
+
+    try {
+      const res = await fetch("/api/shipping/rates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          address: {
+            name: shipping.fullName,
+            line1: shipping.line1,
+            line2: shipping.line2 || "",
+            city: shipping.city,
+            province: shipping.province,
+            postal: shipping.postalCode,
+            country: shipping.country,
+          },
+          items: items.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+          })),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to fetch shipping rates");
+      }
+
+      setShippingRates(data.rates || []);
+      setRatesFetched(true);
+
+      // Auto-select cheapest rate
+      if (data.rates && data.rates.length > 0) {
+        setSelectedRate(data.rates[0]);
+      } else {
+        setSelectedRate(null);
+      }
+    } catch (err) {
+      setRatesError(err instanceof Error ? err.message : "Failed to fetch rates");
+      setShippingRates([]);
+      setSelectedRate(null);
+    } finally {
+      setLoadingRates(false);
+    }
+  }, [shipping.fullName, shipping.line1, shipping.line2, shipping.city, shipping.province, shipping.postalCode, shipping.country, items]);
+
+  // Reset rates when address changes
+  useEffect(() => {
+    setRatesFetched(false);
+    setSelectedRate(null);
+    setShippingRates([]);
+  }, [shipping.city, shipping.country, shipping.postalCode, shipping.province, shipping.line1]);
 
   async function applyDiscount() {
     if (!discountCode.trim()) return;
@@ -120,7 +197,6 @@ export default function CheckoutPage() {
   ) {
     const { name, value } = e.target;
     setShipping((prev) => ({ ...prev, [name]: value }));
-    // Clear field error on change
     if (fieldErrors[name as keyof ShippingForm]) {
       setFieldErrors((prev) => ({ ...prev, [name]: undefined }));
     }
@@ -143,6 +219,12 @@ export default function CheckoutPage() {
     if (!compliance.researchDisclaimer || !compliance.ageVerified || !compliance.termsAccepted) {
       errors.fullName = errors.fullName || "";
       setError("Please acknowledge all required checkboxes before proceeding.");
+      setFieldErrors(errors);
+      return false;
+    }
+
+    if (!selectedRate) {
+      setError("Please select a shipping method.");
       setFieldErrors(errors);
       return false;
     }
@@ -179,6 +261,13 @@ export default function CheckoutPage() {
           researchDisclaimerAccepted: compliance.researchDisclaimer,
           ageVerified: compliance.ageVerified,
           termsAccepted: compliance.termsAccepted,
+          shippingRate: {
+            id: selectedRate!.id,
+            carrier: selectedRate!.carrier,
+            service: selectedRate!.service,
+            rate: selectedRate!.rate,
+            shipment_id: selectedRate!.shipment_id,
+          },
         }),
       });
 
@@ -199,6 +288,8 @@ export default function CheckoutPage() {
   }
 
   if (items.length === 0 && !clientSecret && !orderId) return null;
+
+  const canFetchRates = shipping.line1.trim() && shipping.city.trim() && shipping.postalCode.trim() && shipping.country;
 
   return (
     <main className="min-h-screen bg-[#f8f9fc] py-8 sm:py-12">
@@ -243,253 +334,350 @@ export default function CheckoutPage() {
           <div className="lg:col-span-2">
             {/* Step 1: Shipping */}
             {currentStep === 1 && (
-              <form onSubmit={handleContinueToPayment} className="rounded-xl bg-white p-6 shadow-sm sm:p-8">
-                <div className="flex items-center gap-2 mb-6">
-                  <Truck className="h-5 w-5 text-[#0b3d7a]" />
-                  <h2 className="text-xl font-bold text-[#0b3d7a]">
-                    Shipping Information
-                  </h2>
+              <form onSubmit={handleContinueToPayment} className="space-y-6">
+                <div className="rounded-xl bg-white p-6 shadow-sm sm:p-8">
+                  <div className="flex items-center gap-2 mb-6">
+                    <Truck className="h-5 w-5 text-[#0b3d7a]" />
+                    <h2 className="text-xl font-bold text-[#0b3d7a]">
+                      Shipping Information
+                    </h2>
+                  </div>
+
+                  {error && (
+                    <div className="mb-6 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+                      {error}
+                    </div>
+                  )}
+
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    {/* Full Name */}
+                    <div className="sm:col-span-2">
+                      <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                        Full Name
+                      </label>
+                      <input
+                        type="text"
+                        name="fullName"
+                        autoComplete="name"
+                        value={shipping.fullName}
+                        onChange={handleChange}
+                        className={`${inputCls} ${fieldErrors.fullName ? "border-red-400 focus:border-red-400 focus:ring-red-200" : ""}`}
+                        placeholder="John Doe"
+                      />
+                      {fieldErrors.fullName && (
+                        <p className="mt-1 text-xs text-red-500">{fieldErrors.fullName}</p>
+                      )}
+                    </div>
+
+                    {/* Email */}
+                    <div className="sm:col-span-2">
+                      <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        autoComplete="email"
+                        value={shipping.email}
+                        onChange={handleChange}
+                        className={`${inputCls} ${fieldErrors.email ? "border-red-400 focus:border-red-400 focus:ring-red-200" : ""}`}
+                        placeholder="john@example.com"
+                      />
+                      {fieldErrors.email && (
+                        <p className="mt-1 text-xs text-red-500">{fieldErrors.email}</p>
+                      )}
+                      <p className="mt-1 text-xs text-gray-400">Order confirmation and tracking will be sent here.</p>
+                    </div>
+
+                    {/* Address Line 1 */}
+                    <div className="sm:col-span-2">
+                      <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                        Address
+                      </label>
+                      <input
+                        type="text"
+                        name="line1"
+                        autoComplete="address-line1"
+                        value={shipping.line1}
+                        onChange={handleChange}
+                        className={`${inputCls} ${fieldErrors.line1 ? "border-red-400 focus:border-red-400 focus:ring-red-200" : ""}`}
+                        placeholder="123 Main Street"
+                      />
+                      {fieldErrors.line1 && (
+                        <p className="mt-1 text-xs text-red-500">{fieldErrors.line1}</p>
+                      )}
+                    </div>
+
+                    {/* Address Line 2 */}
+                    <div className="sm:col-span-2">
+                      <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                        Apartment, Suite, Unit <span className="text-gray-400">(optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="line2"
+                        autoComplete="address-line2"
+                        value={shipping.line2}
+                        onChange={handleChange}
+                        className={inputCls}
+                        placeholder="Apt 4B"
+                      />
+                    </div>
+
+                    {/* City */}
+                    <div>
+                      <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                        City
+                      </label>
+                      <input
+                        type="text"
+                        name="city"
+                        autoComplete="address-level2"
+                        value={shipping.city}
+                        onChange={handleChange}
+                        className={`${inputCls} ${fieldErrors.city ? "border-red-400 focus:border-red-400 focus:ring-red-200" : ""}`}
+                        placeholder="Toronto"
+                      />
+                      {fieldErrors.city && (
+                        <p className="mt-1 text-xs text-red-500">{fieldErrors.city}</p>
+                      )}
+                    </div>
+
+                    {/* Province */}
+                    <div>
+                      <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                        Province / State
+                      </label>
+                      <input
+                        type="text"
+                        name="province"
+                        autoComplete="address-level1"
+                        value={shipping.province}
+                        onChange={handleChange}
+                        className={`${inputCls} ${fieldErrors.province ? "border-red-400 focus:border-red-400 focus:ring-red-200" : ""}`}
+                        placeholder="Ontario"
+                      />
+                      {fieldErrors.province && (
+                        <p className="mt-1 text-xs text-red-500">{fieldErrors.province}</p>
+                      )}
+                    </div>
+
+                    {/* Postal Code */}
+                    <div>
+                      <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                        Postal / ZIP Code
+                      </label>
+                      <input
+                        type="text"
+                        name="postalCode"
+                        autoComplete="postal-code"
+                        value={shipping.postalCode}
+                        onChange={handleChange}
+                        className={`${inputCls} ${fieldErrors.postalCode ? "border-red-400 focus:border-red-400 focus:ring-red-200" : ""}`}
+                        placeholder="M5V 1A1"
+                      />
+                      {fieldErrors.postalCode && (
+                        <p className="mt-1 text-xs text-red-500">{fieldErrors.postalCode}</p>
+                      )}
+                    </div>
+
+                    {/* Country */}
+                    <div>
+                      <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                        Country
+                      </label>
+                      <select
+                        name="country"
+                        autoComplete="country"
+                        value={shipping.country}
+                        onChange={handleChange}
+                        className={inputCls}
+                      >
+                        <option value="CA">Canada</option>
+                        <option value="US">United States</option>
+                        <option value="GB">United Kingdom</option>
+                        <option value="AU">Australia</option>
+                        <option value="DE">Germany</option>
+                        <option value="FR">France</option>
+                        <option value="NL">Netherlands</option>
+                        <option value="SE">Sweden</option>
+                        <option value="NO">Norway</option>
+                        <option value="DK">Denmark</option>
+                        <option value="IE">Ireland</option>
+                        <option value="NZ">New Zealand</option>
+                        <option value="OTHER">Other</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
 
-                {error && (
-                  <div className="mb-6 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
-                    {error}
-                  </div>
-                )}
-
-                <div className="grid gap-5 sm:grid-cols-2">
-                  {/* Full Name */}
-                  <div className="sm:col-span-2">
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                      Full Name
-                    </label>
-                    <input
-                      type="text"
-                      name="fullName"
-                      autoComplete="name"
-                      value={shipping.fullName}
-                      onChange={handleChange}
-                      className={`${inputCls} ${fieldErrors.fullName ? "border-red-400 focus:border-red-400 focus:ring-red-200" : ""}`}
-                      placeholder="John Doe"
-                    />
-                    {fieldErrors.fullName && (
-                      <p className="mt-1 text-xs text-red-500">{fieldErrors.fullName}</p>
-                    )}
+                {/* Shipping Method Selection */}
+                <div className="rounded-xl bg-white p-6 shadow-sm sm:p-8">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Package className="h-5 w-5 text-[#0b3d7a]" />
+                    <h2 className="text-lg font-bold text-[#0b3d7a]">
+                      Shipping Method
+                    </h2>
                   </div>
 
-                  {/* Email */}
-                  <div className="sm:col-span-2">
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      autoComplete="email"
-                      value={shipping.email}
-                      onChange={handleChange}
-                      className={`${inputCls} ${fieldErrors.email ? "border-red-400 focus:border-red-400 focus:ring-red-200" : ""}`}
-                      placeholder="john@example.com"
-                    />
-                    {fieldErrors.email && (
-                      <p className="mt-1 text-xs text-red-500">{fieldErrors.email}</p>
-                    )}
-                    <p className="mt-1 text-xs text-gray-400">Order confirmation and tracking will be sent here.</p>
-                  </div>
+                  {!ratesFetched && !loadingRates && (
+                    <div className="text-center py-6">
+                      <p className="text-sm text-gray-500 mb-3">
+                        Enter your shipping address above to see available shipping options.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={fetchShippingRates}
+                        disabled={!canFetchRates || loadingRates}
+                        className="inline-flex items-center gap-2 rounded-lg bg-[#0b3d7a] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#09326a] disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Truck className="h-4 w-4" />
+                        Get Shipping Rates
+                      </button>
+                    </div>
+                  )}
 
-                  {/* Address Line 1 */}
-                  <div className="sm:col-span-2">
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                      Address
-                    </label>
-                    <input
-                      type="text"
-                      name="line1"
-                      autoComplete="address-line1"
-                      value={shipping.line1}
-                      onChange={handleChange}
-                      className={`${inputCls} ${fieldErrors.line1 ? "border-red-400 focus:border-red-400 focus:ring-red-200" : ""}`}
-                      placeholder="123 Main Street"
-                    />
-                    {fieldErrors.line1 && (
-                      <p className="mt-1 text-xs text-red-500">{fieldErrors.line1}</p>
-                    )}
-                  </div>
+                  {loadingRates && (
+                    <div className="flex items-center justify-center gap-2 py-8">
+                      <Loader2 className="h-5 w-5 animate-spin text-[#0b3d7a]" />
+                      <span className="text-sm text-gray-600">Fetching shipping rates...</span>
+                    </div>
+                  )}
 
-                  {/* Address Line 2 */}
-                  <div className="sm:col-span-2">
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                      Apartment, Suite, Unit <span className="text-gray-400">(optional)</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="line2"
-                      autoComplete="address-line2"
-                      value={shipping.line2}
-                      onChange={handleChange}
-                      className={inputCls}
-                      placeholder="Apt 4B"
-                    />
-                  </div>
+                  {ratesError && (
+                    <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700 mb-3">
+                      {ratesError}
+                      <button
+                        type="button"
+                        onClick={fetchShippingRates}
+                        className="ml-2 font-medium underline"
+                      >
+                        Try again
+                      </button>
+                    </div>
+                  )}
 
-                  {/* City */}
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                      City
-                    </label>
-                    <input
-                      type="text"
-                      name="city"
-                      autoComplete="address-level2"
-                      value={shipping.city}
-                      onChange={handleChange}
-                      className={`${inputCls} ${fieldErrors.city ? "border-red-400 focus:border-red-400 focus:ring-red-200" : ""}`}
-                      placeholder="Toronto"
-                    />
-                    {fieldErrors.city && (
-                      <p className="mt-1 text-xs text-red-500">{fieldErrors.city}</p>
-                    )}
-                  </div>
+                  {ratesFetched && shippingRates.length === 0 && !loadingRates && (
+                    <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-700">
+                      No shipping options available for this address. Please verify your address or try a different one.
+                    </div>
+                  )}
 
-                  {/* Province */}
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                      Province / State
-                    </label>
-                    <input
-                      type="text"
-                      name="province"
-                      autoComplete="address-level1"
-                      value={shipping.province}
-                      onChange={handleChange}
-                      className={`${inputCls} ${fieldErrors.province ? "border-red-400 focus:border-red-400 focus:ring-red-200" : ""}`}
-                      placeholder="Ontario"
-                    />
-                    {fieldErrors.province && (
-                      <p className="mt-1 text-xs text-red-500">{fieldErrors.province}</p>
-                    )}
-                  </div>
-
-                  {/* Postal Code */}
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                      Postal / ZIP Code
-                    </label>
-                    <input
-                      type="text"
-                      name="postalCode"
-                      autoComplete="postal-code"
-                      value={shipping.postalCode}
-                      onChange={handleChange}
-                      className={`${inputCls} ${fieldErrors.postalCode ? "border-red-400 focus:border-red-400 focus:ring-red-200" : ""}`}
-                      placeholder="M5V 1A1"
-                    />
-                    {fieldErrors.postalCode && (
-                      <p className="mt-1 text-xs text-red-500">{fieldErrors.postalCode}</p>
-                    )}
-                  </div>
-
-                  {/* Country */}
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                      Country
-                    </label>
-                    <select
-                      name="country"
-                      autoComplete="country"
-                      value={shipping.country}
-                      onChange={handleChange}
-                      className={inputCls}
-                    >
-                      <option value="CA">Canada</option>
-                      <option value="US">United States</option>
-                      <option value="GB">United Kingdom</option>
-                      <option value="AU">Australia</option>
-                      <option value="DE">Germany</option>
-                      <option value="FR">France</option>
-                      <option value="NL">Netherlands</option>
-                      <option value="SE">Sweden</option>
-                      <option value="NO">Norway</option>
-                      <option value="DK">Denmark</option>
-                      <option value="IE">Ireland</option>
-                      <option value="NZ">New Zealand</option>
-                      <option value="OTHER">Other</option>
-                    </select>
-                  </div>
+                  {shippingRates.length > 0 && (
+                    <div className="space-y-2">
+                      {shippingRates.map((rate) => (
+                        <label
+                          key={rate.id}
+                          className={`flex items-center gap-4 rounded-lg border p-4 cursor-pointer transition-all ${
+                            selectedRate?.id === rate.id
+                              ? "border-[#0b3d7a] bg-[#f0f4ff] ring-1 ring-[#0b3d7a]"
+                              : "border-gray-200 hover:border-gray-300"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="shippingRate"
+                            value={rate.id}
+                            checked={selectedRate?.id === rate.id}
+                            onChange={() => setSelectedRate(rate)}
+                            className="text-[#0b3d7a] focus:ring-[#1a6de3]"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900">
+                              {rate.carrier} &mdash; {rate.service}
+                            </p>
+                            <p className="text-xs text-gray-500">{rate.delivery_days}</p>
+                          </div>
+                          <span className="text-sm font-bold text-gray-900 whitespace-nowrap">
+                            {formatPrice(rate.rate)}
+                          </span>
+                        </label>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={fetchShippingRates}
+                        className="text-xs text-[#1a6de3] hover:underline mt-1"
+                      >
+                        Refresh rates
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Research Compliance */}
-                <div className="mt-8 rounded-lg border border-amber-200 bg-amber-50 p-5 space-y-4">
-                  <div className="flex items-start gap-2.5">
-                    <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
-                    <div>
-                      <h3 className="text-sm font-semibold text-amber-800">Research Use Disclaimer</h3>
-                      <p className="mt-1 text-xs text-amber-700 leading-relaxed">
-                        All products sold by Jartides are intended strictly for laboratory and
-                        research purposes only. These products are not intended for human consumption,
-                        veterinary use, or any therapeutic application.
-                      </p>
+                <div className="rounded-xl bg-white p-6 shadow-sm sm:p-8">
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-5 space-y-4">
+                    <div className="flex items-start gap-2.5">
+                      <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
+                      <div>
+                        <h3 className="text-sm font-semibold text-amber-800">Research Use Disclaimer</h3>
+                        <p className="mt-1 text-xs text-amber-700 leading-relaxed">
+                          All products sold by Jartides are intended strictly for laboratory and
+                          research purposes only. These products are not intended for human consumption,
+                          veterinary use, or any therapeutic application.
+                        </p>
+                      </div>
                     </div>
+
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={compliance.researchDisclaimer}
+                        onChange={(e) => setCompliance((p) => ({ ...p, researchDisclaimer: e.target.checked }))}
+                        className="mt-0.5 rounded border-gray-300 text-[#0b3d7a] focus:ring-[#1a6de3]"
+                      />
+                      <span className="text-sm text-gray-700">
+                        I acknowledge that these products are for <strong>research use only</strong> and are not for human consumption.
+                      </span>
+                    </label>
+
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={compliance.ageVerified}
+                        onChange={(e) => setCompliance((p) => ({ ...p, ageVerified: e.target.checked }))}
+                        className="mt-0.5 rounded border-gray-300 text-[#0b3d7a] focus:ring-[#1a6de3]"
+                      />
+                      <span className="text-sm text-gray-700">
+                        I confirm that I am <strong>21 years of age or older</strong>.
+                      </span>
+                    </label>
+
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={compliance.termsAccepted}
+                        onChange={(e) => setCompliance((p) => ({ ...p, termsAccepted: e.target.checked }))}
+                        className="mt-0.5 rounded border-gray-300 text-[#0b3d7a] focus:ring-[#1a6de3]"
+                      />
+                      <span className="text-sm text-gray-700">
+                        I agree to the{" "}
+                        <a href="/policies/terms" target="_blank" className="text-[#1a6de3] underline">Terms of Service</a>
+                        {" "}and{" "}
+                        <a href="/policies/privacy" target="_blank" className="text-[#1a6de3] underline">Privacy Policy</a>.
+                      </span>
+                    </label>
                   </div>
 
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={compliance.researchDisclaimer}
-                      onChange={(e) => setCompliance((p) => ({ ...p, researchDisclaimer: e.target.checked }))}
-                      className="mt-0.5 rounded border-gray-300 text-[#0b3d7a] focus:ring-[#1a6de3]"
-                    />
-                    <span className="text-sm text-gray-700">
-                      I acknowledge that these products are for <strong>research use only</strong> and are not for human consumption.
-                    </span>
-                  </label>
-
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={compliance.ageVerified}
-                      onChange={(e) => setCompliance((p) => ({ ...p, ageVerified: e.target.checked }))}
-                      className="mt-0.5 rounded border-gray-300 text-[#0b3d7a] focus:ring-[#1a6de3]"
-                    />
-                    <span className="text-sm text-gray-700">
-                      I confirm that I am <strong>21 years of age or older</strong>.
-                    </span>
-                  </label>
-
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={compliance.termsAccepted}
-                      onChange={(e) => setCompliance((p) => ({ ...p, termsAccepted: e.target.checked }))}
-                      className="mt-0.5 rounded border-gray-300 text-[#0b3d7a] focus:ring-[#1a6de3]"
-                    />
-                    <span className="text-sm text-gray-700">
-                      I agree to the{" "}
-                      <a href="/policies/terms" target="_blank" className="text-[#1a6de3] underline">Terms of Service</a>
-                      {" "}and{" "}
-                      <a href="/policies/privacy" target="_blank" className="text-[#1a6de3] underline">Privacy Policy</a>.
-                    </span>
-                  </label>
-                </div>
-
-                <div className="mt-6">
-                  <button
-                    type="submit"
-                    disabled={isSubmitting || !compliance.researchDisclaimer || !compliance.ageVerified || !compliance.termsAccepted}
-                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#0b3d7a] px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#09326a] disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Creating order...
-                      </>
-                    ) : (
-                      <>
-                        Continue to Payment
-                        <ChevronRight className="h-4 w-4" />
-                      </>
-                    )}
-                  </button>
+                  <div className="mt-6">
+                    <button
+                      type="submit"
+                      disabled={isSubmitting || !compliance.researchDisclaimer || !compliance.ageVerified || !compliance.termsAccepted || !selectedRate}
+                      className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#0b3d7a] px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#09326a] disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Creating order...
+                        </>
+                      ) : (
+                        <>
+                          Continue to Payment
+                          <ChevronRight className="h-4 w-4" />
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </form>
             )}
@@ -514,6 +702,11 @@ export default function CheckoutPage() {
                         {shipping.line2 ? `, ${shipping.line2}` : ""}, {shipping.city}, {shipping.province} {shipping.postalCode}
                       </p>
                       <p className="text-xs text-gray-500">{shipping.email}</p>
+                      {selectedRate && (
+                        <p className="text-xs text-[#0b3d7a] font-medium mt-1">
+                          {selectedRate.carrier} &mdash; {selectedRate.service} ({selectedRate.delivery_days})
+                        </p>
+                      )}
                     </div>
                     <button
                       type="button"
@@ -664,7 +857,12 @@ export default function CheckoutPage() {
                 )}
                 <div className="flex justify-between text-gray-600">
                   <span>Shipping</span>
-                  <span>{formatPrice(SHIPPING_COST)}</span>
+                  <span>
+                    {selectedRate
+                      ? formatPrice(shippingCost)
+                      : <span className="text-gray-400 italic">Select method</span>
+                    }
+                  </span>
                 </div>
                 <div className="flex justify-between text-gray-600">
                   <span>Tax (13% HST)</span>
@@ -688,7 +886,7 @@ export default function CheckoutPage() {
                 </div>
                 <div className="flex items-center gap-2 text-xs text-gray-500">
                   <Truck className="h-3.5 w-3.5 text-[#1a6de3]" />
-                  3-8 business day delivery
+                  {selectedRate ? selectedRate.delivery_days : "Multiple carrier options"}
                 </div>
               </div>
             </div>

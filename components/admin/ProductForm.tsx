@@ -1140,7 +1140,7 @@ export default function ProductForm({ product, categories, coaDocuments = [], al
                 />
               </div>
             </div>
-            <p className="text-xs text-gray-400">Used for calculating shipping rates via EasyPost.</p>
+            <p className="text-xs text-gray-400">Used for calculating shipping rates via Shippo.</p>
           </div>
         </Section>
 

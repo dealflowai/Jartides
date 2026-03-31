@@ -28,7 +28,7 @@ export default function TermsPage() {
               1. Acceptance of Terms
             </h2>
             <p className="mt-2 text-sm leading-relaxed">
-              By accessing, browsing, or using the {SITE_NAME} website (jartides.com) or placing an
+              By accessing, browsing, or using the {SITE_NAME} website (jartides.ca) or placing an
               order through our platform, you acknowledge that you have read, understood, and agree to
               be bound by these Terms of Service, our Privacy Policy, Refund Policy, and Shipping Policy
               (collectively, the &ldquo;Agreements&rdquo;). If you do not agree to these terms, you must not use
@@ -254,7 +254,7 @@ export default function TermsPage() {
                 contain the wrong product, or have missing items.
               </li>
               <li>
-                Claims must be submitted within 30 days of delivery with photographic evidence.
+                Claims must be submitted within 3 calendar days of delivery with photographic evidence.
               </li>
               <li>
                 No refunds are issued for packages seized, held, or destroyed by customs authorities.

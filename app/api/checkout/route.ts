@@ -28,6 +28,14 @@ const ShippingSchema = z.object({
   country: z.string().min(1),
 });
 
+const ShippingRateSchema = z.object({
+  id: z.string(),
+  carrier: z.string(),
+  service: z.string(),
+  rate: z.number().min(0).max(500),
+  shipment_id: z.string(),
+});
+
 const CheckoutSchema = z.object({
   items: z.array(CartItemSchema).min(1, "Cart cannot be empty"),
   shipping: ShippingSchema,
@@ -36,9 +44,10 @@ const CheckoutSchema = z.object({
   researchDisclaimerAccepted: z.literal(true),
   ageVerified: z.literal(true),
   termsAccepted: z.literal(true),
+  shippingRate: ShippingRateSchema,
 });
 
-import { SHIPPING_COST, TAX_RATE } from "@/lib/constants";
+import { TAX_RATE } from "@/lib/constants";
 
 export async function POST(request: NextRequest) {
   const csrfError = verifyCsrf(request);
@@ -58,7 +67,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { items, shipping, email, paymentMethod, researchDisclaimerAccepted, ageVerified, termsAccepted } = parsed.data;
+    const { items, shipping, email, paymentMethod, researchDisclaimerAccepted, ageVerified, termsAccepted, shippingRate } = parsed.data;
     const supabase = createAdminClient();
 
     // Fetch actual prices from database — never trust client prices
@@ -142,7 +151,7 @@ export async function POST(request: NextRequest) {
       return sum + product.price * item.quantity;
     }, 0);
 
-    const shippingCost = SHIPPING_COST;
+    const shippingCost = shippingRate.rate;
     const tax = Math.round(subtotal * TAX_RATE * 100) / 100;
     const total = Math.round((subtotal + shippingCost + tax) * 100) / 100;
 
@@ -168,6 +177,9 @@ export async function POST(request: NextRequest) {
         shipping_postal: shipping.postalCode,
         shipping_country: shipping.country,
         payment_method: paymentMethod,
+        carrier: shippingRate.carrier,
+        shippo_shipment_id: shippingRate.shipment_id,
+        shippo_rate_id: shippingRate.id,
         research_disclaimer_accepted: researchDisclaimerAccepted,
         age_verified: ageVerified,
         terms_accepted: termsAccepted,

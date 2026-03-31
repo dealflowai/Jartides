@@ -143,7 +143,9 @@ export interface Order {
   shipping_country: string;
   tracking_number: string | null;
   shipping_label_url: string | null;
-  easypost_shipment_id: string | null;
+  shippo_shipment_id: string | null;
+  shippo_rate_id: string | null;
+  tracking_url_provider: string | null;
   carrier: string | null;
   payment_method: string | null;
   stripe_payment_intent_id: string | null;
