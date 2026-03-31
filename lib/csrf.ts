@@ -16,10 +16,15 @@ export function verifyCsrf(request: NextRequest): NextResponse | null {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
   try {
-    const allowed = new URL(siteUrl).origin;
     const incoming = new URL(origin).origin;
+    const allowed = new URL(siteUrl).origin;
 
+    // Allow the configured site URL
     if (incoming === allowed) return null;
+
+    // Allow the request's own host (handles Vercel preview URLs and mismatched env vars)
+    const requestOrigin = new URL(request.url).origin;
+    if (incoming === requestOrigin) return null;
   } catch {
     // Malformed URL — reject
   }
