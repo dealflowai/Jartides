@@ -1,31 +1,35 @@
-import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireAdmin } from "@/lib/admin";
+import { verifyCsrf } from "@/lib/csrf";
+import { z } from "zod";
+
+const labelSchema = z.object({
+  orderId: z.string().uuid("Invalid order ID"),
+});
 
 // Generate shipping label via EasyPost (admin only)
 // TODO: Wire up with real EasyPost API
-export async function POST(request: Request) {
-  try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+export async function POST(request: NextRequest) {
+  const csrfError = verifyCsrf(request);
+  if (csrfError) return csrfError;
 
-    if (!user) {
+  try {
+    const admin = await requireAdmin();
+    if (!admin) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (profile?.role !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const body = await request.json();
+    const parsed = labelSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
 
-    const { orderId } = await request.json();
+    const { orderId } = parsed.data;
 
     if (!orderId) {
       return NextResponse.json(
@@ -34,10 +38,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const admin = createAdminClient();
+    const db = createAdminClient();
 
     // Fetch order
-    const { data: order } = await admin
+    const { data: order } = await db
       .from("orders")
       .select("*")
       .eq("id", orderId)
@@ -57,7 +61,7 @@ export async function POST(request: Request) {
     const trackingNumber = `JRT${Date.now()}`;
 
     // Update order with tracking info
-    await admin
+    await db
       .from("orders")
       .update({
         tracking_number: trackingNumber,

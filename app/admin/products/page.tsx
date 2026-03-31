@@ -1,12 +1,15 @@
 import Link from "next/link";
 import Image from "next/image";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireAdminPage } from "@/lib/admin";
 import { formatPrice } from "@/lib/utils";
 import Button from "@/components/ui/Button";
+import DuplicateProductButton from "@/components/admin/DuplicateProductButton";
 import type { Product } from "@/lib/types";
 import CategoriesSection from "./CategoriesSection";
 
 export default async function AdminProductsPage() {
+  await requireAdminPage();
   const supabase = createAdminClient();
 
   const [productsRes, categoriesRes] = await Promise.all([
@@ -87,12 +90,15 @@ export default async function AdminProductsPage() {
                   />
                 </td>
                 <td className="px-4 py-3">
-                  <Link
-                    href={`/admin/products/${p.id}`}
-                    className="text-[#1a6de3] hover:underline"
-                  >
-                    Edit
-                  </Link>
+                  <div className="flex items-center gap-3">
+                    <Link
+                      href={`/admin/products/${p.id}`}
+                      className="text-[#1a6de3] hover:underline"
+                    >
+                      Edit
+                    </Link>
+                    <DuplicateProductButton productId={p.id} productName={p.name} />
+                  </div>
                 </td>
               </tr>
             ))}

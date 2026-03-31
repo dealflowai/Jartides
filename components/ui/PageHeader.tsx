@@ -63,7 +63,7 @@ export default function PageHeader({
         )}
 
         {/* Title */}
-        <h1 className="text-4xl md:text-5xl font-bold tracking-wide uppercase text-white font-[family-name:var(--font-heading)]">
+        <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white font-[family-name:var(--font-heading)]">
           {titleKey ? (
             <EditableText settingKey={titleKey}>{title}</EditableText>
           ) : (

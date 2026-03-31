@@ -1,16 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Check, Minus, Plus, Shield, Package, AlertTriangle, XCircle } from "lucide-react";
+import { Check, Minus, Plus, Shield, Package, AlertTriangle, XCircle, FileText, ExternalLink } from "lucide-react";
+import DOMPurify from "isomorphic-dompurify";
 import { cn, formatPrice } from "@/lib/utils";
 import { MAX_QUANTITY } from "@/lib/constants";
 import { useCart } from "@/hooks/useCart";
 import Button from "@/components/ui/Button";
-import type { Product } from "@/lib/types";
+import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
+import type { Product, CoaDocument } from "@/lib/types";
 
 interface ProductDetailProps {
   product: Product;
+  coaDocuments?: CoaDocument[];
 }
 
 const FEATURES = [
@@ -53,28 +56,50 @@ function getStockStatus(product: Product) {
   };
 }
 
-export default function ProductDetail({ product }: ProductDetailProps) {
+export default function ProductDetail({ product, coaDocuments = [] }: ProductDetailProps) {
   const { addItem, openCart } = useCart();
+  const { addViewed } = useRecentlyViewed();
   const [quantity, setQuantity] = useState(1);
   const [mainImage, setMainImage] = useState(0);
 
-  const sku = `JRT-${product.id.slice(0, 4).toUpperCase()}`;
-  const images = product.images?.length ? product.images : [];
-  const hasImages = images.length > 0;
-  const stockStatus = getStockStatus(product);
-  const StockIcon = stockStatus.icon;
-  const isOutOfStock = product.stock_quantity <= 0;
+  useEffect(() => {
+    addViewed(product.id);
+  }, [product.id, addViewed]);
 
-  const displayPrice = product.price;
+  const variants = product.variants?.filter((v) => v.active) ?? [];
+  const hasVariants = variants.length > 0;
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
+    hasVariants ? variants[0].id : null
+  );
+  const selectedVariant = hasVariants
+    ? variants.find((v) => v.id === selectedVariantId) ?? variants[0]
+    : null;
+
+  const sku = product.sku || selectedVariant?.sku || `JRT-${product.id.slice(0, 4).toUpperCase()}`;
+  const variantImages = selectedVariant?.images?.length ? selectedVariant.images : null;
+  const images = variantImages ?? (product.images?.length ? product.images : []);
+  const hasImages = images.length > 0;
+
+  const activeStock = selectedVariant?.stock_quantity ?? product.stock_quantity;
+  const activeLowThreshold = selectedVariant?.low_stock_threshold ?? product.low_stock_threshold;
+  const stockProduct = { ...product, stock_quantity: activeStock, low_stock_threshold: activeLowThreshold };
+  const stockStatus = getStockStatus(stockProduct);
+  const StockIcon = stockStatus.icon;
+  const isOutOfStock = activeStock <= 0;
+
+  const displayPrice = selectedVariant?.price ?? product.price;
+  const displayOriginalPrice = selectedVariant?.original_price ?? product.original_price;
+  const displaySize = selectedVariant?.size ?? product.size;
 
   const handleAddToCart = () => {
     if (isOutOfStock) return;
     addItem({
       productId: product.id,
+      variantId: selectedVariant?.id ?? null,
       name: product.name,
       slug: product.slug,
       price: displayPrice,
-      size: product.size,
+      size: displaySize,
       image: hasImages ? images[0] : null,
       purchaseType: "one-time",
       quantity,
@@ -91,13 +116,13 @@ export default function ProductDetail({ product }: ProductDetailProps) {
       {/* LEFT — Gallery */}
       <div>
         {/* Main Image */}
-        <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-gray-100">
+        <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-white border border-gray-200">
           {hasImages ? (
             <Image
               src={images[mainImage]}
               alt={product.name}
               fill
-              className="object-contain p-4"
+              className="object-contain p-1"
               sizes="(max-width: 768px) 100vw, 50vw"
               priority
             />
@@ -176,9 +201,10 @@ export default function ProductDetail({ product }: ProductDetailProps) {
         </div>
 
         {/* Description */}
-        <p className="mt-4 text-base leading-relaxed text-gray-700 font-[family-name:var(--font-body)]">
-          {product.description}
-        </p>
+        <div
+          className="mt-4 prose prose-sm max-w-none text-gray-700 font-[family-name:var(--font-body)] prose-headings:text-gray-900 prose-a:text-[#1a6de3]"
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description) }}
+        />
 
         {/* Research Description (rich text HTML) */}
         {product.research_description && (
@@ -188,8 +214,43 @@ export default function ProductDetail({ product }: ProductDetailProps) {
             </h3>
             <div
               className="prose prose-sm max-w-none text-gray-700 font-[family-name:var(--font-body)] prose-headings:text-gray-900 prose-a:text-[#1a6de3]"
-              dangerouslySetInnerHTML={{ __html: product.research_description }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.research_description) }}
             />
+          </div>
+        )}
+
+        {/* Variant Selector */}
+        {hasVariants && (
+          <div className="mt-6">
+            <p className="mb-2 text-sm font-medium text-gray-700 font-[family-name:var(--font-body)]">
+              Size
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {variants.map((v) => {
+                const isSelected = v.id === selectedVariantId;
+                const outOfStock = v.stock_quantity <= 0;
+                return (
+                  <button
+                    key={v.id}
+                    onClick={() => !outOfStock && setSelectedVariantId(v.id)}
+                    disabled={outOfStock}
+                    className={cn(
+                      "rounded-lg border-2 px-4 py-2.5 text-sm font-semibold transition-all",
+                      isSelected
+                        ? "border-[#0b3d7a] bg-[#0b3d7a]/5 text-[#0b3d7a]"
+                        : outOfStock
+                        ? "border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed line-through"
+                        : "border-gray-200 text-gray-700 hover:border-[#1a6de3] hover:text-[#1a6de3]"
+                    )}
+                  >
+                    <span>{v.size}</span>
+                    <span className="ml-2 text-xs font-normal">
+                      {formatPrice(v.price)}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 
@@ -198,9 +259,9 @@ export default function ProductDetail({ product }: ProductDetailProps) {
           <span className="text-3xl font-bold text-[#0b3d7a] font-[family-name:var(--font-heading)]">
             {formatPrice(displayPrice)}
           </span>
-          {product.original_price && product.original_price > product.price && (
+          {displayOriginalPrice && displayOriginalPrice > displayPrice && (
             <span className="text-lg text-gray-400 line-through font-[family-name:var(--font-body)]">
-              {formatPrice(product.original_price)}
+              {formatPrice(displayOriginalPrice)}
             </span>
           )}
         </div>
@@ -279,6 +340,37 @@ export default function ProductDetail({ product }: ProductDetailProps) {
           {isOutOfStock ? "Out of Stock" : "Add to Cart"}
         </Button>
 
+        {/* Video Embed */}
+        {product.video_url && (
+          <div className="mt-8">
+            <h3 className="mb-3 text-sm font-semibold text-gray-900 font-[family-name:var(--font-heading)]">
+              Product Video
+            </h3>
+            <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-gray-200">
+              {product.video_url.includes("youtube.com") || product.video_url.includes("youtu.be") ? (
+                <iframe
+                  src={`https://www.youtube.com/embed/${product.video_url.includes("youtu.be") ? product.video_url.split("/").pop()?.split("?")[0] : new URL(product.video_url).searchParams.get("v")}`}
+                  className="absolute inset-0 h-full w-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title={`${product.name} video`}
+                />
+              ) : product.video_url.includes("tiktok.com") ? (
+                <a
+                  href={product.video_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-full items-center justify-center bg-gray-50 text-sm text-[#1a6de3] hover:underline"
+                >
+                  Watch on TikTok
+                </a>
+              ) : (
+                <video src={product.video_url} controls className="absolute inset-0 h-full w-full object-contain" />
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Features */}
         <ul className="mt-8 space-y-2.5">
           {FEATURES.map((feature) => (
@@ -292,15 +384,59 @@ export default function ProductDetail({ product }: ProductDetailProps) {
           ))}
         </ul>
 
-        {/* Related Products Placeholder */}
-        <div className="mt-10 border-t border-gray-200 pt-8">
-          <h3 className="text-lg font-semibold text-gray-900 font-[family-name:var(--font-heading)]">
-            Related Products
-          </h3>
-          <p className="mt-2 text-sm text-gray-500 font-[family-name:var(--font-body)]">
-            Related products coming soon.
-          </p>
-        </div>
+        {/* Certificate of Analysis */}
+        {coaDocuments.length > 0 && (
+          <div className="mt-8 rounded-xl border border-gray-200 bg-white">
+            <div className="flex items-center gap-2.5 border-b border-gray-100 px-5 py-4">
+              <Shield className="h-5 w-5 text-[#0b3d7a]" />
+              <h3 className="text-sm font-semibold text-gray-900 font-[family-name:var(--font-heading)]">
+                Certificate of Analysis
+              </h3>
+            </div>
+            <div className="divide-y divide-gray-100">
+              {coaDocuments.map((coa) => (
+                <div key={coa.id} className="flex items-center justify-between px-5 py-3.5">
+                  <div className="flex items-center gap-3">
+                    <FileText className="h-5 w-5 text-[#1a6de3]" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 font-[family-name:var(--font-body)]">
+                        Batch {coa.batch_number}
+                      </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-xs font-semibold text-green-600">
+                          {coa.purity_percentage}% Purity
+                        </span>
+                        {coa.test_date && (
+                          <span className="text-xs text-gray-400">
+                            Tested {new Date(coa.test_date).toLocaleDateString("en-CA", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {coa.pdf_url ? (
+                    <a
+                      href={coa.pdf_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-[#1a6de3] px-3 py-1.5 text-xs font-semibold text-[#1a6de3] transition-colors hover:bg-[#1a6de3] hover:text-white"
+                    >
+                      View PDF
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  ) : (
+                    <span className="text-xs text-gray-400">Pending</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );

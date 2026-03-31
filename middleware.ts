@@ -51,7 +51,8 @@ export async function middleware(request: NextRequest) {
 
   // Redirect logged-in users from auth pages
   if ((pathname === "/login" || pathname === "/register") && user) {
-    const redirect = request.nextUrl.searchParams.get("redirect") || "/account";
+    const raw = request.nextUrl.searchParams.get("redirect") || "/account";
+    const redirect = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/account";
     const url = request.nextUrl.clone();
     url.pathname = redirect;
     url.searchParams.delete("redirect");

@@ -21,12 +21,12 @@ export default function Hero() {
 
       <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-12 md:py-16">
         <div className="max-w-3xl mx-auto text-center">
-          <h1 className="font-[family-name:var(--font-heading)] text-6xl sm:text-7xl md:text-8xl lg:text-9xl text-white leading-[1] mb-3 tracking-wide">
+          <h1 className="font-[family-name:var(--font-heading)] text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold text-white leading-[0.95] mb-3 tracking-tight">
             <EditableText settingKey="hero_heading">
               JARTIDES
             </EditableText>
           </h1>
-          <p className="font-[family-name:var(--font-heading)] text-base sm:text-lg md:text-xl text-white/90 mb-10 leading-relaxed tracking-wider">
+          <p className="font-[family-name:var(--font-body)] text-base sm:text-lg md:text-xl text-white/90 mb-10 leading-relaxed">
             <EditableText settingKey="hero_subheading">
               Uncompromising Purity. Precision Peptides for Research. Lab-Tested Excellence.
             </EditableText>

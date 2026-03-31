@@ -23,6 +23,7 @@ export default function ContactForm() {
 
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   function handleChange(
     e: React.ChangeEvent<
@@ -35,26 +36,33 @@ export default function ContactForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
+    setError("");
 
     try {
-      await fetch("/api/contact", {
+      const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-    } catch {
-      // Silently handle — still show success for now
-    }
 
-    setLoading(false);
-    setSubmitted(true);
-    setForm({
-      firstName: "",
-      lastName: "",
-      email: "",
-      category: "",
-      message: "",
-    });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? "Something went wrong. Please try again.");
+      }
+
+      setSubmitted(true);
+      setForm({
+        firstName: "",
+        lastName: "",
+        email: "",
+        category: "",
+        message: "",
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   if (submitted) {
@@ -83,6 +91,11 @@ export default function ContactForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {error && (
+        <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div>
           <label

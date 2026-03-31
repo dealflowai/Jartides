@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendOrderConfirmation, sendAdminOrderNotification } from "@/lib/email";
 import type Stripe from "stripe";
 
 export async function POST(request: NextRequest) {
@@ -14,13 +15,22 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!webhookSecret) {
+    console.error("STRIPE_WEBHOOK_SECRET is not configured");
+    return NextResponse.json(
+      { error: "Webhook not configured" },
+      { status: 500 }
+    );
+  }
+
   let event: Stripe.Event;
 
   try {
     event = getStripe().webhooks.constructEvent(
       body,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
+      webhookSecret
     );
   } catch (err) {
     console.error("Webhook signature verification failed:", err);
@@ -37,11 +47,12 @@ export async function POST(request: NextRequest) {
       case "payment_intent.succeeded": {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
 
-        // Update order status to processing
+        // Update order status to processing (only if still pending — idempotency)
         const { data: order, error: orderError } = await supabase
           .from("orders")
           .update({ status: "processing", updated_at: new Date().toISOString() })
           .eq("stripe_payment_intent_id", paymentIntent.id)
+          .eq("status", "pending")
           .select("id")
           .single();
 
@@ -58,16 +69,43 @@ export async function POST(request: NextRequest) {
 
         if (orderItems) {
           for (const item of orderItems) {
-            await supabase.rpc("decrement_stock", {
+            const { error: stockError } = await supabase.rpc("decrement_stock", {
               p_product_id: item.product_id,
               p_quantity: item.quantity,
             });
+            if (stockError) {
+              console.error(`Failed to decrement stock for ${item.product_id}:`, stockError);
+            }
           }
         }
 
         console.log(
           `Order ${order.id} payment succeeded, status updated to processing`
         );
+
+        // Send confirmation + admin notification emails (non-blocking)
+        try {
+          const { data: fullOrder } = await supabase
+            .from("orders")
+            .select("*")
+            .eq("id", order.id)
+            .single();
+
+          const { data: fullItems } = await supabase
+            .from("order_items")
+            .select("*")
+            .eq("order_id", order.id);
+
+          if (fullOrder && fullItems) {
+            await Promise.allSettled([
+              sendOrderConfirmation(fullOrder, fullItems),
+              sendAdminOrderNotification(fullOrder, fullItems),
+            ]);
+          }
+        } catch (emailErr) {
+          console.error("Failed to send order emails:", emailErr);
+        }
+
         break;
       }
 

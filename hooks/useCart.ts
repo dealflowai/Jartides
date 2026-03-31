@@ -6,8 +6,8 @@ import type { CartItem } from "@/lib/types";
 export interface CartContextType {
   items: CartItem[];
   addItem: (item: Omit<CartItem, "quantity"> & { quantity?: number }) => void;
-  removeItem: (productId: string, purchaseType: string) => void;
-  updateQuantity: (productId: string, purchaseType: string, quantity: number) => void;
+  removeItem: (productId: string, variantId: string | null, purchaseType: string) => void;
+  updateQuantity: (productId: string, variantId: string | null, purchaseType: string, quantity: number) => void;
   clearCart: () => void;
   itemCount: number;
   subtotal: number;

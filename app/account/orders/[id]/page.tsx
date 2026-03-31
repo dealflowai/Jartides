@@ -54,7 +54,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-[family-name:var(--font-heading)] tracking-wide text-[#0b3d7a]">
+          <h1 className="text-2xl font-bold font-[family-name:var(--font-heading)] tracking-tight text-[#0b3d7a]">
             Order #{order.order_number}
           </h1>
           <p className="text-sm text-gray-500 mt-1">

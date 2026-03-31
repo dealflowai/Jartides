@@ -7,8 +7,8 @@ export const metadata: Metadata = {
 };
 import { createClient } from "@/lib/supabase/server";
 import type { Order } from "@/lib/types";
-import { Package, MapPin, ShoppingBag, Shield } from "lucide-react";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { Package, MapPin, ShoppingBag, Shield, Truck } from "lucide-react";
+
 
 export default async function AccountPage() {
   const supabase = await createClient();
@@ -30,15 +30,7 @@ export default async function AccountPage() {
     .limit(5)
     .returns<Order[]>();
 
-  // Check admin role using admin client to bypass RLS
-  const adminSupabase = createAdminClient();
-  const { data: adminProfile } = await adminSupabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user!.id)
-    .single();
-
-  const isAdmin = adminProfile?.role === "admin";
+  const isAdmin = profile?.role === "admin";
   const displayName = profile?.full_name || user!.email || "User";
   const memberSince = new Date(user!.created_at).toLocaleDateString("en-CA", {
     year: "numeric",
@@ -58,7 +50,7 @@ export default async function AccountPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-[family-name:var(--font-heading)] tracking-wide text-[#0b3d7a]">
+        <h1 className="text-2xl font-bold font-[family-name:var(--font-heading)] tracking-tight text-[#0b3d7a]">
           Welcome, {displayName}
         </h1>
         <p className="text-sm text-gray-500 mt-1">Member since {memberSince}</p>
@@ -79,7 +71,7 @@ export default async function AccountPage() {
       </div>
 
       {/* Quick Links */}
-      <div className={`grid gap-4 ${isAdmin ? "grid-cols-4" : "grid-cols-3"}`}>
+      <div className={`grid gap-4 ${isAdmin ? "grid-cols-5" : "grid-cols-4"}`}>
         {isAdmin && (
           <Link
             href="/admin"
@@ -95,6 +87,13 @@ export default async function AccountPage() {
         >
           <Package className="w-6 h-6 text-[#1a6de3]" />
           <span className="text-sm font-medium text-gray-700">Orders</span>
+        </Link>
+        <Link
+          href="/track"
+          className="flex flex-col items-center gap-2 bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow text-center"
+        >
+          <Truck className="w-6 h-6 text-[#1a6de3]" />
+          <span className="text-sm font-medium text-gray-700">Track Order</span>
         </Link>
         <Link
           href="/account/addresses"

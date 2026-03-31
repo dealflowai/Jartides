@@ -14,7 +14,7 @@ export default function NotFound() {
       <div className="absolute inset-0 bg-[#0a0a1a]/80" />
 
       <div className="relative z-10 text-center px-6 max-w-lg">
-        <p className="text-7xl font-[family-name:var(--font-heading)] tracking-wider mb-4">
+        <p className="text-7xl font-extrabold font-[family-name:var(--font-heading)] tracking-tight mb-4">
           404
         </p>
         <h1 className="text-3xl md:text-4xl font-bold mb-4">Page Not Found</h1>

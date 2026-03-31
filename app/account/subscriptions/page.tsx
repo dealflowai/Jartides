@@ -4,7 +4,7 @@ import { Bell } from "lucide-react";
 export default function SubscriptionsPage() {
   return (
     <div>
-      <h1 className="text-2xl font-[family-name:var(--font-heading)] tracking-wide text-[#0b3d7a] mb-6">
+      <h1 className="text-2xl font-bold font-[family-name:var(--font-heading)] tracking-tight text-[#0b3d7a] mb-6">
         Subscriptions
       </h1>
 

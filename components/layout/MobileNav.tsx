@@ -4,15 +4,14 @@ import { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { X, Mail, Globe } from "lucide-react";
-import { SOCIAL_LINKS, CONTACT_EMAIL } from "@/lib/constants";
+import { X } from "lucide-react";
+import { SOCIAL_LINKS } from "@/lib/constants";
 
 const NAV_LINKS = [
   { href: "/shop", label: "Shop" },
   { href: "/subscribe", label: "Subscribe" },
   { href: "/coa", label: "COAs" },
   { href: "/faq", label: "FAQ" },
-  { href: "/fda", label: "FDA" },
   { href: "/contact", label: "Contact" },
 ];
 
@@ -61,7 +60,7 @@ export default function MobileNav({ isOpen, onClose }: MobileNavProps) {
           <div className="flex items-center">
             <Image src="/images/logo.png" alt="Jartides" width={128} height={128} className="h-28 w-28 flex-shrink-0 object-contain -my-6 -mr-4 -ml-4" unoptimized />
             <div className="flex flex-col leading-none">
-              <span className="font-[family-name:var(--font-heading)] text-[1.35rem] tracking-wide text-[#0b3d7a]">
+              <span className="font-[family-name:var(--font-heading)] text-[1.35rem] font-extrabold tracking-tight text-[#0b3d7a]">
                 JARTIDES
               </span>
               <span className="text-[0.65rem] font-bold tracking-[0.15em] text-[#1a6de3] uppercase -mt-0.5">
@@ -124,15 +123,6 @@ export default function MobileNav({ isOpen, onClose }: MobileNavProps) {
         >
           <div className="flex items-center justify-center gap-4 mb-4">
             <a
-              href={SOCIAL_LINKS.instagram}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-[#0b3d7a] hover:text-white transition-colors"
-              aria-label="Instagram"
-            >
-              <Globe className="h-4 w-4" />
-            </a>
-            <a
               href={SOCIAL_LINKS.tiktok}
               target="_blank"
               rel="noopener noreferrer"
@@ -142,13 +132,6 @@ export default function MobileNav({ isOpen, onClose }: MobileNavProps) {
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05A6.34 6.34 0 0 0 3.15 15a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.6a8.22 8.22 0 0 0 4.76 1.51V6.69h-1z" />
               </svg>
-            </a>
-            <a
-              href={`mailto:${CONTACT_EMAIL}`}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-[#0b3d7a] hover:text-white transition-colors"
-              aria-label="Email"
-            >
-              <Mail className="h-4 w-4" />
             </a>
           </div>
           <p className="text-xs text-gray-400 text-center">

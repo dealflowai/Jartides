@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { requireAdminPage } from "@/lib/admin";
 import CoaForm from "@/components/admin/CoaForm";
 import type { CoaDocument, Product } from "@/lib/types";
 
@@ -8,6 +9,7 @@ export default async function EditCoaPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireAdminPage();
   const { id } = await params;
   const supabase = await createClient();
 

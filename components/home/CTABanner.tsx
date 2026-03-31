@@ -30,7 +30,7 @@ export default function CTABanner() {
             Browse our premium collection of 99%+ purity research peptides
           </EditableText>
         </p>
-        <Button variant="blue" size="lg" href="/shop">
+        <Button variant="blue" href="/shop">
           Shop Now
         </Button>
       </div>

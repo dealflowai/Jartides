@@ -25,6 +25,21 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!/[A-Z]/.test(password)) {
+      setError("Password must include at least one uppercase letter.");
+      return;
+    }
+
+    if (!/[0-9]/.test(password)) {
+      setError("Password must include at least one number.");
+      return;
+    }
+
+    if (!/[^A-Za-z0-9]/.test(password)) {
+      setError("Password must include at least one special character.");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
       return;
@@ -59,7 +74,7 @@ export default function RegisterPage() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
           </svg>
         </div>
-        <h1 className="text-3xl font-[family-name:var(--font-heading)] tracking-wide text-[#0b3d7a] mb-3">
+        <h1 className="text-3xl font-bold font-[family-name:var(--font-heading)] tracking-tight text-[#0b3d7a] mb-3">
           Check Your Email
         </h1>
         <p className="text-gray-600 text-sm leading-relaxed mb-6">
@@ -90,7 +105,7 @@ export default function RegisterPage() {
 
   return (
     <>
-      <h1 className="text-3xl font-[family-name:var(--font-heading)] tracking-wide text-[#0b3d7a] mb-6">
+      <h1 className="text-3xl font-bold font-[family-name:var(--font-heading)] tracking-tight text-[#0b3d7a] mb-6">
         Create Account
       </h1>
 
@@ -151,7 +166,7 @@ export default function RegisterPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-[#1a6de3] focus:ring-1 focus:ring-[#1a6de3] outline-none transition-colors"
-            placeholder="Min. 8 characters"
+            placeholder="Min. 8 chars, uppercase, number, symbol"
           />
         </div>
 

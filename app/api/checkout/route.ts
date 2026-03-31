@@ -3,9 +3,12 @@ import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStripe } from "@/lib/stripe";
 import { generateOrderNumber } from "@/lib/utils";
+import { rateLimit } from "@/lib/rate-limit";
+import { verifyCsrf } from "@/lib/csrf";
 
 const CartItemSchema = z.object({
   productId: z.string().uuid(),
+  variantId: z.string().uuid().nullable(),
   name: z.string(),
   slug: z.string(),
   price: z.number(),
@@ -29,13 +32,21 @@ const CheckoutSchema = z.object({
   items: z.array(CartItemSchema).min(1, "Cart cannot be empty"),
   shipping: ShippingSchema,
   email: z.string().email(),
-  paymentMethod: z.enum(["stripe", "paypal"]),
+  paymentMethod: z.enum(["stripe"]),
+  researchDisclaimerAccepted: z.literal(true),
+  ageVerified: z.literal(true),
+  termsAccepted: z.literal(true),
 });
 
-const SHIPPING_COST = 15;
-const TAX_RATE = 0.13;
+import { SHIPPING_COST, TAX_RATE } from "@/lib/constants";
 
 export async function POST(request: NextRequest) {
+  const csrfError = verifyCsrf(request);
+  if (csrfError) return csrfError;
+
+  const rateLimited = await rateLimit(request, { limit: 5, windowMs: 60_000 });
+  if (rateLimited) return rateLimited;
+
   try {
     const body = await request.json();
     const parsed = CheckoutSchema.safeParse(body);
@@ -47,7 +58,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { items, shipping, email, paymentMethod } = parsed.data;
+    const { items, shipping, email, paymentMethod, researchDisclaimerAccepted, ageVerified, termsAccepted } = parsed.data;
     const supabase = createAdminClient();
 
     // Fetch actual prices from database — never trust client prices
@@ -66,6 +77,20 @@ export async function POST(request: NextRequest) {
 
     const productMap = new Map(products.map((p) => [p.id, p]));
 
+    // Fetch variants if any items have variantId
+    const variantIds = items.map((i) => i.variantId).filter(Boolean) as string[];
+    const variantMap = new Map<string, { price: number; stock_quantity: number; size: string }>();
+    if (variantIds.length > 0) {
+      const { data: variants } = await supabase
+        .from("product_variants")
+        .select("id, price, stock_quantity, size, active")
+        .in("id", variantIds);
+
+      for (const v of variants ?? []) {
+        if (v.active) variantMap.set(v.id, v);
+      }
+    }
+
     // Validate all products exist, are active, and in stock
     for (const item of items) {
       const product = productMap.get(item.productId);
@@ -81,18 +106,38 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-      if (product.stock_quantity < item.quantity) {
-        return NextResponse.json(
-          {
-            error: `Insufficient stock for ${product.name}. Only ${product.stock_quantity} available.`,
-          },
-          { status: 400 }
-        );
+
+      // Use variant stock/price if applicable
+      if (item.variantId) {
+        const variant = variantMap.get(item.variantId);
+        if (!variant) {
+          return NextResponse.json(
+            { error: `Variant not found for ${product.name}` },
+            { status: 400 }
+          );
+        }
+        if (variant.stock_quantity < item.quantity) {
+          return NextResponse.json(
+            { error: `Insufficient stock for ${product.name} (${variant.size}). Only ${variant.stock_quantity} available.` },
+            { status: 400 }
+          );
+        }
+      } else {
+        if (product.stock_quantity < item.quantity) {
+          return NextResponse.json(
+            { error: `Insufficient stock for ${product.name}. Only ${product.stock_quantity} available.` },
+            { status: 400 }
+          );
+        }
       }
     }
 
     // Calculate totals from verified DB prices
     const subtotal = items.reduce((sum, item) => {
+      if (item.variantId) {
+        const variant = variantMap.get(item.variantId)!;
+        return sum + variant.price * item.quantity;
+      }
       const product = productMap.get(item.productId)!;
       return sum + product.price * item.quantity;
     }, 0);
@@ -103,21 +148,7 @@ export async function POST(request: NextRequest) {
 
     const orderNumber = generateOrderNumber();
 
-    let stripePaymentIntentId: string | null = null;
-    let clientSecret: string | null = null;
-
-    // Create Stripe PaymentIntent if paying by card
-    if (paymentMethod === "stripe") {
-      const paymentIntent = await getStripe().paymentIntents.create({
-        amount: Math.round(total * 100), // cents
-        currency: "cad",
-        metadata: { orderNumber, email },
-      });
-      stripePaymentIntentId = paymentIntent.id;
-      clientSecret = paymentIntent.client_secret;
-    }
-
-    // Create order in database
+    // Create order in database first
     const { data: order, error: orderError } = await supabase
       .from("orders")
       .insert({
@@ -137,7 +168,9 @@ export async function POST(request: NextRequest) {
         shipping_postal: shipping.postalCode,
         shipping_country: shipping.country,
         payment_method: paymentMethod,
-        stripe_payment_intent_id: stripePaymentIntentId,
+        research_disclaimer_accepted: researchDisclaimerAccepted,
+        age_verified: ageVerified,
+        terms_accepted: termsAccepted,
       })
       .select("id")
       .single();
@@ -152,12 +185,15 @@ export async function POST(request: NextRequest) {
     // Create order items
     const orderItems = items.map((item) => {
       const product = productMap.get(item.productId)!;
+      const variant = item.variantId ? variantMap.get(item.variantId) : null;
       return {
         order_id: order.id,
         product_id: item.productId,
+        variant_id: item.variantId ?? null,
         product_name: product.name,
+        variant_size: variant?.size ?? null,
         quantity: item.quantity,
-        unit_price: product.price,
+        unit_price: variant?.price ?? product.price,
         purchase_type: item.purchaseType,
       };
     });
@@ -167,7 +203,6 @@ export async function POST(request: NextRequest) {
       .insert(orderItems);
 
     if (itemsError) {
-      // Clean up order if items fail
       await supabase.from("orders").delete().eq("id", order.id);
       return NextResponse.json(
         { error: "Failed to create order items" },
@@ -175,10 +210,49 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Create Stripe PaymentIntent with full order context
+    let clientSecret: string | null = null;
+
+    try {
+      const paymentIntent = await getStripe().paymentIntents.create({
+        amount: Math.round(total * 100),
+        currency: "cad",
+        automatic_payment_methods: { enabled: true },
+        receipt_email: email,
+        shipping: {
+          name: shipping.fullName,
+          address: {
+            line1: shipping.line1,
+            line2: shipping.line2 || undefined,
+            city: shipping.city,
+            state: shipping.province,
+            postal_code: shipping.postalCode,
+            country: shipping.country,
+          },
+        },
+        metadata: { orderNumber, email, orderId: order.id },
+      });
+
+      clientSecret = paymentIntent.client_secret;
+
+      // Link PaymentIntent to order
+      await supabase
+        .from("orders")
+        .update({ stripe_payment_intent_id: paymentIntent.id })
+        .eq("id", order.id);
+    } catch (stripeErr) {
+      console.error("Stripe PaymentIntent error:", stripeErr);
+      await supabase.from("orders").delete().eq("id", order.id);
+      return NextResponse.json(
+        { error: "Failed to initialize payment. Please try again." },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({
       orderId: order.id,
       orderNumber,
-      ...(clientSecret && { clientSecret }),
+      clientSecret,
     });
   } catch (err) {
     console.error("Checkout error:", err);

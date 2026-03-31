@@ -5,12 +5,32 @@ export interface Category {
   sort_order: number;
 }
 
+export interface ProductVariant {
+  id: string;
+  product_id: string;
+  sku: string | null;
+  size: string;
+  price: number;
+  original_price: number | null;
+  stock_quantity: number;
+  low_stock_threshold: number;
+  images: string[];
+  sort_order: number;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Product {
   id: string;
   name: string;
   slug: string;
+  sku: string | null;
   description: string;
   research_description: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
+  video_url: string | null;
   category_id: string;
   category?: Category;
   price: number;
@@ -23,8 +43,28 @@ export interface Product {
   active: boolean;
   stock_quantity: number;
   low_stock_threshold: number;
+  weight_grams: number | null;
+  length_cm: number | null;
+  width_cm: number | null;
+  height_cm: number | null;
+  sort_order: number;
   created_at: string;
   updated_at: string;
+  variants?: ProductVariant[];
+  tags?: ProductTag[];
+}
+
+export interface ProductTag {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface RelatedProduct {
+  id: string;
+  product_id: string;
+  related_product_id: string;
+  sort_order: number;
 }
 
 export interface CoaDocument {
@@ -110,6 +150,7 @@ export interface OrderItem {
 
 export interface CartItem {
   productId: string;
+  variantId: string | null;
   name: string;
   slug: string;
   price: number;

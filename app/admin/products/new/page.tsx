@@ -1,8 +1,10 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireAdminPage } from "@/lib/admin";
 import ProductForm from "@/components/admin/ProductForm";
 import type { Category } from "@/lib/types";
 
 export default async function NewProductPage() {
+  await requireAdminPage();
   const supabase = createAdminClient();
   const { data: categories } = await supabase
     .from("categories")

@@ -2,10 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { Product } from "@/lib/types";
 import { formatPrice, calculateSavings } from "@/lib/utils";
 import { useCart } from "@/hooks/useCart";
-import { ShoppingCart } from "lucide-react";
+import { useWishlist } from "@/hooks/useWishlist";
+import { ShoppingCart, Heart } from "lucide-react";
 import { useState } from "react";
 
 interface ProductCardProps {
@@ -14,15 +16,30 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCart();
+  const { toggleWishlist, isWishlisted } = useWishlist();
+  const router = useRouter();
   const [hovered, setHovered] = useState(false);
+  const wishlisted = isWishlisted(product.id);
 
-  const savings = calculateSavings(product.price, product.original_price);
+  const hasVariants = (product.variants?.length ?? 0) > 0;
+  const minPrice = hasVariants
+    ? Math.min(...product.variants!.map((v) => v.price))
+    : product.price;
+  const savings = calculateSavings(
+    minPrice,
+    hasVariants ? product.variants![0].original_price : product.original_price
+  );
   const image = product.images?.[0] ?? null;
   const hoverImage = product.images?.[1] ?? null;
 
   function handleAddToCart() {
+    if (hasVariants) {
+      router.push(`/shop/${product.slug}`);
+      return;
+    }
     addItem({
       productId: product.id,
+      variantId: null,
       name: product.name,
       slug: product.slug,
       price: product.price,
@@ -58,16 +75,33 @@ export default function ProductCard({ product }: ProductCardProps) {
         </span>
       )}
 
+      {/* Wishlist heart */}
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleWishlist(product.id);
+        }}
+        className={`absolute ${savings ? "top-11" : "top-3"} right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 backdrop-blur-sm border border-gray-200 transition-colors hover:bg-white`}
+        aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+      >
+        <Heart
+          className={`h-4 w-4 transition-colors ${
+            wishlisted ? "fill-red-500 text-red-500" : "text-gray-400 hover:text-red-400"
+          }`}
+        />
+      </button>
+
       {/* Image with hover swap */}
       <Link href={`/shop/${product.slug}`} className="block">
-        <div className="relative h-[220px] w-full overflow-hidden rounded-t-xl bg-gray-100">
+        <div className="relative aspect-[5/4] w-full overflow-hidden rounded-t-xl bg-white">
           {image ? (
             <>
               <Image
                 src={image}
                 alt={product.name}
                 fill
-                className="object-contain p-4 transition-opacity duration-300"
+                className="object-contain p-1 transition-opacity duration-300"
                 style={{ opacity: hovered && hoverImage ? 0 : 1 }}
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
               />
@@ -100,15 +134,17 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         <p className="mt-1 text-xs text-gray-400">
           {product.category?.name}
-          {product.size && <> &middot; {product.size}</>}
+          {hasVariants
+            ? <> &middot; {product.variants!.map((v) => v.size).join(", ")}</>
+            : product.size && <> &middot; {product.size}</>}
         </p>
 
         {/* Price */}
         <div className="mt-3 flex items-baseline gap-2">
           <span className="text-base font-bold text-[#0b3d7a]">
-            {formatPrice(product.price)}
+            {hasVariants && "From "}{formatPrice(minPrice)}
           </span>
-          {product.original_price && product.original_price > product.price && (
+          {!hasVariants && product.original_price && product.original_price > product.price && (
             <span className="text-sm text-gray-400 line-through">
               {formatPrice(product.original_price)}
             </span>
@@ -122,7 +158,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#1a6de3] px-3 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#155ec7]"
           >
             <ShoppingCart className="h-3.5 w-3.5" />
-            Add to Cart
+            {hasVariants ? "Select Size" : "Add to Cart"}
           </button>
           <Link
             href={`/shop/${product.slug}`}

@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireAdminPage } from "@/lib/admin";
 import { formatPrice } from "@/lib/utils";
 import {
   ShoppingBag,
@@ -24,6 +25,7 @@ const statusColors: Record<OrderStatus, string> = {
 };
 
 export default async function AdminDashboard() {
+  await requireAdminPage();
   const supabase = createAdminClient();
 
   const thirtyDaysAgo = new Date();

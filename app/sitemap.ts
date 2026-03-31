@@ -54,7 +54,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = createAdminClient();
   const { data: products } = await supabase
     .from("products")
-    .select("slug, updated_at")
+    .select("slug, updated_at, images")
     .eq("active", true);
 
   const productPages: MetadataRoute.Sitemap = (products ?? []).map(
@@ -63,6 +63,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(product.updated_at),
       changeFrequency: "weekly" as const,
       priority: 0.8,
+      images: (product.images as string[] | null)?.filter(Boolean) ?? [],
     })
   );
 

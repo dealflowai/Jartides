@@ -25,7 +25,7 @@ export default async function HomePage() {
     const supabase = await createClient();
     const { data } = await supabase
       .from("products")
-      .select("*, category:categories(*)")
+      .select("*, category:categories(*), variants:product_variants(*)")
       .eq("active", true)
       .eq("featured", true)
       .order("created_at", { ascending: false })

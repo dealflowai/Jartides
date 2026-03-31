@@ -32,13 +32,14 @@ function LoginForm() {
       return;
     }
 
-    const redirect = searchParams.get("redirect") || "/account";
+    const raw = searchParams.get("redirect") || "/account";
+    const redirect = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/account";
     router.push(redirect);
   }
 
   return (
     <>
-      <h1 className="text-3xl font-[family-name:var(--font-heading)] tracking-wide text-[#0b3d7a] mb-6">
+      <h1 className="text-3xl font-bold font-[family-name:var(--font-heading)] tracking-tight text-[#0b3d7a] mb-6">
         Welcome Back
       </h1>
 

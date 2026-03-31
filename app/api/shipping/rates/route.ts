@@ -1,8 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { rateLimit } from "@/lib/rate-limit";
 
 // EasyPost shipping rate calculation
 // TODO: Wire up with real EasyPost API key
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const rateLimited = await rateLimit(request, { limit: 15, windowMs: 60_000 });
+  if (rateLimited) return rateLimited;
   try {
     const { address } = await request.json();
 

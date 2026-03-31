@@ -22,9 +22,6 @@ export default function FeaturedProducts({ products }: FeaturedProductsProps) {
           <h2 className="font-[family-name:var(--font-heading)] text-3xl md:text-4xl text-gray-900">
             <EditableText settingKey="featured_heading">FEATURED PRODUCTS</EditableText>
           </h2>
-          <p className="mt-2 text-gray-500">
-            <EditableText settingKey="featured_subheading">Handpicked for researchers</EditableText>
-          </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

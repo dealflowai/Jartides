@@ -6,6 +6,10 @@ import type { CartItem } from "@/lib/types";
 
 const CART_KEY = "jartides_cart";
 
+function cartKey(item: { productId: string; variantId: string | null; purchaseType: string }) {
+  return `${item.productId}:${item.variantId ?? "base"}:${item.purchaseType}`;
+}
+
 export default function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -15,7 +19,13 @@ export default function CartProvider({ children }: { children: ReactNode }) {
     const stored = localStorage.getItem(CART_KEY);
     if (stored) {
       try {
-        setItems(JSON.parse(stored));
+        const parsed = JSON.parse(stored) as CartItem[];
+        // Migrate old cart items that lack variantId
+        const migrated = parsed.map((i) => ({
+          ...i,
+          variantId: i.variantId ?? null,
+        }));
+        setItems(migrated);
       } catch {
         localStorage.removeItem(CART_KEY);
       }
@@ -31,21 +41,17 @@ export default function CartProvider({ children }: { children: ReactNode }) {
 
   const addItem = useCallback(
     (newItem: Omit<CartItem, "quantity"> & { quantity?: number }) => {
+      const key = cartKey(newItem);
       setItems((prev) => {
-        const existing = prev.find(
-          (i) =>
-            i.productId === newItem.productId &&
-            i.purchaseType === newItem.purchaseType
-        );
+        const existing = prev.find((i) => cartKey(i) === key);
         if (existing) {
           return prev.map((i) =>
-            i.productId === newItem.productId &&
-            i.purchaseType === newItem.purchaseType
+            cartKey(i) === key
               ? { ...i, quantity: Math.min(i.quantity + (newItem.quantity || 1), 20) }
               : i
           );
         }
-        return [...prev, { ...newItem, quantity: newItem.quantity || 1 }];
+        return [...prev, { ...newItem, variantId: newItem.variantId ?? null, quantity: newItem.quantity || 1 }];
       });
       setIsOpen(true);
     },
@@ -53,27 +59,23 @@ export default function CartProvider({ children }: { children: ReactNode }) {
   );
 
   const removeItem = useCallback(
-    (productId: string, purchaseType: string) => {
-      setItems((prev) =>
-        prev.filter(
-          (i) => !(i.productId === productId && i.purchaseType === purchaseType)
-        )
-      );
+    (productId: string, variantId: string | null, purchaseType: string) => {
+      const key = cartKey({ productId, variantId, purchaseType });
+      setItems((prev) => prev.filter((i) => cartKey(i) !== key));
     },
     []
   );
 
   const updateQuantity = useCallback(
-    (productId: string, purchaseType: string, quantity: number) => {
+    (productId: string, variantId: string | null, purchaseType: string, quantity: number) => {
       if (quantity < 1) {
-        removeItem(productId, purchaseType);
+        removeItem(productId, variantId, purchaseType);
         return;
       }
+      const key = cartKey({ productId, variantId, purchaseType });
       setItems((prev) =>
         prev.map((i) =>
-          i.productId === productId && i.purchaseType === purchaseType
-            ? { ...i, quantity: Math.min(quantity, 20) }
-            : i
+          cartKey(i) === key ? { ...i, quantity: Math.min(quantity, 20) } : i
         )
       );
     },
@@ -94,7 +96,7 @@ export default function CartProvider({ children }: { children: ReactNode }) {
   );
 
   const subtotal = useMemo(
-    () => items.reduce((sum, i) => sum + i.price * i.quantity, 0),
+    () => Math.round(items.reduce((sum, i) => sum + i.price * i.quantity, 0) * 100) / 100,
     [items]
   );
 

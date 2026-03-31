@@ -149,7 +149,7 @@ export default function AddressesPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-[family-name:var(--font-heading)] tracking-wide text-[#0b3d7a]">
+        <h1 className="text-2xl font-bold font-[family-name:var(--font-heading)] tracking-tight text-[#0b3d7a]">
           Addresses
         </h1>
         {!showForm && (

@@ -18,9 +18,10 @@ export default async function ShopPage() {
   try {
     const { data: productsData } = await supabase
       .from("products")
-      .select("*, category:categories(*)")
+      .select("*, category:categories(*), variants:product_variants(*)")
       .eq("active", true)
-      .order("created_at");
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false });
 
     products = (productsData as Product[]) ?? [];
   } catch {

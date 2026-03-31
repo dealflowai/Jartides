@@ -1,0 +1,137 @@
+.rte-editor .tiptap {
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: #1a1a2e;
+  outline: none;
+}
+
+.rte-editor .tiptap > * + * {
+  margin-top: 0.5em;
+}
+
+/* Placeholder */
+.rte-editor .tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: #9ca3af;
+  float: left;
+  pointer-events: none;
+  height: 0;
+}
+
+/* Headings */
+.rte-editor .tiptap h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 0.25em;
+  color: #111;
+}
+
+.rte-editor .tiptap h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 0.25em;
+  color: #111;
+}
+
+.rte-editor .tiptap h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: 0.2em;
+  color: #222;
+}
+
+/* Paragraph */
+.rte-editor .tiptap p {
+  margin: 0;
+}
+
+/* Bold / Italic / Underline / Strike */
+.rte-editor .tiptap strong {
+  font-weight: 700;
+}
+
+.rte-editor .tiptap em {
+  font-style: italic;
+}
+
+.rte-editor .tiptap u {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.rte-editor .tiptap s {
+  text-decoration: line-through;
+  color: #888;
+}
+
+/* Lists */
+.rte-editor .tiptap ul {
+  list-style: disc;
+  padding-left: 1.5rem;
+}
+
+.rte-editor .tiptap ol {
+  list-style: decimal;
+  padding-left: 1.5rem;
+}
+
+.rte-editor .tiptap li {
+  margin: 0.15em 0;
+}
+
+.rte-editor .tiptap li p {
+  margin: 0;
+}
+
+/* Blockquote */
+.rte-editor .tiptap blockquote {
+  border-left: 3px solid #d1d5db;
+  padding-left: 1rem;
+  color: #6b7280;
+  font-style: italic;
+  margin: 0.5em 0;
+}
+
+/* Horizontal Rule */
+.rte-editor .tiptap hr {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 1em 0;
+}
+
+/* Code */
+.rte-editor .tiptap code {
+  background: #f3f4f6;
+  border-radius: 4px;
+  padding: 0.15em 0.35em;
+  font-size: 0.85em;
+  font-family: ui-monospace, monospace;
+  color: #e11d48;
+}
+
+/* Highlight */
+.rte-editor .tiptap mark {
+  background: #fef08a;
+  border-radius: 2px;
+  padding: 0.05em 0.2em;
+}
+
+/* Links */
+.rte-editor .tiptap a {
+  color: #1a6de3;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+/* Text alignment */
+.rte-editor .tiptap [style*="text-align: center"] {
+  text-align: center;
+}
+.rte-editor .tiptap [style*="text-align: right"] {
+  text-align: right;
+}

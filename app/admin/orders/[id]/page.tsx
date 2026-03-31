@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { requireAdminPage } from "@/lib/admin";
 import { formatPrice } from "@/lib/utils";
 import OrderStatusUpdater from "@/components/admin/OrderStatusUpdater";
 import type { Order, OrderItem, OrderStatus } from "@/lib/types";
@@ -18,6 +19,7 @@ export default async function AdminOrderDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireAdminPage();
   const { id } = await params;
   const supabase = await createClient();
 

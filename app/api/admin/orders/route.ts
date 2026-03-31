@@ -1,24 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireAdmin } from "@/lib/admin";
+import { verifyCsrf } from "@/lib/csrf";
 import { z } from "zod";
-
-async function requireAdmin() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.role !== "admin") return null;
-  return user;
-}
 
 export async function GET(req: NextRequest) {
   const admin = await requireAdmin();
@@ -62,6 +47,9 @@ const updateSchema = z.object({
 });
 
 export async function PUT(req: NextRequest) {
+  const csrfError = verifyCsrf(req);
+  if (csrfError) return csrfError;
+
   const admin = await requireAdmin();
   if (!admin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

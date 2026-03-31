@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { requireAdminPage } from "@/lib/admin";
 import Button from "@/components/ui/Button";
 import type { CoaDocument } from "@/lib/types";
 
 export default async function AdminCoaPage() {
+  await requireAdminPage();
   const supabase = await createClient();
 
   const { data } = await supabase

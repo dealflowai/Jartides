@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
+  const rateLimited = await rateLimit(req, { limit: 10, windowMs: 60_000 });
+  if (rateLimited) return rateLimited;
+
   try {
     const { code, subtotal } = await req.json();
 
@@ -19,7 +23,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const supabase = createAdminClient();
+    const supabase = await createClient();
 
     const { data: discountCode, error } = await supabase
       .from("discount_codes")
@@ -34,31 +38,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check active
+    // Validate code is usable (generic message to prevent enumeration)
+    const invalidResponse = { valid: false, discount: 0, type: null, message: "Invalid or expired discount code." };
+
     if (!discountCode.active) {
-      return NextResponse.json(
-        { valid: false, discount: 0, type: null, message: "This discount code is no longer active." },
-        { status: 200 }
-      );
+      return NextResponse.json(invalidResponse, { status: 200 });
     }
 
-    // Check expiry
     if (discountCode.expires_at && new Date(discountCode.expires_at) < new Date()) {
-      return NextResponse.json(
-        { valid: false, discount: 0, type: null, message: "This discount code has expired." },
-        { status: 200 }
-      );
+      return NextResponse.json(invalidResponse, { status: 200 });
     }
 
-    // Check max uses
     if (
       discountCode.max_uses !== null &&
       discountCode.used_count >= discountCode.max_uses
     ) {
-      return NextResponse.json(
-        { valid: false, discount: 0, type: null, message: "This discount code has reached its maximum usage." },
-        { status: 200 }
-      );
+      return NextResponse.json(invalidResponse, { status: 200 });
     }
 
     // Check min order amount
