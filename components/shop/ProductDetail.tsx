@@ -372,7 +372,7 @@ export default function ProductDetail({ product, coaDocuments = [] }: ProductDet
         {/* Share */}
         <div className="mt-4">
           <ShareButtons
-            url={typeof window !== "undefined" ? window.location.href : `https://jartides.com/shop/${product.slug}`}
+            url={typeof window !== "undefined" ? window.location.href : `https://jartides.ca/shop/${product.slug}`}
             title={product.name}
           />
         </div>

@@ -342,7 +342,7 @@ export async function sendShippingNotification(
     ? escapeHtml(order.tracking_number)
     : null;
   const carrier = order.carrier ? escapeHtml(order.carrier) : null;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://jartides.vercel.app";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://jartides.ca";
 
   const trackingBlock = trackingNumber
     ? `

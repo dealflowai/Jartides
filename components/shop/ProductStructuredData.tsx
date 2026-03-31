@@ -1,7 +1,7 @@
 import type { Product } from "@/lib/types";
 
 const BASE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL || "https://jartides.vercel.app";
+  process.env.NEXT_PUBLIC_SITE_URL || "https://jartides.ca";
 
 interface Props {
   product: Product;

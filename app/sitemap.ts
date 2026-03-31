@@ -2,7 +2,7 @@ import { MetadataRoute } from "next";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const BASE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL || "https://jartides.vercel.app";
+  process.env.NEXT_PUBLIC_SITE_URL || "https://jartides.ca";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [
