@@ -12,6 +12,7 @@ import {
   Ticket,
   Settings,
   ArrowLeft,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +24,7 @@ const navItems = [
   { label: "Inventory", href: "/admin/inventory", icon: Warehouse },
   { label: "Discounts", href: "/admin/discounts", icon: Ticket },
   { label: "FAQ Manager", href: "/admin/faq", icon: MessageCircleQuestion },
+  { label: "Compliance", href: "/admin/compliance", icon: ShieldCheck },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
