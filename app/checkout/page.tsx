@@ -19,7 +19,10 @@ import {
   Lock,
   AlertTriangle,
   Package,
+  Search,
+  Check,
 } from "lucide-react";
+import { COUNTRIES, PRIORITY_COUNTRIES } from "@/lib/countries";
 
 interface ShippingForm {
   fullName: string;
@@ -71,6 +74,8 @@ export default function CheckoutPage() {
     ageVerified: false,
     termsAccepted: false,
   });
+  const [countrySearch, setCountrySearch] = useState("");
+  const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
   const [discountCode, setDiscountCode] = useState("");
   const [discountData, setDiscountData] = useState<{
     discount: number;
@@ -482,31 +487,72 @@ export default function CheckoutPage() {
                     </div>
 
                     {/* Country */}
-                    <div>
+                    <div className="relative">
                       <label className="mb-1.5 block text-sm font-medium text-gray-700">
                         Country
                       </label>
-                      <select
-                        name="country"
-                        autoComplete="country"
-                        value={shipping.country}
-                        onChange={handleChange}
-                        className={inputCls}
+                      <button
+                        type="button"
+                        onClick={() => setCountryDropdownOpen(!countryDropdownOpen)}
+                        className={`${inputCls} text-left flex items-center justify-between`}
                       >
-                        <option value="CA">Canada</option>
-                        <option value="US">United States</option>
-                        <option value="GB">United Kingdom</option>
-                        <option value="AU">Australia</option>
-                        <option value="DE">Germany</option>
-                        <option value="FR">France</option>
-                        <option value="NL">Netherlands</option>
-                        <option value="SE">Sweden</option>
-                        <option value="NO">Norway</option>
-                        <option value="DK">Denmark</option>
-                        <option value="IE">Ireland</option>
-                        <option value="NZ">New Zealand</option>
-                        <option value="OTHER">Other</option>
-                      </select>
+                        <span>
+                          {COUNTRIES.find((c) => c.code === shipping.country)?.name || "Select country"}
+                        </span>
+                        <ChevronRight className={`h-4 w-4 text-gray-400 transition-transform ${countryDropdownOpen ? "rotate-90" : ""}`} />
+                      </button>
+                      {countryDropdownOpen && (
+                        <div className="absolute z-50 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg">
+                          <div className="flex items-center gap-2 border-b px-3 py-2">
+                            <Search className="h-4 w-4 text-gray-400" />
+                            <input
+                              type="text"
+                              value={countrySearch}
+                              onChange={(e) => setCountrySearch(e.target.value)}
+                              placeholder="Search countries..."
+                              className="w-full text-sm outline-none placeholder:text-gray-400"
+                              autoFocus
+                            />
+                          </div>
+                          <ul className="max-h-52 overflow-y-auto py-1">
+                            {(() => {
+                              const search = countrySearch.toLowerCase();
+                              const filtered = COUNTRIES.filter((c) =>
+                                c.name.toLowerCase().includes(search) || c.code.toLowerCase().includes(search)
+                              );
+                              const priority = filtered.filter((c) => PRIORITY_COUNTRIES.includes(c.code));
+                              const rest = filtered.filter((c) => !PRIORITY_COUNTRIES.includes(c.code));
+                              const sorted = [...priority, ...rest];
+
+                              if (sorted.length === 0) {
+                                return <li className="px-3 py-2 text-sm text-gray-400">No countries found</li>;
+                              }
+
+                              return sorted.map((c, i) => (
+                                <li key={c.code}>
+                                  {i === priority.length && priority.length > 0 && !search && (
+                                    <div className="border-t border-gray-100 my-1" />
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setShipping((prev) => ({ ...prev, country: c.code }));
+                                      setCountryDropdownOpen(false);
+                                      setCountrySearch("");
+                                    }}
+                                    className={`flex w-full items-center justify-between px-3 py-2 text-sm transition-colors hover:bg-[#f0f4ff] ${
+                                      shipping.country === c.code ? "bg-[#f0f4ff] text-[#0b3d7a] font-medium" : "text-gray-700"
+                                    }`}
+                                  >
+                                    {c.name}
+                                    {shipping.country === c.code && <Check className="h-4 w-4 text-[#0b3d7a]" />}
+                                  </button>
+                                </li>
+                              ));
+                            })()}
+                          </ul>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
