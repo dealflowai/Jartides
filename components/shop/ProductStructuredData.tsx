@@ -8,12 +8,12 @@ interface Props {
 }
 
 export default function ProductStructuredData({ product }: Props) {
-  const jsonLd = {
+  const productJsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
-    description: product.description,
-    sku: product.slug,
+    description: product.meta_description || product.description?.replace(/<[^>]*>/g, "").slice(0, 200),
+    sku: product.sku || product.slug,
     image: product.images.length > 0 ? product.images[0] : undefined,
     url: `${BASE_URL}/shop/${product.slug}`,
     brand: {
@@ -31,12 +31,69 @@ export default function ProductStructuredData({ product }: Props) {
           : "https://schema.org/OutOfStock",
       url: `${BASE_URL}/shop/${product.slug}`,
     },
+    ...(product.review_count > 0 && {
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: product.avg_rating,
+        reviewCount: product.review_count,
+        bestRating: 5,
+        worstRating: 1,
+      },
+    }),
+  };
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: BASE_URL,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Shop",
+        item: `${BASE_URL}/shop`,
+      },
+      ...(product.category
+        ? [
+            {
+              "@type": "ListItem",
+              position: 3,
+              name: product.category.name,
+              item: `${BASE_URL}/shop?category=${product.category.slug}`,
+            },
+            {
+              "@type": "ListItem",
+              position: 4,
+              name: product.name,
+              item: `${BASE_URL}/shop/${product.slug}`,
+            },
+          ]
+        : [
+            {
+              "@type": "ListItem",
+              position: 3,
+              name: product.name,
+              item: `${BASE_URL}/shop/${product.slug}`,
+            },
+          ]),
+    ],
   };
 
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+    </>
   );
 }

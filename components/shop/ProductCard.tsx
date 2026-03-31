@@ -7,7 +7,7 @@ import type { Product } from "@/lib/types";
 import { formatPrice, calculateSavings } from "@/lib/utils";
 import { useCart } from "@/hooks/useCart";
 import { useWishlist } from "@/hooks/useWishlist";
-import { ShoppingCart, Heart } from "lucide-react";
+import { ShoppingCart, Heart, Star } from "lucide-react";
 import { useState } from "react";
 
 interface ProductCardProps {
@@ -138,6 +138,21 @@ export default function ProductCard({ product }: ProductCardProps) {
             ? <> &middot; {product.variants!.map((v) => v.size).join(", ")}</>
             : product.size && <> &middot; {product.size}</>}
         </p>
+
+        {/* Star rating */}
+        {(product.review_count ?? 0) > 0 && (
+          <div className="mt-1.5 flex items-center gap-1">
+            <div className="flex gap-0.5">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <Star
+                  key={s}
+                  className={`h-3 w-3 ${s <= Math.round(product.avg_rating ?? 0) ? "fill-amber-400 text-amber-400" : "fill-gray-200 text-gray-200"}`}
+                />
+              ))}
+            </div>
+            <span className="text-[10px] text-gray-400">({product.review_count})</span>
+          </div>
+        )}
 
         {/* Price */}
         <div className="mt-3 flex items-baseline gap-2">

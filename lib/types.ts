@@ -50,6 +50,8 @@ export interface Product {
   sort_order: number;
   created_at: string;
   updated_at: string;
+  avg_rating: number;
+  review_count: number;
   variants?: ProductVariant[];
   tags?: ProductTag[];
 }
@@ -58,6 +60,19 @@ export interface ProductTag {
   id: string;
   name: string;
   slug: string;
+}
+
+export interface ProductReview {
+  id: string;
+  product_id: string;
+  user_id: string | null;
+  author_name: string;
+  rating: number;
+  title: string | null;
+  body: string | null;
+  verified_purchase: boolean;
+  approved: boolean;
+  created_at: string;
 }
 
 export interface RelatedProduct {

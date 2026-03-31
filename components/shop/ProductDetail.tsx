@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { Check, Minus, Plus, Shield, Package, AlertTriangle, XCircle, FileText, ExternalLink } from "lucide-react";
 import DOMPurify from "isomorphic-dompurify";
@@ -8,6 +8,9 @@ import { cn, formatPrice } from "@/lib/utils";
 import { MAX_QUANTITY } from "@/lib/constants";
 import { useCart } from "@/hooks/useCart";
 import Button from "@/components/ui/Button";
+import ImageZoom from "@/components/shop/ImageZoom";
+import ShareButtons from "@/components/shop/ShareButtons";
+import BackInStockForm from "@/components/shop/BackInStockForm";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import type { Product, CoaDocument } from "@/lib/types";
 
@@ -111,34 +114,55 @@ export default function ProductDetail({ product, coaDocuments = [] }: ProductDet
     setQuantity((q) => Math.min(q + 1, MAX_QUANTITY));
   const decrementQty = () => setQuantity((q) => Math.max(q - 1, 1));
 
+  // Mobile swipe support
+  const touchStartX = useRef(0);
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  }, []);
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0 && mainImage < images.length - 1) {
+        setMainImage((i) => i + 1);
+      } else if (diff < 0 && mainImage > 0) {
+        setMainImage((i) => i - 1);
+      }
+    }
+  }, [mainImage, images.length]);
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-14">
       {/* LEFT — Gallery */}
       <div>
-        {/* Main Image */}
-        <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-white border border-gray-200">
-          {hasImages ? (
-            <Image
-              src={images[mainImage]}
-              alt={product.name}
-              fill
-              className="object-contain p-1"
-              sizes="(max-width: 768px) 100vw, 50vw"
-              priority
-            />
-          ) : (
+        {/* Main Image with Zoom + Swipe */}
+        {hasImages ? (
+          <div className="relative" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+            <ImageZoom src={images[mainImage]} alt={product.name} priority />
+            {/* Image counter (mobile) */}
+            {images.length > 1 && (
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 md:hidden">
+                {images.map((_, i) => (
+                  <span
+                    key={i}
+                    className={`h-1.5 rounded-full transition-all ${i === mainImage ? "w-4 bg-[#0b3d7a]" : "w-1.5 bg-gray-300"}`}
+                  />
+                ))}
+              </div>
+            )}
+            {/* Badge overlay */}
+            {product.badge && (
+              <span className="absolute left-3 top-3 z-10 rounded-full bg-[#0b3d7a] px-3 py-1 text-xs font-semibold text-white shadow-sm pointer-events-none">
+                {product.badge}
+              </span>
+            )}
+          </div>
+        ) : (
+          <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-white border border-gray-200">
             <div className="flex h-full items-center justify-center text-gray-400 text-sm font-[family-name:var(--font-body)]">
               No image available
             </div>
-          )}
-
-          {/* Badge overlay */}
-          {product.badge && (
-            <span className="absolute left-3 top-3 rounded-full bg-[#0b3d7a] px-3 py-1 text-xs font-semibold text-white shadow-sm">
-              {product.badge}
-            </span>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Thumbnails */}
         {images.length > 1 && (
@@ -339,6 +363,19 @@ export default function ProductDetail({ product, coaDocuments = [] }: ProductDet
         >
           {isOutOfStock ? "Out of Stock" : "Add to Cart"}
         </Button>
+
+        {/* Back in stock notification */}
+        {isOutOfStock && (
+          <BackInStockForm productId={product.id} productName={product.name} />
+        )}
+
+        {/* Share */}
+        <div className="mt-4">
+          <ShareButtons
+            url={typeof window !== "undefined" ? window.location.href : `https://jartides.com/shop/${product.slug}`}
+            title={product.name}
+          />
+        </div>
 
         {/* Video Embed */}
         {product.video_url && (

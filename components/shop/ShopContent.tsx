@@ -6,7 +6,7 @@ import { X, ChevronDown, SlidersHorizontal } from "lucide-react";
 import ProductCard from "@/components/shop/ProductCard";
 import { cn } from "@/lib/utils";
 import { CATEGORIES } from "@/lib/constants";
-import type { Product, Category } from "@/lib/types";
+import type { Product, Category, ProductTag } from "@/lib/types";
 
 type SortOption =
   | "newest"
@@ -35,9 +35,10 @@ function getEffectivePrice(product: Product): number {
 interface ShopContentProps {
   products: Product[];
   categories: Category[];
+  tags?: ProductTag[];
 }
 
-export default function ShopContent({ products, categories }: ShopContentProps) {
+export default function ShopContent({ products, categories, tags = [] }: ShopContentProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -47,6 +48,7 @@ export default function ShopContent({ products, categories }: ShopContentProps) 
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [priceMin, setPriceMin] = useState("");
   const [priceMax, setPriceMax] = useState("");
+  const [activeTag, setActiveTag] = useState<string | null>(null);
 
   const handleFilter = useCallback(
     (slug: string) => {
@@ -69,6 +71,7 @@ export default function ShopContent({ products, categories }: ShopContentProps) 
     setSortBy("newest");
     setPriceMin("");
     setPriceMax("");
+    setActiveTag(null);
     const params = new URLSearchParams(searchParams.toString());
     params.delete("category");
     router.replace(`/shop${params.toString() ? `?${params.toString()}` : ""}`, {
@@ -84,8 +87,9 @@ export default function ShopContent({ products, categories }: ShopContentProps) 
     if (priceMin !== "") count++;
     if (priceMax !== "") count++;
     if (searchQuery) count++;
+    if (activeTag) count++;
     return count;
-  }, [activeFilter, sortBy, priceMin, priceMax, searchQuery]);
+  }, [activeFilter, sortBy, priceMin, priceMax, searchQuery, activeTag]);
 
   const filteredProducts = useMemo(() => {
     let filtered = products;
@@ -106,6 +110,13 @@ export default function ShopContent({ products, categories }: ShopContentProps) 
       if (matchedCategory) {
         filtered = filtered.filter((p) => p.category_id === matchedCategory.id);
       }
+    }
+
+    // Filter by tag
+    if (activeTag) {
+      filtered = filtered.filter((p) =>
+        p.tags?.some((t) => t.slug === activeTag)
+      );
     }
 
     // Filter by price range
@@ -148,7 +159,7 @@ export default function ShopContent({ products, categories }: ShopContentProps) 
     }
 
     return sorted;
-  }, [activeFilter, searchQuery, products, categories, priceMin, priceMax, sortBy]);
+  }, [activeFilter, searchQuery, products, categories, priceMin, priceMax, sortBy, activeTag]);
 
   return (
     <section className="mx-auto max-w-7xl px-6 py-10 md:py-14">
@@ -187,6 +198,27 @@ export default function ShopContent({ products, categories }: ShopContentProps) 
           </button>
         ))}
       </div>
+
+      {/* Tag Pills */}
+      {tags.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <span className="text-xs text-gray-400 mr-1">Tags:</span>
+          {tags.map((tag) => (
+            <button
+              key={tag.id}
+              onClick={() => setActiveTag(activeTag === tag.slug ? null : tag.slug)}
+              className={cn(
+                "rounded-full border px-3 py-1 text-xs font-medium transition-all duration-200",
+                activeTag === tag.slug
+                  ? "border-[#1a6de3] bg-[#1a6de3]/10 text-[#0b3d7a]"
+                  : "border-gray-200 text-gray-500 hover:border-gray-400"
+              )}
+            >
+              {tag.name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Sort, Price Range, and Active Filters Row */}
       <div className="mb-8 flex flex-wrap items-center gap-3">

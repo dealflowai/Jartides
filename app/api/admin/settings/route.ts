@@ -16,6 +16,14 @@ const ALLOWED_KEY_PREFIXES = [
   "faq_",
   "fda_",
   "agegate_",
+  "ticker_",
+  "instagram_",
+  "tiktok_",
+  "business_",
+  "site_",
+  "meta_",
+  "social_",
+  "seo_",
 ];
 
 export async function GET() {

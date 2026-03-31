@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/ui/PageHeader";
 import ProductDetail from "@/components/shop/ProductDetail";
+import ProductReviews from "@/components/shop/ProductReviews";
 import ProductCard from "@/components/shop/ProductCard";
 import ProductStructuredData from "@/components/shop/ProductStructuredData";
 import type { Product, CoaDocument } from "@/lib/types";
@@ -128,6 +129,11 @@ export default async function ProductPage({ params }: PageProps) {
 
       <section className="mx-auto max-w-7xl px-6 py-10 md:py-14">
         <ProductDetail product={typedProduct} coaDocuments={coaDocuments} />
+        <ProductReviews
+          productId={typedProduct.id}
+          avgRating={typedProduct.avg_rating ?? 0}
+          reviewCount={typedProduct.review_count ?? 0}
+        />
       </section>
 
       {/* Related Products */}

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/admin";
 import { verifyCsrf } from "@/lib/csrf";
+import { sendShippingNotification } from "@/lib/email";
 import { z } from "zod";
 
 export async function GET(req: NextRequest) {
@@ -66,7 +67,14 @@ export async function PUT(req: NextRequest) {
 
   const { id, ...updates } = parsed.data;
 
+  // Get current order to check if status is changing to shipped
   const db = createAdminClient();
+  const { data: currentOrder } = await db
+    .from("orders")
+    .select("status, guest_email")
+    .eq("id", id)
+    .single();
+
   const { data, error } = await db
     .from("orders")
     .update({ ...updates, updated_at: new Date().toISOString() })
@@ -77,5 +85,19 @@ export async function PUT(req: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  // Send shipping notification when status changes to "shipped"
+  if (
+    updates.status === "shipped" &&
+    currentOrder?.status !== "shipped"
+  ) {
+    try {
+      await sendShippingNotification(data);
+    } catch (e) {
+      console.error("Failed to send shipping notification:", e);
+      // Don't fail the request — status was already updated
+    }
+  }
+
   return NextResponse.json(data);
 }

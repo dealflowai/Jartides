@@ -3,6 +3,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import type { Order, OrderItem } from "@/lib/types";
 import { ArrowLeft } from "lucide-react";
+import ReorderButton from "@/components/account/ReorderButton";
+import DownloadInvoice from "@/components/account/DownloadInvoice";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -66,13 +68,17 @@ export default async function OrderDetailPage({ params }: PageProps) {
             })}
           </p>
         </div>
-        <span
-          className={`text-sm font-medium px-3 py-1.5 rounded-full capitalize ${
-            statusColors[order.status] || "bg-gray-100 text-gray-700"
-          }`}
-        >
-          {order.status}
-        </span>
+        <div className="flex items-center gap-3">
+          <ReorderButton items={items ?? []} />
+          <DownloadInvoice order={order} items={items ?? []} />
+          <span
+            className={`text-sm font-medium px-3 py-1.5 rounded-full capitalize ${
+              statusColors[order.status] || "bg-gray-100 text-gray-700"
+            }`}
+          >
+            {order.status}
+          </span>
+        </div>
       </div>
 
       {/* Items */}

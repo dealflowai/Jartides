@@ -9,6 +9,7 @@ import { SITE_NAME, SITE_DESCRIPTION } from "@/lib/constants";
 import StructuredData from "@/components/layout/StructuredData";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 import SentryInit from "@/components/analytics/SentryInit";
+import CookieConsent from "@/components/layout/CookieConsent";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -78,6 +79,7 @@ export default function RootLayout({
           <WishlistProvider>
             <AgeGate />
             <SiteShell>{children}</SiteShell>
+            <CookieConsent />
           </WishlistProvider>
         </CartProvider>
       </body>

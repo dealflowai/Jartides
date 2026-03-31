@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/ui/PageHeader";
 import ShopContent from "@/components/shop/ShopContent";
-import type { Product, Category } from "@/lib/types";
+import type { Product, Category, ProductTag } from "@/lib/types";
 
 export const metadata = {
   title: "Shop All Products | Jartides",
@@ -14,6 +14,7 @@ export default async function ShopPage() {
 
   let products: Product[] = [];
   let categories: Category[] = [];
+  let tags: ProductTag[] = [];
 
   try {
     const { data: productsData } = await supabase
@@ -39,6 +40,16 @@ export default async function ShopPage() {
     categories = [];
   }
 
+  try {
+    const { data: tagsData } = await supabase
+      .from("product_tags")
+      .select("*")
+      .order("name");
+    tags = (tagsData as ProductTag[]) ?? [];
+  } catch {
+    tags = [];
+  }
+
   return (
     <>
       <PageHeader
@@ -49,7 +60,7 @@ export default async function ShopPage() {
         descriptionKey="shop_description"
       />
 
-      <ShopContent products={products} categories={categories} />
+      <ShopContent products={products} categories={categories} tags={tags} />
     </>
   );
 }

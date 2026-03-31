@@ -13,6 +13,8 @@ import {
   Settings,
   ArrowLeft,
   ShieldCheck,
+  Users,
+  Star,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -21,7 +23,9 @@ const navItems = [
   { label: "Products", href: "/admin/products", icon: Package },
   { label: "COA Documents", href: "/admin/coa", icon: FileCheck },
   { label: "Orders", href: "/admin/orders", icon: ShoppingBag },
+  { label: "Customers", href: "/admin/customers", icon: Users },
   { label: "Inventory", href: "/admin/inventory", icon: Warehouse },
+  { label: "Reviews", href: "/admin/reviews", icon: Star },
   { label: "Discounts", href: "/admin/discounts", icon: Ticket },
   { label: "FAQ Manager", href: "/admin/faq", icon: MessageCircleQuestion },
   { label: "Compliance", href: "/admin/compliance", icon: ShieldCheck },

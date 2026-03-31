@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireAdminPage } from "@/lib/admin";
 import { formatPrice } from "@/lib/utils";
 import OrderStatusUpdater from "@/components/admin/OrderStatusUpdater";
+import OrderNotes from "@/components/admin/OrderNotes";
 import type { Order, OrderItem, OrderStatus } from "@/lib/types";
 
 const statusColors: Record<OrderStatus, string> = {
@@ -171,7 +172,7 @@ export default async function AdminOrderDetailPage({
       </div>
 
       {/* Status update & actions */}
-      <div className="flex flex-wrap items-end gap-4">
+      <div className="flex flex-wrap items-end gap-4 mb-6">
         <OrderStatusUpdater orderId={order.id} currentStatus={order.status} />
         <button
           disabled
@@ -181,6 +182,9 @@ export default async function AdminOrderDetailPage({
           Generate Shipping Label
         </button>
       </div>
+
+      {/* Internal Notes */}
+      <OrderNotes orderId={order.id} />
     </div>
   );
 }
