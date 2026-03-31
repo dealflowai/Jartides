@@ -21,21 +21,26 @@ function LoginForm() {
     setError(null);
     setLoading(true);
 
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (authError) {
-      setError(authError.message);
+      if (authError) {
+        setError(authError.message);
+        setLoading(false);
+        return;
+      }
+
+      const raw = searchParams.get("redirect") || "/account";
+      const redirect = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/account";
+      // Full page navigation so middleware picks up the new auth cookies
+      window.location.href = redirect;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Sign in failed. Please try again.");
       setLoading(false);
-      return;
     }
-
-    const raw = searchParams.get("redirect") || "/account";
-    const redirect = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/account";
-    // Full page navigation so middleware picks up the new auth cookies
-    window.location.href = redirect;
   }
 
   return (
