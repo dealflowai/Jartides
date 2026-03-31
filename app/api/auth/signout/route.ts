@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-async function handleSignOut(request: NextRequest) {
+export async function GET(request: NextRequest) {
   const supabase = await createClient();
   await supabase.auth.signOut();
 
@@ -9,10 +9,11 @@ async function handleSignOut(request: NextRequest) {
   return NextResponse.redirect(`${origin}/login`);
 }
 
-export async function GET(request: NextRequest) {
-  return handleSignOut(request);
-}
-
 export async function POST(request: NextRequest) {
-  return handleSignOut(request);
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+
+  const { origin } = new URL(request.url);
+  // Use 303 See Other to convert POST redirect into GET
+  return NextResponse.redirect(`${origin}/login`, { status: 303 });
 }
