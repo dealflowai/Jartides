@@ -32,8 +32,10 @@ export async function POST(request: NextRequest) {
     const parsed = ContactSchema.safeParse(body);
 
     if (!parsed.success) {
+      const fieldErrors = parsed.error.flatten().fieldErrors;
+      const firstError = Object.values(fieldErrors).flat()[0] || "Invalid request";
       return NextResponse.json(
-        { error: "Invalid request", details: parsed.error.flatten() },
+        { error: firstError, details: fieldErrors },
         { status: 400 }
       );
     }
