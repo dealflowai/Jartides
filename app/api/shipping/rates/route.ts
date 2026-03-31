@@ -106,6 +106,13 @@ export async function POST(request: NextRequest) {
       parcels: [parcel],
     });
 
+    console.log("Shippo shipment response:", JSON.stringify({
+      objectId: shipment.objectId,
+      status: shipment.status,
+      ratesCount: shipment.rates.length,
+      messages: shipment.messages,
+    }));
+
     const rates = shipment.rates.map((r) => ({
       id: r.objectId,
       carrier: r.provider,
@@ -121,11 +128,21 @@ export async function POST(request: NextRequest) {
     // Sort by price ascending
     rates.sort((a, b) => a.rate - b.rate);
 
+    if (rates.length === 0) {
+      const messages = shipment.messages?.map((m) => m.text).filter(Boolean) || [];
+      console.warn("Shippo returned 0 rates. Messages:", messages);
+      return NextResponse.json({
+        rates: [],
+        debug: messages,
+      });
+    }
+
     return NextResponse.json({ rates });
   } catch (err) {
     console.error("Shippo rates error:", err);
+    const message = err instanceof Error ? err.message : "Failed to calculate shipping rates";
     return NextResponse.json(
-      { error: "Failed to calculate shipping rates" },
+      { error: message },
       { status: 500 }
     );
   }

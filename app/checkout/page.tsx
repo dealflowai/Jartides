@@ -145,6 +145,9 @@ export default function CheckoutPage() {
         setSelectedRate(data.rates[0]);
       } else {
         setSelectedRate(null);
+        if (data.debug && data.debug.length > 0) {
+          setRatesError(data.debug.join(" | "));
+        }
       }
     } catch (err) {
       setRatesError(err instanceof Error ? err.message : "Failed to fetch rates");
