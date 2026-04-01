@@ -28,7 +28,7 @@ export default function Hero() {
           </h1>
           <p className="font-[family-name:var(--font-body)] text-base sm:text-lg md:text-xl text-white/90 mb-10 leading-relaxed">
             <EditableText settingKey="hero_subheading">
-              Uncompromising Purity. Precision Peptides for Research. Lab-Tested Excellence.
+              Uncompromising Purity. Precision Peptides for Research. Lab-Tested Excellence
             </EditableText>
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
