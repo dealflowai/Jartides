@@ -11,8 +11,7 @@ export default async function AdminInventoryPage() {
     .from("products")
     .select("id, name, stock_quantity, low_stock_threshold, category:categories(name)")
     .eq("active", true)
-    .order("updated_at", { ascending: false })
-    .order("name", { ascending: true });
+    .order("created_at", { ascending: false });
 
   return (
     <div>
