@@ -264,24 +264,26 @@ export async function POST(request: NextRequest) {
     }
 
     // Create account if opted in
+    let accountCreated = false;
     if (createAccount && password) {
-      try {
-        const { data: authData } = await supabase.auth.admin.createUser({
-          email,
-          password,
-          email_confirm: true,
-          user_metadata: { full_name: shipping.fullName },
-        });
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { full_name: shipping.fullName },
+      });
 
-        if (authData?.user) {
-          // Link this order and any previous guest orders to the new account
-          await supabase
-            .from("orders")
-            .update({ user_id: authData.user.id })
-            .eq("guest_email", email);
-        }
-      } catch {
-        // Account creation failed silently — order still succeeds
+      if (authError) {
+        console.error("Account creation error:", authError.message);
+      }
+
+      if (authData?.user) {
+        accountCreated = true;
+        // Link this order and any previous guest orders to the new account
+        await supabase
+          .from("orders")
+          .update({ user_id: authData.user.id })
+          .eq("guest_email", email);
       }
     }
 
@@ -289,6 +291,7 @@ export async function POST(request: NextRequest) {
       orderId: order.id,
       orderNumber,
       clientSecret,
+      accountCreated,
     });
   } catch (err) {
     console.error("Checkout error:", err);

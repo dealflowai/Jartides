@@ -9,11 +9,12 @@ interface Props {
   searchParams: Promise<{
     order_id?: string;
     redirect_status?: string;
+    account_created?: string;
   }>;
 }
 
 export default async function CheckoutSuccessPage({ searchParams }: Props) {
-  const { order_id, redirect_status } = await searchParams;
+  const { order_id, redirect_status, account_created } = await searchParams;
   let order: Order | null = null;
 
   if (order_id) {
@@ -136,6 +137,15 @@ export default async function CheckoutSuccessPage({ searchParams }: Props) {
             <p className="text-sm text-gray-600">
               If you have any questions about your order, please contact our
               support team.
+            </p>
+          </div>
+        )}
+
+        {account_created === "1" && (
+          <div className="mb-8 rounded-xl bg-green-50 border border-green-200 p-5 text-left">
+            <p className="text-sm font-semibold text-green-800 mb-1">Account created!</p>
+            <p className="text-sm text-green-700">
+              You can now <a href="/login" className="font-medium underline">sign in</a> to track your orders and save addresses for faster checkout.
             </p>
           </div>
         )}

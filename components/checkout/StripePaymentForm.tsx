@@ -12,9 +12,10 @@ import { formatPrice } from "@/lib/utils";
 interface Props {
   total: number;
   orderId: string;
+  accountCreated?: boolean;
 }
 
-export default function StripePaymentForm({ total, orderId }: Props) {
+export default function StripePaymentForm({ total, orderId, accountCreated }: Props) {
   const stripe = useStripe();
   const elements = useElements();
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +34,7 @@ export default function StripePaymentForm({ total, orderId }: Props) {
     const { error: stripeError } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        return_url: `${siteUrl}/checkout/success?order_id=${orderId}`,
+        return_url: `${siteUrl}/checkout/success?order_id=${orderId}${accountCreated ? "&account_created=1" : ""}`,
       },
     });
 

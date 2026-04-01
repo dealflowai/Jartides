@@ -67,6 +67,7 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [accountCreated, setAccountCreated] = useState(false);
   const [shipping, setShipping] = useState<ShippingForm>(INITIAL_SHIPPING);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof ShippingForm, string>>>({});
   const [compliance, setCompliance] = useState({
@@ -297,6 +298,7 @@ export default function CheckoutPage() {
 
       setClientSecret(data.clientSecret);
       setOrderId(data.orderId);
+      setAccountCreated(data.accountCreated === true);
       setCurrentStep(2);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -840,7 +842,7 @@ export default function CheckoutPage() {
                     },
                   }}
                 >
-                  <StripePaymentForm total={total} orderId={orderId} />
+                  <StripePaymentForm total={total} orderId={orderId} accountCreated={accountCreated} />
                 </Elements>
 
                 <button
