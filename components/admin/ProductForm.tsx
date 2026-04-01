@@ -1288,8 +1288,7 @@ export default function ProductForm({ product, categories, coaDocuments = [], al
         )}
 
         {/* ---- Certificates of Analysis ---- */}
-        {isEdit && (
-          <Section title="Certificates of Analysis" icon={Shield} defaultOpen={coas.length > 0}>
+        <Section title="Certificates of Analysis" icon={Shield} defaultOpen={coas.length > 0}>
             <div className="space-y-4">
               {coas.length === 0 && (
                 <p className="text-sm text-gray-500">No COA documents linked to this product yet.</p>
@@ -1436,7 +1435,6 @@ export default function ProductForm({ product, categories, coaDocuments = [], al
               </button>
             </div>
           </Section>
-        )}
 
         {/* ---- Settings ---- */}
         <Section title="Settings" icon={Settings} defaultOpen={true}>
