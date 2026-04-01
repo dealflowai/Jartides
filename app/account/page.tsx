@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   description: "Manage your Jartides account, orders, and addresses.",
 };
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { Order } from "@/lib/types";
 import { Package, MapPin, ShoppingBag, Shield, Truck } from "lucide-react";
 
@@ -15,6 +16,16 @@ export default async function AccountPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Link any guest orders made with this email
+  if (user?.email) {
+    const admin = createAdminClient();
+    await admin
+      .from("orders")
+      .update({ user_id: user.id })
+      .eq("guest_email", user.email)
+      .is("user_id", null);
+  }
 
   const { data: profile } = await supabase
     .from("profiles")

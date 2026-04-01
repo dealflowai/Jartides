@@ -34,6 +34,9 @@ function LoginForm() {
         return;
       }
 
+      // Link any guest orders to this account
+      fetch("/api/auth/link-orders", { method: "POST" }).catch(() => {});
+
       const raw = searchParams.get("redirect") || "/account";
       const redirect = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/account";
       // Full page navigation so middleware picks up the new auth cookies
