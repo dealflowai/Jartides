@@ -153,21 +153,6 @@ export async function POST(request: NextRequest) {
         break;
       }
 
-      case "payment_intent.expired": {
-        const paymentIntent = event.data.object as Stripe.PaymentIntent;
-
-        await supabase
-          .from("orders")
-          .update({ status: "cancelled", updated_at: new Date().toISOString() })
-          .eq("stripe_payment_intent_id", paymentIntent.id)
-          .eq("status", "pending");
-
-        console.log(
-          `Payment intent expired for ${paymentIntent.id}, order cancelled`
-        );
-        break;
-      }
-
       default:
         console.log(`Unhandled event type: ${event.type}`);
     }
