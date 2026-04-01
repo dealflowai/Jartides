@@ -52,21 +52,21 @@ export function EditProvider({ children }: { children: React.ReactNode }) {
     new Map()
   );
 
-  // Check admin status on mount
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/admin/check-role")
-      .then((res) => res.json())
-      .then((data) => {
-        if (!cancelled) setIsAdmin(data.isAdmin === true);
-      })
-      .catch(() => {
-        if (!cancelled) setIsAdmin(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  // Inline edit mode disabled — use /admin dashboard instead
+  // useEffect(() => {
+  //   let cancelled = false;
+  //   fetch("/api/admin/check-role")
+  //     .then((res) => res.json())
+  //     .then((data) => {
+  //       if (!cancelled) setIsAdmin(data.isAdmin === true);
+  //     })
+  //     .catch(() => {
+  //       if (!cancelled) setIsAdmin(false);
+  //     });
+  //   return () => {
+  //     cancelled = true;
+  //   };
+  // }, []);
 
   const toggleEditMode = useCallback(() => {
     setIsEditMode((prev) => {
