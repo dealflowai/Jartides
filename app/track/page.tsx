@@ -160,7 +160,18 @@ export default function TrackOrderPage() {
                   Tracking Number
                 </p>
                 <p className="mt-1 text-sm text-indigo-700 font-mono">
-                  {order.tracking_number}
+                  {order.tracking_url_provider ? (
+                    <a
+                      href={order.tracking_url_provider}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline hover:text-indigo-900"
+                    >
+                      {order.tracking_number}
+                    </a>
+                  ) : (
+                    order.tracking_number
+                  )}
                   {order.carrier && (
                     <span className="ml-2 text-indigo-500">
                       ({order.carrier})
@@ -224,27 +235,14 @@ export default function TrackOrderPage() {
               </div>
             </div>
 
-            {/* Shipping address */}
+            {/* Shipping address (partially redacted for privacy) */}
             <div className="rounded-xl border border-gray-200 bg-white shadow-sm px-5 py-4">
               <h3 className="text-sm font-semibold text-gray-700 font-[family-name:var(--font-heading)] mb-2">
-                Shipping Address
+                Shipping To
               </h3>
-              <address className="not-italic text-sm text-gray-600 leading-relaxed font-[family-name:var(--font-body)]">
-                {order.shipping_name}
-                <br />
-                {order.shipping_line1}
-                {order.shipping_line2 && (
-                  <>
-                    <br />
-                    {order.shipping_line2}
-                  </>
-                )}
-                <br />
-                {order.shipping_city}, {order.shipping_province}{" "}
-                {order.shipping_postal}
-                <br />
-                {order.shipping_country}
-              </address>
+              <p className="text-sm text-gray-600 font-[family-name:var(--font-body)]">
+                {order.shipping_city}, {order.shipping_province}, {order.shipping_country}
+              </p>
             </div>
           </div>
         )}

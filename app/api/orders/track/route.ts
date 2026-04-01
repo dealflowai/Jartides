@@ -99,5 +99,8 @@ export async function POST(req: NextRequest) {
     .select("*")
     .eq("order_id", order.id);
 
-  return NextResponse.json({ ...order, items: items ?? [] });
+  // Strip sensitive fields from public response
+  const { shipping_name, shipping_line1, shipping_line2, shipping_postal, guest_email, ...safeOrder } = order;
+
+  return NextResponse.json({ ...safeOrder, items: items ?? [] });
 }

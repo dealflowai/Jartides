@@ -147,7 +147,18 @@ export default async function OrderDetailPage({ params }: PageProps) {
               )}
               <p>
                 <span className="font-medium text-gray-700">Tracking #:</span>{" "}
-                {order.tracking_number}
+                {order.tracking_url_provider ? (
+                  <a
+                    href={order.tracking_url_provider}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#1a6de3] underline hover:text-[#0b3d7a]"
+                  >
+                    {order.tracking_number}
+                  </a>
+                ) : (
+                  order.tracking_number
+                )}
               </p>
             </div>
           </div>
