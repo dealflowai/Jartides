@@ -32,7 +32,7 @@ export default function InventoryTable({
   async function saveStock(id: string) {
     setSaving(true);
     try {
-      const res = await fetch("/api/admin/products", {
+      const res = await fetch("/api/admin/inventory", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, stock_quantity: parseInt(value) || 0 }),
