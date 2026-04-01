@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { z } from "zod";
 
 const trackSchema = z.object({
-  orderNumber: z.string().min(1, "Order number is required").max(20),
+  orderNumber: z.string().min(1, "Order number is required"),
   email: z.string().email("Valid email is required"),
 });
 
@@ -58,12 +58,25 @@ export async function POST(req: NextRequest) {
   /* Lookup order using admin client (bypasses RLS) */
   const db = createAdminClient();
 
-  const { data: order, error } = await db
+  // Try by order_number first, then fall back to order id
+  let { data: order, error } = await db
     .from("orders")
     .select("*")
     .eq("order_number", orderNumber)
     .ilike("guest_email", email)
     .maybeSingle();
+
+  // Fallback: try matching by order id (UUID)
+  if (!order && !error) {
+    const fallback = await db
+      .from("orders")
+      .select("*")
+      .eq("id", orderNumber)
+      .ilike("guest_email", email)
+      .maybeSingle();
+    order = fallback.data;
+    error = fallback.error;
+  }
 
   if (error) {
     console.error("Order track lookup error:", error.message);
