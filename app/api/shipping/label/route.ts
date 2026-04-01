@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
     }
 
     const carrierName = transaction.rate
-      ? typeof transaction.rate === "string" ? "Shippo" : transaction.rate.provider
+      ? typeof transaction.rate === "string" ? "Shippo" : (transaction.rate.provider || "Shippo")
       : "Shippo";
 
     // Update order with tracking info
