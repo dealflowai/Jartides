@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdminPage } from "@/lib/admin";
 import { formatPrice } from "@/lib/utils";
+import CleanupOrdersButton from "@/components/admin/CleanupOrdersButton";
 import type { Order, OrderStatus } from "@/lib/types";
 
 const statusColors: Record<OrderStatus, string> = {
@@ -26,7 +27,10 @@ export default async function AdminOrdersPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">Orders</h1>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
+        <CleanupOrdersButton />
+      </div>
 
       <div className="overflow-x-auto rounded-xl border border-gray-200">
         <table className="w-full text-left text-sm">
