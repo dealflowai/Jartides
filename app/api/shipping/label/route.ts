@@ -177,7 +177,7 @@ export async function POST(request: NextRequest) {
       try {
         const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://jartides.ca";
         await shippo.trackingStatus.create({
-          carrier: typeof transaction.rate === "string" ? carrierName : (transaction.rate?.provider || carrierName),
+          carrier: carrierName,
           trackingNumber: transaction.trackingNumber,
           metadata: orderId,
         });
