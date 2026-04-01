@@ -228,9 +228,23 @@ export default function CheckoutPage() {
     if (!shipping.province.trim()) errors.province = "Province/State is required";
     if (!shipping.postalCode.trim()) errors.postalCode = "Postal code is required";
 
-    if (createAccount && password.length < 8) {
-      setPasswordError("Password must be at least 8 characters.");
-      return false;
+    if (createAccount) {
+      if (password.length < 8) {
+        setPasswordError("Password must be at least 8 characters.");
+        return false;
+      }
+      if (!/[A-Z]/.test(password)) {
+        setPasswordError("Password must include at least one uppercase letter.");
+        return false;
+      }
+      if (!/[0-9]/.test(password)) {
+        setPasswordError("Password must include at least one number.");
+        return false;
+      }
+      if (!/[^A-Za-z0-9]/.test(password)) {
+        setPasswordError("Password must include at least one special character.");
+        return false;
+      }
     }
 
     if (!compliance.researchDisclaimer || !compliance.ageVerified || !compliance.termsAccepted) {
@@ -441,7 +455,7 @@ export default function CheckoutPage() {
                               setPasswordError(null);
                             }}
                             className={`${inputCls} ${passwordError ? "border-red-400 focus:border-red-400 focus:ring-red-200" : ""}`}
-                            placeholder="Min. 8 characters"
+                            placeholder="Min. 8 chars, uppercase, number, symbol"
                           />
                           {passwordError && (
                             <p className="mt-1 text-xs text-red-500">{passwordError}</p>

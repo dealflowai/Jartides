@@ -263,26 +263,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create account if opted in
+    // Create account if opted in (uses signUp to trigger verification email)
     let accountCreated = false;
     if (createAccount && password) {
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://jartides.ca";
+
+      // Use a separate Supabase client for signUp (not admin) so it triggers confirmation email
+      const { createClient } = await import("@supabase/supabase-js");
+      const signupClient = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+
+      const { data: signupData, error: signupError } = await signupClient.auth.signUp({
         email,
         password,
-        email_confirm: true,
-        user_metadata: { full_name: shipping.fullName },
+        options: {
+          data: { full_name: shipping.fullName },
+          emailRedirectTo: `${siteUrl}/api/auth/callback`,
+        },
       });
 
-      if (authError) {
-        console.error("Account creation error:", authError.message);
+      if (signupError) {
+        console.error("Account creation error:", signupError.message);
       }
 
-      if (authData?.user) {
+      if (signupData?.user) {
         accountCreated = true;
         // Link this order and any previous guest orders to the new account
         await supabase
           .from("orders")
-          .update({ user_id: authData.user.id })
+          .update({ user_id: signupData.user.id })
           .eq("guest_email", email);
       }
     }

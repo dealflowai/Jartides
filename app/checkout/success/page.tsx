@@ -145,7 +145,7 @@ export default async function CheckoutSuccessPage({ searchParams }: Props) {
           <div className="mb-8 rounded-xl bg-green-50 border border-green-200 p-5 text-left">
             <p className="text-sm font-semibold text-green-800 mb-1">Account created!</p>
             <p className="text-sm text-green-700">
-              You can now <a href="/login" className="font-medium underline">sign in</a> to track your orders and save addresses for faster checkout.
+              Check your email for a verification link to activate your account. Once verified, you can <a href="/login" className="font-medium underline">sign in</a> to track orders and save addresses.
             </p>
           </div>
         )}
