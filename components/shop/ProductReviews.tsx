@@ -93,7 +93,7 @@ export default function ProductReviews({
         return;
       }
 
-      setSubmitMessage("Review submitted! It will appear after admin approval.");
+      setSubmitMessage("Thank you! Your review has been submitted.");
       setShowForm(false);
       setFormData({ rating: 5, title: "", body: "", author_name: "" });
     } catch {
