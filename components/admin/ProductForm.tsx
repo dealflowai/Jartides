@@ -282,9 +282,10 @@ export default function ProductForm({ product, categories, coaDocuments = [], al
     );
   }
 
-  async function saveCoa(index: number) {
+  async function saveCoa(index: number, productId?: string) {
     const coa = coas[index];
-    if (!coa.batch_number || !product?.id) return;
+    const pid = productId || product?.id;
+    if (!coa.batch_number || !pid) return;
 
     setCoas((prev) =>
       prev.map((c, i) => (i === index ? { ...c, _saving: true } : c))
@@ -293,7 +294,7 @@ export default function ProductForm({ product, categories, coaDocuments = [], al
     try {
       const body = {
         ...(coa.id ? { id: coa.id } : {}),
-        product_id: product.id,
+        product_id: pid,
         batch_number: coa.batch_number,
         purity_percentage: parseFloat(coa.purity_percentage) || 0,
         test_date: coa.test_date || null,
@@ -556,6 +557,15 @@ export default function ProductForm({ product, categories, coaDocuments = [], al
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error ?? "Failed to save product");
+      }
+
+      const savedProduct = await res.json();
+
+      // Save any unsaved COAs (especially for new products)
+      for (let i = 0; i < coas.length; i++) {
+        if (!coas[i].id && coas[i].batch_number) {
+          await saveCoa(i, savedProduct.id);
+        }
       }
 
       router.push("/admin/products");
@@ -1395,17 +1405,23 @@ export default function ProductForm({ product, categories, coaDocuments = [], al
                   </div>
 
                   <div className="mt-3 flex justify-end">
-                    <button
-                      type="button"
-                      onClick={() => saveCoa(idx)}
-                      disabled={coa._saving || !coa.batch_number}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-[#0b3d7a] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#1a6de3] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {coa._saving ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : null}
-                      {coa.id ? "Update COA" : "Save COA"}
-                    </button>
+                    {isEdit ? (
+                      <button
+                        type="button"
+                        onClick={() => saveCoa(idx)}
+                        disabled={coa._saving || !coa.batch_number}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#0b3d7a] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#1a6de3] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {coa._saving ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : null}
+                        {coa.id ? "Update COA" : "Save COA"}
+                      </button>
+                    ) : (
+                      <span className="text-xs text-gray-500">
+                        Will be saved when you create the product
+                      </span>
+                    )}
                   </div>
                 </div>
               ))}

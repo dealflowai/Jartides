@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import Button from "@/components/ui/Button";
 import { Upload, Loader2 } from "lucide-react";
 import type { CoaDocument, Product } from "@/lib/types";
@@ -39,20 +38,17 @@ export default function CoaForm({ coa, products }: Props) {
     setError("");
 
     try {
-      const supabase = createClient();
-      const path = `${Date.now()}-${file.name}`;
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("bucket", "coa-documents");
 
-      const { error: uploadError } = await supabase.storage
-        .from("coa-pdfs")
-        .upload(path, file);
-
-      if (uploadError) throw uploadError;
-
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("coa-pdfs").getPublicUrl(path);
-
-      setPdfUrl(publicUrl);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error ?? "Upload failed");
+      }
+      const { url } = await res.json();
+      setPdfUrl(url);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
