@@ -172,6 +172,20 @@ export async function POST(request: NextRequest) {
       })
       .eq("id", orderId);
 
+    // Register tracking with Shippo for auto-updates
+    if (transaction.trackingNumber) {
+      try {
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://jartides.ca";
+        await shippo.trackingStatus.create({
+          carrier: typeof transaction.rate === "string" ? carrierName : (transaction.rate?.provider || carrierName),
+          trackingNumber: transaction.trackingNumber,
+          metadata: orderId,
+        });
+      } catch (trackErr) {
+        console.error("Failed to register Shippo tracking:", trackErr);
+      }
+    }
+
     // Send shipping notification email
     try {
       const { data: updatedOrder } = await db
