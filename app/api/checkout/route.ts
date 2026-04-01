@@ -45,6 +45,8 @@ const CheckoutSchema = z.object({
   ageVerified: z.literal(true),
   termsAccepted: z.literal(true),
   shippingRate: ShippingRateSchema,
+  createAccount: z.boolean().optional(),
+  password: z.string().min(8).optional(),
 });
 
 import { TAX_RATE } from "@/lib/constants";
@@ -67,7 +69,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { items, shipping, email, paymentMethod, researchDisclaimerAccepted, ageVerified, termsAccepted, shippingRate } = parsed.data;
+    const { items, shipping, email, paymentMethod, researchDisclaimerAccepted, ageVerified, termsAccepted, shippingRate, createAccount, password } = parsed.data;
     const supabase = createAdminClient();
 
     // Fetch actual prices from database — never trust client prices
@@ -259,6 +261,28 @@ export async function POST(request: NextRequest) {
         { error: "Failed to initialize payment. Please try again." },
         { status: 500 }
       );
+    }
+
+    // Create account if opted in
+    if (createAccount && password) {
+      try {
+        const { data: authData } = await supabase.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,
+          user_metadata: { full_name: shipping.fullName },
+        });
+
+        if (authData?.user) {
+          // Link this order and any previous guest orders to the new account
+          await supabase
+            .from("orders")
+            .update({ user_id: authData.user.id })
+            .eq("guest_email", email);
+        }
+      } catch {
+        // Account creation failed silently — order still succeeds
+      }
     }
 
     return NextResponse.json({

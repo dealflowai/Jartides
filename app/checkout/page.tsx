@@ -76,6 +76,9 @@ export default function CheckoutPage() {
   });
   const [countrySearch, setCountrySearch] = useState("");
   const [countryDropdownOpen, setCountryDropdownOpen] = useState(false);
+  const [createAccount, setCreateAccount] = useState(false);
+  const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [discountCode, setDiscountCode] = useState("");
   const [discountData, setDiscountData] = useState<{
     discount: number;
@@ -224,6 +227,11 @@ export default function CheckoutPage() {
     if (!shipping.province.trim()) errors.province = "Province/State is required";
     if (!shipping.postalCode.trim()) errors.postalCode = "Postal code is required";
 
+    if (createAccount && password.length < 8) {
+      setPasswordError("Password must be at least 8 characters.");
+      return false;
+    }
+
     if (!compliance.researchDisclaimer || !compliance.ageVerified || !compliance.termsAccepted) {
       errors.fullName = errors.fullName || "";
       setError("Please acknowledge all required checkboxes before proceeding.");
@@ -276,6 +284,8 @@ export default function CheckoutPage() {
             rate: selectedRate!.rate,
             shipment_id: selectedRate!.shipment_id,
           },
+          createAccount: createAccount || undefined,
+          password: createAccount ? password : undefined,
         }),
       });
 
@@ -395,6 +405,50 @@ export default function CheckoutPage() {
                         <p className="mt-1 text-xs text-red-500">{fieldErrors.email}</p>
                       )}
                       <p className="mt-1 text-xs text-gray-400">Order confirmation and tracking will be sent here.</p>
+                    </div>
+
+                    {/* Optional Account Creation */}
+                    <div className="sm:col-span-2">
+                      <label className="flex items-center gap-2.5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={createAccount}
+                          onChange={(e) => {
+                            setCreateAccount(e.target.checked);
+                            if (!e.target.checked) {
+                              setPassword("");
+                              setPasswordError(null);
+                            }
+                          }}
+                          className="rounded border-gray-300 text-[#0b3d7a] focus:ring-[#1a6de3]"
+                        />
+                        <span className="text-sm text-gray-700">
+                          Create an account for faster checkout next time
+                        </span>
+                      </label>
+                      {createAccount && (
+                        <div className="mt-3 ml-6">
+                          <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                            Password
+                          </label>
+                          <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => {
+                              setPassword(e.target.value);
+                              setPasswordError(null);
+                            }}
+                            className={`${inputCls} ${passwordError ? "border-red-400 focus:border-red-400 focus:ring-red-200" : ""}`}
+                            placeholder="Min. 8 characters"
+                          />
+                          {passwordError && (
+                            <p className="mt-1 text-xs text-red-500">{passwordError}</p>
+                          )}
+                          <p className="mt-1 text-xs text-gray-400">
+                            Track orders and save addresses for future purchases.
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     {/* Address Line 1 */}
