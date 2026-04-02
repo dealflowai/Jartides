@@ -41,10 +41,11 @@ interface Toast {
 /*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
 function formatPrice(cents: number) {
-  return new Intl.NumberFormat("en-CA", {
+  const formatted = new Intl.NumberFormat("en-CA", {
     style: "currency",
     currency: "CAD",
   }).format(cents / 100);
+  return `${formatted} CAD`;
 }
 
 function formatDate(iso: string) {

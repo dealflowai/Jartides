@@ -10,10 +10,11 @@ function escapeHtml(str: string): string {
 }
 
 function formatCurrency(amount: number, currency = "CAD"): string {
-  return new Intl.NumberFormat("en-CA", {
+  const formatted = new Intl.NumberFormat("en-CA", {
     style: "currency",
     currency,
   }).format(amount);
+  return `${formatted} ${currency}`;
 }
 
 export async function sendEmail(options: {
