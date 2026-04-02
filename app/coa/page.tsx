@@ -3,6 +3,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import Button from "@/components/ui/Button";
 import CoaExplanation from "@/components/coa/CoaExplanation";
 import { FileText, FlaskConical } from "lucide-react";
+import { getCoaUrl } from "@/lib/coa-url";
 
 export const metadata = {
   title: "Certificates of Analysis | Jartides",
@@ -89,7 +90,7 @@ export default async function CoaPage() {
                 <div className="mt-auto pt-4">
                   {coa.pdf_url ? (
                     <Button
-                      href={coa.pdf_url}
+                      href={getCoaUrl(coa.pdf_url)}
                       size="sm"
                       variant="blue"
                       className="w-full"

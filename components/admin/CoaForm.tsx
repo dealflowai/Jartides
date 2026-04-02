@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import { Upload, Loader2 } from "lucide-react";
 import type { CoaDocument, Product } from "@/lib/types";
+import { getCoaUrl } from "@/lib/coa-url";
 
 interface Props {
   coa?: CoaDocument;
@@ -169,7 +170,7 @@ export default function CoaForm({ coa, products }: Props) {
           <p className="mb-2 text-sm text-gray-500">
             Current:{" "}
             <a
-              href={pdfUrl}
+              href={getCoaUrl(pdfUrl)}
               target="_blank"
               rel="noopener noreferrer"
               className="text-[#1a6de3] hover:underline"

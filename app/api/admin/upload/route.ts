@@ -69,6 +69,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: uploadError.message }, { status: 500 });
   }
 
+  // For COA documents, return a proxied URL so the Supabase domain is never exposed
+  if (bucket === "coa-documents") {
+    return NextResponse.json({ url: `/api/coa/${path}` });
+  }
+
   const {
     data: { publicUrl },
   } = db.storage.from(bucket).getPublicUrl(path);

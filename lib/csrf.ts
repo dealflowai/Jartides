@@ -13,7 +13,7 @@ export function verifyCsrf(request: NextRequest): NextResponse | null {
   // Allow server-to-server calls (e.g. webhooks) that have no Origin/Referer
   if (!origin) return null;
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://jartides.ca";
 
   try {
     const incoming = new URL(origin).origin;

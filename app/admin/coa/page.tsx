@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { requireAdminPage } from "@/lib/admin";
 import Button from "@/components/ui/Button";
 import type { CoaDocument } from "@/lib/types";
+import { getCoaUrl } from "@/lib/coa-url";
+import DeleteCoaButton from "@/components/admin/DeleteCoaButton";
 
 export default async function AdminCoaPage() {
   await requireAdminPage();
@@ -54,7 +56,7 @@ export default async function AdminCoaPage() {
                 <td className="px-4 py-3">
                   {coa.pdf_url ? (
                     <a
-                      href={coa.pdf_url}
+                      href={getCoaUrl(coa.pdf_url)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[#1a6de3] hover:underline"
@@ -66,12 +68,15 @@ export default async function AdminCoaPage() {
                   )}
                 </td>
                 <td className="px-4 py-3">
-                  <Link
-                    href={`/admin/coa/${coa.id}`}
-                    className="text-[#1a6de3] hover:underline"
-                  >
-                    Edit
-                  </Link>
+                  <div className="flex items-center gap-3">
+                    <Link
+                      href={`/admin/coa/${coa.id}`}
+                      className="text-[#1a6de3] hover:underline"
+                    >
+                      Edit
+                    </Link>
+                    <DeleteCoaButton id={coa.id} />
+                  </div>
                 </td>
               </tr>
             ))}

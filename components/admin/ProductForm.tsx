@@ -6,6 +6,7 @@ import Image from "next/image";
 import Button from "@/components/ui/Button";
 import dynamic from "next/dynamic";
 const RichTextEditor = dynamic(() => import("@/components/admin/RichTextEditor"), { ssr: false });
+import { getCoaUrl } from "@/lib/coa-url";
 import {
   X,
   Upload,
@@ -1367,7 +1368,7 @@ export default function ProductForm({ product, categories, coaDocuments = [], al
                       {coa.pdf_url ? (
                         <div className="flex items-center gap-2">
                           <a
-                            href={coa.pdf_url}
+                            href={getCoaUrl(coa.pdf_url)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 text-xs text-[#1a6de3] hover:underline truncate max-w-[120px]"

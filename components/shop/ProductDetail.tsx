@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { Check, Minus, Plus, Shield, Package, AlertTriangle, XCircle, FileText, ExternalLink } from "lucide-react";
+import { getCoaUrl } from "@/lib/coa-url";
 import DOMPurify from "isomorphic-dompurify";
 import { cn, formatPrice } from "@/lib/utils";
 import { MAX_QUANTITY } from "@/lib/constants";
@@ -457,7 +458,7 @@ export default function ProductDetail({ product, coaDocuments = [] }: ProductDet
                   </div>
                   {coa.pdf_url ? (
                     <a
-                      href={coa.pdf_url}
+                      href={getCoaUrl(coa.pdf_url)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 rounded-lg border border-[#1a6de3] px-3 py-1.5 text-xs font-semibold text-[#1a6de3] transition-colors hover:bg-[#1a6de3] hover:text-white"
