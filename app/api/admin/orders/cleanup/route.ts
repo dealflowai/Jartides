@@ -1,9 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/admin";
+import { verifyCsrf } from "@/lib/csrf";
 
 // Cancel orders that have been "pending" for more than 1 hour (never paid)
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const csrfError = verifyCsrf(req);
+  if (csrfError) return csrfError;
+
   const admin = await requireAdmin();
   if (!admin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

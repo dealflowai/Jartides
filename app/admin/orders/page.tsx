@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireAdminPage } from "@/lib/admin";
 import { formatPrice } from "@/lib/utils";
 import CleanupOrdersButton from "@/components/admin/CleanupOrdersButton";
+import ExportOrdersButton from "@/components/admin/ExportOrdersButton";
 import type { Order, OrderStatus } from "@/lib/types";
 
 const statusColors: Record<OrderStatus, string> = {
@@ -29,7 +30,10 @@ export default async function AdminOrdersPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
-        <CleanupOrdersButton />
+        <div className="flex items-center gap-2">
+          <ExportOrdersButton />
+          <CleanupOrdersButton />
+        </div>
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-gray-200">

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/admin";
+import { writeAuditLog } from "@/lib/audit";
 import { z } from "zod";
 
 const stockSchema = z.object({
@@ -37,5 +38,14 @@ export async function PUT(req: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  writeAuditLog({
+    admin_id: admin.id,
+    action: "inventory.update",
+    entity_type: "product",
+    entity_id: parsed.data.id,
+    details: { stock_quantity: parsed.data.stock_quantity },
+  });
+
   return NextResponse.json(data);
 }

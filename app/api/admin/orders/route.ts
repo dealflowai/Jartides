@@ -3,7 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/admin";
 import { verifyCsrf } from "@/lib/csrf";
-import { sendShippingNotification } from "@/lib/email";
+import { sendShippingNotification, sendReviewRequest } from "@/lib/email";
+import { writeAuditLog } from "@/lib/audit";
+import { logger } from "@/lib/logger";
 import { z } from "zod";
 
 export async function GET(req: NextRequest) {
@@ -86,6 +88,20 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // Audit log for order status change
+  writeAuditLog({
+    admin_id: admin.id,
+    action: "order.status_change",
+    entity_type: "order",
+    entity_id: id,
+    details: {
+      from: currentOrder?.status,
+      to: updates.status,
+      tracking_number: updates.tracking_number ?? null,
+      carrier: updates.carrier ?? null,
+    },
+  });
+
   // Send shipping notification when status changes to "shipped"
   if (
     updates.status === "shipped" &&
@@ -94,8 +110,33 @@ export async function PUT(req: NextRequest) {
     try {
       await sendShippingNotification(data);
     } catch (e) {
-      console.error("Failed to send shipping notification:", e);
-      // Don't fail the request — status was already updated
+      logger.error("Failed to send shipping notification", { orderId: id, error: String(e) });
+    }
+  }
+
+  // Send review request when status changes to "delivered"
+  if (
+    updates.status === "delivered" &&
+    currentOrder?.status !== "delivered" &&
+    data.guest_email
+  ) {
+    try {
+      const { data: orderItems } = await db
+        .from("order_items")
+        .select("product_name, product:products(slug)")
+        .eq("order_id", id);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const items = (orderItems ?? []).map((item: any) => ({
+        product_name: item.product_name as string,
+        slug: (Array.isArray(item.product) ? item.product[0]?.slug : item.product?.slug) as string ?? "",
+      }));
+
+      if (items.length > 0) {
+        await sendReviewRequest(data.guest_email, data.order_number, items);
+      }
+    } catch (e) {
+      logger.error("Failed to send review request", { orderId: id, error: String(e) });
     }
   }
 

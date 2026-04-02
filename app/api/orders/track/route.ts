@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { rateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 import { z } from "zod";
 
 const trackSchema = z.object({
@@ -7,35 +9,9 @@ const trackSchema = z.object({
   email: z.string().email("Valid email is required"),
 });
 
-/* Simple in-memory rate limiter: 5 requests per minute per IP */
-const rateMap = new Map<string, number[]>();
-const RATE_LIMIT = 5;
-const WINDOW_MS = 60_000;
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const timestamps = (rateMap.get(ip) ?? []).filter(
-    (t) => now - t < WINDOW_MS
-  );
-  if (timestamps.length >= RATE_LIMIT) {
-    rateMap.set(ip, timestamps);
-    return true;
-  }
-  timestamps.push(now);
-  rateMap.set(ip, timestamps);
-  return false;
-}
-
 export async function POST(req: NextRequest) {
-  /* Rate limit */
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  if (isRateLimited(ip)) {
-    return NextResponse.json(
-      { error: "Too many requests. Please try again in a minute." },
-      { status: 429 }
-    );
-  }
+  const rateLimited = await rateLimit(req, { limit: 5, windowMs: 60_000 });
+  if (rateLimited) return rateLimited;
 
   /* Parse & validate body */
   let body: unknown;
@@ -79,7 +55,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (error) {
-    console.error("Order track lookup error:", error.message);
+    logger.error("Order track lookup error", { error: error.message });
     return NextResponse.json(
       { error: "Unable to look up order. Please try again later." },
       { status: 500 }

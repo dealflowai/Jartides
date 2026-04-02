@@ -91,8 +91,8 @@ export default function CookieConsent() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-4">
               <p className="text-sm text-gray-600 leading-relaxed">
                 We use cookies for essential site functionality and, with your consent, for analytics to improve your experience.{" "}
-                <Link href="/policies/privacy" className="text-[#1a6de3] hover:underline">
-                  Privacy Policy
+                <Link href="/policies/cookies" className="text-[#1a6de3] hover:underline">
+                  Cookie Policy
                 </Link>
               </p>
               <div className="flex items-center gap-2 shrink-0">

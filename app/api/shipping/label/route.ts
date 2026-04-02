@@ -3,6 +3,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/admin";
 import { verifyCsrf } from "@/lib/csrf";
 import { sendShippingNotification } from "@/lib/email";
+import { logger } from "@/lib/logger";
+import { SHIPPO_FROM_ADDRESS } from "@/lib/shipping-config";
 import { z } from "zod";
 import { Shippo } from "shippo";
 
@@ -102,15 +104,7 @@ export async function POST(request: NextRequest) {
       }
 
       const shipment = await shippo.shipments.create({
-        addressFrom: {
-          name: "J'Artides",
-          street1: "4511 Walker Rd",
-          street2: "Suite 1012",
-          city: "Windsor",
-          state: "ON",
-          zip: "N8W 3T6",
-          country: "CA",
-        },
+        addressFrom: SHIPPO_FROM_ADDRESS,
         addressTo: {
           name: order.shipping_name || "Customer",
           street1: order.shipping_line1 || "",
@@ -175,14 +169,13 @@ export async function POST(request: NextRequest) {
     // Register tracking with Shippo for auto-updates
     if (transaction.trackingNumber) {
       try {
-        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://jartides.ca";
         await shippo.trackingStatus.create({
           carrier: carrierName,
           trackingNumber: transaction.trackingNumber,
           metadata: orderId,
         });
       } catch (trackErr) {
-        console.error("Failed to register Shippo tracking:", trackErr);
+        logger.error("Failed to register Shippo tracking", { orderId, error: String(trackErr) });
       }
     }
 
@@ -198,7 +191,7 @@ export async function POST(request: NextRequest) {
         await sendShippingNotification(updatedOrder);
       }
     } catch (e) {
-      console.error("Failed to send shipping notification:", e);
+      logger.error("Failed to send shipping notification", { orderId, error: String(e) });
     }
 
     return NextResponse.json({
@@ -209,7 +202,7 @@ export async function POST(request: NextRequest) {
       carrier: carrierName,
     });
   } catch (err) {
-    console.error("Shippo label error:", err);
+    logger.error("Shippo label error", { error: String(err) });
     return NextResponse.json(
       { error: "Failed to generate shipping label" },
       { status: 500 }

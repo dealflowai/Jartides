@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { verifyCsrf } from "@/lib/csrf";
+import { rateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
 // GET reviews for a product (public)
@@ -37,6 +39,12 @@ const reviewSchema = z.object({
 
 // POST new review (authenticated users)
 export async function POST(req: NextRequest) {
+  const csrfError = verifyCsrf(req);
+  if (csrfError) return csrfError;
+
+  const rateLimited = await rateLimit(req, { limit: 5, windowMs: 60_000 });
+  if (rateLimited) return rateLimited;
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 

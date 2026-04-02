@@ -1,5 +1,15 @@
 import type { Order, OrderItem } from "@/lib/types";
 
+function unsubscribeFooter(email: string): string {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://jartides.ca";
+  const encoded = encodeURIComponent(email);
+  return `<p style="margin:8px 0 0;font-size:11px;color:#bbb;">
+    <a href="${siteUrl}/policies/privacy" style="color:#999;text-decoration:underline;">Privacy Policy</a>
+    &nbsp;|&nbsp;
+    <a href="mailto:jartidesofficial@gmail.com?subject=Unsubscribe&body=Please%20unsubscribe%20${encoded}%20from%20marketing%20emails." style="color:#999;text-decoration:underline;">Unsubscribe</a>
+  </p>`;
+}
+
 function escapeHtml(str: string): string {
   return str
     .replace(/&/g, "&amp;")
@@ -214,6 +224,7 @@ export async function sendOrderConfirmation(
               <a href="mailto:jartidesofficial@gmail.com" style="color:#666;">jartidesofficial@gmail.com</a>.
             </p>
             <p style="margin:8px 0 0;font-size:12px;color:#bbb;">&copy; Jartides. All rights reserved.</p>
+            ${unsubscribeFooter(customerEmail)}
           </td>
         </tr>
 
@@ -417,6 +428,7 @@ export async function sendShippingNotification(
               <a href="mailto:jartidesofficial@gmail.com" style="color:#666;">jartidesofficial@gmail.com</a>.
             </p>
             <p style="margin:8px 0 0;font-size:12px;color:#bbb;">&copy; Jartides. All rights reserved.</p>
+            ${unsubscribeFooter(customerEmail)}
           </td>
         </tr>
 
@@ -527,4 +539,158 @@ export async function sendLowStockAlert(
   }
 
   console.log(`Low stock alert sent for ${products.length} products`);
+}
+
+// ---------------------------------------------------------------------------
+// Admin notification for new account signups
+// ---------------------------------------------------------------------------
+
+export async function sendAdminNewAccountNotification(
+  email: string
+): Promise<void> {
+  const safeEmail = escapeHtml(email);
+
+  const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"/></head>
+<body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-serif;color:#333;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:24px 0;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;">
+
+        <tr>
+          <td style="background:#16a34a;padding:20px 24px;">
+            <h2 style="margin:0;color:#fff;font-size:18px;">New Account Created</h2>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:24px;">
+            <p style="margin:0 0 8px;font-size:14px;color:#555;">A new customer has created an account:</p>
+            <p style="margin:0;font-size:16px;font-weight:bold;color:#111;">${safeEmail}</p>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:16px 24px;background:#f8f9fa;border-top:1px solid #eee;text-align:center;">
+            <p style="margin:0;font-size:12px;color:#999;">Jartides Admin Notification</p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  const result = await sendEmail({
+    to: ["jartidesofficial@gmail.com"],
+    subject: `New Account: ${safeEmail}`,
+    html,
+  });
+
+  if (!result.success) {
+    console.error(`Failed to send new account notification: ${result.error}`);
+  } else {
+    console.log(`Admin notification sent for new account: ${email}`);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Review request email — sent after delivery
+// ---------------------------------------------------------------------------
+
+export async function sendReviewRequest(
+  email: string,
+  orderNumber: string,
+  items: { product_name: string; slug: string }[]
+): Promise<void> {
+  const safeOrderNumber = escapeHtml(orderNumber);
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://jartides.ca";
+
+  const productLinks = items
+    .map((item) => {
+      const name = escapeHtml(item.product_name);
+      return `<li style="margin-bottom:8px;">
+        <a href="${siteUrl}/shop/${item.slug}" style="color:#1a6de3;text-decoration:none;font-weight:600;">${name}</a>
+      </li>`;
+    })
+    .join("");
+
+  const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"/></head>
+<body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-serif;color:#333;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:24px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;">
+
+        <tr>
+          <td style="background:#111;padding:24px;text-align:center;">
+            <h1 style="margin:0;color:#fff;font-size:22px;letter-spacing:1px;">JARTIDES</h1>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:32px 24px 8px;">
+            <h2 style="margin:0 0 4px;font-size:20px;color:#111;">How was your order?</h2>
+            <p style="margin:0;color:#666;font-size:14px;">Order #${safeOrderNumber}</p>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:16px 24px 0;">
+            <p style="margin:0;font-size:15px;line-height:1.6;">
+              We hope you&apos;re happy with your recent purchase! Your feedback helps other researchers make informed decisions. Would you take a moment to leave a review?
+            </p>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:20px 24px;">
+            <p style="margin:0 0 8px;font-size:14px;font-weight:bold;color:#111;">Products from your order:</p>
+            <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.8;">
+              ${productLinks}
+            </ul>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:0 24px 24px;text-align:center;">
+            <a href="${siteUrl}/account/orders" style="display:inline-block;background:#0b3d7a;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:bold;">
+              Leave a Review
+            </a>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:20px 24px;background:#fafafa;text-align:center;border-top:1px solid #eee;">
+            <p style="margin:0;font-size:12px;color:#999;">
+              Thank you for choosing Jartides!
+            </p>
+            <p style="margin:8px 0 0;font-size:12px;color:#bbb;">&copy; Jartides. All rights reserved.</p>
+            ${unsubscribeFooter(email)}
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  const result = await sendEmail({
+    to: [email],
+    replyTo: "jartidesofficial@gmail.com",
+    subject: `How was your order #${safeOrderNumber}? Leave a review!`,
+    html,
+  });
+
+  if (!result.success) {
+    console.error(`Failed to send review request: ${result.error}`);
+  } else {
+    console.log(`Review request sent for order #${orderNumber}`);
+  }
 }

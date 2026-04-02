@@ -32,6 +32,7 @@ const supportLinks = [
 
 const policyLinks = [
   { label: "Privacy Policy", href: "/policies/privacy" },
+  { label: "Cookie Policy", href: "/policies/cookies" },
   { label: "Terms of Service", href: "/policies/terms" },
   { label: "Refund Policy", href: "/policies/refund" },
   { label: "Shipping Policy", href: "/policies/shipping" },

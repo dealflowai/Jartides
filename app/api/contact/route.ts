@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { rateLimit } from "@/lib/rate-limit";
 import { verifyCsrf } from "@/lib/csrf";
+import { logger } from "@/lib/logger";
+import { CONTACT_EMAIL } from "@/lib/constants";
 
 function escapeHtml(str: string): string {
   return str
@@ -56,7 +58,7 @@ export async function POST(request: NextRequest) {
         },
         body: JSON.stringify({
           from: `Jartides Contact <noreply@${process.env.RESEND_DOMAIN || "jartides.ca"}>`,
-          to: ["jartidesofficial@gmail.com"],
+          to: [CONTACT_EMAIL],
           reply_to: email,
           subject: `[${safeCategory}] Contact from ${name}`,
           html: `
@@ -72,21 +74,15 @@ export async function POST(request: NextRequest) {
       });
 
       if (!res.ok) {
-        console.error("Failed to send email via Resend:", await res.text());
+        logger.error("Failed to send contact email", { error: await res.text() });
       }
     } else {
-      console.log("Contact form submission (no email provider configured):", {
-        name,
-        email,
-        category,
-        message,
-        submittedAt: new Date().toISOString(),
-      });
+      logger.warn("Contact form submitted but no email provider configured", { name, email, category });
     }
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error("Contact form error:", err);
+    logger.error("Contact form error", { error: String(err) });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

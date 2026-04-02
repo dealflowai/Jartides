@@ -24,7 +24,7 @@ export const SUBSCRIPTION_DISCOUNT = 0.15;
 export const AGE_REQUIREMENT = 21;
 export const MAX_QUANTITY = 20;
 
-export const PAYMENT_METHODS = ["Visa", "Mastercard", "Amex", "PayPal"];
+export const PAYMENT_METHODS = ["Visa", "Mastercard", "Amex"];
 
 export const CATEGORIES = [
   { name: "All", slug: "all" },

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/admin";
 import { verifyCsrf } from "@/lib/csrf";
+import { writeAuditLog } from "@/lib/audit";
 import { z } from "zod";
 
 const variantSchema = z.object({
@@ -176,6 +177,14 @@ export async function POST(req: NextRequest) {
     await saveRelatedProducts(db, data.id, related_product_ids);
   }
 
+  writeAuditLog({
+    admin_id: admin.id,
+    action: "product.create",
+    entity_type: "product",
+    entity_id: data.id,
+    details: { name: data.name, price: data.price },
+  });
+
   return NextResponse.json(data, { status: 201 });
 }
 
@@ -243,6 +252,14 @@ export async function PUT(req: NextRequest) {
     await saveRelatedProducts(db, id, related_product_ids ?? []);
   }
 
+  writeAuditLog({
+    admin_id: admin.id,
+    action: "product.update",
+    entity_type: "product",
+    entity_id: id,
+    details: { name: data.name, price: data.price },
+  });
+
   return NextResponse.json(data);
 }
 
@@ -267,5 +284,13 @@ export async function DELETE(req: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  writeAuditLog({
+    admin_id: admin.id,
+    action: "product.delete",
+    entity_type: "product",
+    entity_id: id,
+  });
+
   return NextResponse.json({ success: true });
 }

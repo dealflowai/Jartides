@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/logger";
+
+const log = logger.child({ route: "/api/webhooks/shippo" });
 
 // Shippo tracking status → order status mapping
 function mapTrackingStatus(shippoStatus: string): string | null {
@@ -30,7 +33,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true });
     }
 
-    console.log(`Shippo tracking update: ${trackingNumber} → ${trackingStatus}`);
+    log.info("Tracking update received", { trackingNumber, status: trackingStatus });
 
     const newStatus = mapTrackingStatus(trackingStatus);
     if (!newStatus) {
@@ -48,7 +51,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (!order) {
-      console.log(`No order found for tracking number: ${trackingNumber}`);
+      log.warn("No order found for tracking number", { trackingNumber });
       return NextResponse.json({ received: true });
     }
 
@@ -69,11 +72,11 @@ export async function POST(request: NextRequest) {
       })
       .eq("id", order.id);
 
-    console.log(`Order ${order.id} status updated: ${order.status} → ${newStatus}`);
+    log.info("Order status updated via tracking", { orderId: order.id, from: order.status, to: newStatus });
 
     return NextResponse.json({ received: true });
   } catch (err) {
-    console.error("Shippo webhook error:", err);
-    return NextResponse.json({ received: true });
+    log.error("Shippo webhook error", { error: String(err) });
+    return NextResponse.json({ error: "Webhook handler failed" }, { status: 500 });
   }
 }

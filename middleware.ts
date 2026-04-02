@@ -1,7 +1,26 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+const ALLOWED_ORIGIN =
+  process.env.NEXT_PUBLIC_SITE_URL || "https://jartides.ca";
+
 export async function middleware(request: NextRequest) {
+  // Handle CORS preflight for API routes
+  if (
+    request.nextUrl.pathname.startsWith("/api/") &&
+    request.method === "OPTIONS"
+  ) {
+    return new NextResponse(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Access-Control-Max-Age": "86400",
+      },
+    });
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -59,9 +78,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Attach CORS headers to API responses
+  if (request.nextUrl.pathname.startsWith("/api/")) {
+    supabaseResponse.headers.set("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
+  }
+
   return supabaseResponse;
 }
 
 export const config = {
-  matcher: ["/account/:path*", "/admin/:path*", "/login", "/register"],
+  matcher: ["/account/:path*", "/admin/:path*", "/login", "/register", "/api/:path*"],
 };

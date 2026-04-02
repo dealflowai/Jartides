@@ -10,6 +10,7 @@ import StructuredData from "@/components/layout/StructuredData";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 import SentryInit from "@/components/analytics/SentryInit";
 import CookieConsent from "@/components/layout/CookieConsent";
+import WebVitals from "@/components/analytics/WebVitals";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -74,6 +75,7 @@ export default function RootLayout({
       <body className="font-[family-name:var(--font-body)] text-[#1a1a2e] bg-white leading-relaxed overflow-x-hidden">
         <GoogleAnalytics />
         <SentryInit />
+        <WebVitals />
         <StructuredData />
         <CartProvider>
           <WishlistProvider>

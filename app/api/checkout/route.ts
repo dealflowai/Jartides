@@ -5,6 +5,7 @@ import { getStripe } from "@/lib/stripe";
 import { generateOrderNumber } from "@/lib/utils";
 import { rateLimit } from "@/lib/rate-limit";
 import { verifyCsrf } from "@/lib/csrf";
+import { logger } from "@/lib/logger";
 
 const CartItemSchema = z.object({
   productId: z.string().uuid(),
@@ -58,6 +59,8 @@ export async function POST(request: NextRequest) {
   const rateLimited = await rateLimit(request, { limit: 5, windowMs: 60_000 });
   if (rateLimited) return rateLimited;
 
+  const log = logger.child({ route: "/api/checkout" });
+
   try {
     const body = await request.json();
     const parsed = CheckoutSchema.safeParse(body);
@@ -80,6 +83,7 @@ export async function POST(request: NextRequest) {
       .in("id", productIds);
 
     if (productsError || !products) {
+      log.error("Failed to verify products", { error: productsError?.message });
       return NextResponse.json(
         { error: "Failed to verify products" },
         { status: 500 }
@@ -190,6 +194,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (orderError || !order) {
+      log.error("Failed to create order", { error: orderError?.message, email });
       return NextResponse.json(
         { error: "Failed to create order" },
         { status: 500 }
@@ -217,6 +222,7 @@ export async function POST(request: NextRequest) {
       .insert(orderItems);
 
     if (itemsError) {
+      log.error("Failed to create order items", { orderId: order.id, error: itemsError.message });
       await supabase.from("orders").delete().eq("id", order.id);
       return NextResponse.json(
         { error: "Failed to create order items" },
@@ -255,7 +261,7 @@ export async function POST(request: NextRequest) {
         .update({ stripe_payment_intent_id: paymentIntent.id })
         .eq("id", order.id);
     } catch (stripeErr) {
-      console.error("Stripe PaymentIntent error:", stripeErr);
+      log.error("Stripe PaymentIntent error", { orderId: order.id, error: String(stripeErr) });
       await supabase.from("orders").delete().eq("id", order.id);
       return NextResponse.json(
         { error: "Failed to initialize payment. Please try again." },
@@ -285,7 +291,7 @@ export async function POST(request: NextRequest) {
       });
 
       if (signupError) {
-        console.error("Account creation error:", signupError.message);
+        log.warn("Account creation failed", { email, error: signupError.message });
       }
 
       if (signupData?.user) {
@@ -305,7 +311,7 @@ export async function POST(request: NextRequest) {
       accountCreated,
     });
   } catch (err) {
-    console.error("Checkout error:", err);
+    log.error("Checkout error", { error: String(err) });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

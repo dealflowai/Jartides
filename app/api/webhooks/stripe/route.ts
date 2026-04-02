@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendOrderConfirmation, sendAdminOrderNotification } from "@/lib/email";
+import { logger } from "@/lib/logger";
 import type Stripe from "stripe";
+
+const log = logger.child({ route: "/api/webhooks/stripe" });
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -17,7 +20,7 @@ export async function POST(request: NextRequest) {
 
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!webhookSecret) {
-    console.error("STRIPE_WEBHOOK_SECRET is not configured");
+    log.error("STRIPE_WEBHOOK_SECRET is not configured");
     return NextResponse.json(
       { error: "Webhook not configured" },
       { status: 500 }
@@ -33,7 +36,7 @@ export async function POST(request: NextRequest) {
       webhookSecret
     );
   } catch (err) {
-    console.error("Webhook signature verification failed:", err);
+    log.error("Webhook signature verification failed", { error: String(err) });
     return NextResponse.json(
       { error: "Invalid signature" },
       { status: 400 }
@@ -57,7 +60,10 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (orderError || !order) {
-          console.error("Failed to update order:", orderError);
+          log.error("Failed to update order on payment success", {
+            paymentIntentId: paymentIntent.id,
+            error: orderError?.message,
+          });
           break;
         }
 
@@ -74,14 +80,20 @@ export async function POST(request: NextRequest) {
               p_quantity: item.quantity,
             });
             if (stockError) {
-              console.error(`Failed to decrement stock for ${item.product_id}:`, stockError);
+              log.error("Failed to decrement stock", {
+                productId: item.product_id,
+                quantity: item.quantity,
+                orderId: order.id,
+                error: stockError.message,
+              });
             }
           }
         }
 
-        console.log(
-          `Order ${order.id} payment succeeded, status updated to processing`
-        );
+        log.info("Payment succeeded, order processing", {
+          orderId: order.id,
+          paymentIntentId: paymentIntent.id,
+        });
 
         // Send confirmation + admin notification emails (non-blocking)
         try {
@@ -103,7 +115,7 @@ export async function POST(request: NextRequest) {
             ]);
           }
         } catch (emailErr) {
-          console.error("Failed to send order emails:", emailErr);
+          log.error("Failed to send order emails", { orderId: order.id, error: String(emailErr) });
         }
 
         break;
@@ -117,9 +129,7 @@ export async function POST(request: NextRequest) {
           .update({ status: "cancelled", updated_at: new Date().toISOString() })
           .eq("stripe_payment_intent_id", paymentIntent.id);
 
-        console.log(
-          `Payment failed for intent ${paymentIntent.id}, order cancelled`
-        );
+        log.warn("Payment failed, order cancelled", { paymentIntentId: paymentIntent.id });
         break;
       }
 
@@ -132,9 +142,7 @@ export async function POST(request: NextRequest) {
           .eq("stripe_payment_intent_id", paymentIntent.id)
           .eq("status", "pending");
 
-        console.log(
-          `Payment intent cancelled for ${paymentIntent.id}, order cancelled`
-        );
+        log.info("Payment intent cancelled", { paymentIntentId: paymentIntent.id });
         break;
       }
 
@@ -148,16 +156,16 @@ export async function POST(request: NextRequest) {
             .update({ status: "refunded", updated_at: new Date().toISOString() })
             .eq("stripe_payment_intent_id", piId);
 
-          console.log(`Charge refunded for intent ${piId}, order marked as refunded`);
+          log.info("Charge refunded", { paymentIntentId: piId });
         }
         break;
       }
 
       default:
-        console.log(`Unhandled event type: ${event.type}`);
+        log.info("Unhandled event type", { type: event.type });
     }
   } catch (err) {
-    console.error("Webhook handler error:", err);
+    log.error("Webhook handler error", { error: String(err) });
     return NextResponse.json(
       { error: "Webhook handler failed" },
       { status: 500 }

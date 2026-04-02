@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { verifyCsrf } from "@/lib/csrf";
+import { rateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const schema = z.object({
@@ -9,6 +11,12 @@ const schema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const csrfError = verifyCsrf(req);
+  if (csrfError) return csrfError;
+
+  const rateLimited = await rateLimit(req, { limit: 5, windowMs: 60_000 });
+  if (rateLimited) return rateLimited;
+
   const body = await req.json();
   const parsed = schema.safeParse(body);
   if (!parsed.success) {

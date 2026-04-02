@@ -338,6 +338,7 @@ export default function ProductDetail({ product, coaDocuments = [] }: ProductDet
                 const val = parseInt(e.target.value, 10);
                 if (!isNaN(val)) setQuantity(Math.max(1, Math.min(val, MAX_QUANTITY)));
               }}
+              aria-label="Quantity"
               className="h-10 w-12 border-x border-gray-200 bg-transparent text-center text-sm font-medium text-gray-900 outline-none font-[family-name:var(--font-body)] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             />
             <button

@@ -1,17 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logger } from "@/lib/logger";
+import { SHIPPO_FROM_ADDRESS } from "@/lib/shipping-config";
 import { Shippo } from "shippo";
-
-const FROM_ADDRESS = {
-  name: "J'Artides",
-  street1: "4511 Walker Rd",
-  street2: "Suite 1012",
-  city: "Windsor",
-  state: "ON",
-  zip: "N8W 3T6",
-  country: "CA",
-};
 
 interface CartItemInput {
   productId: string;
@@ -93,7 +85,7 @@ export async function POST(request: NextRequest) {
     const shippo = new Shippo({ apiKeyHeader: process.env.SHIPPO_API_TOKEN! });
 
     const shipment = await shippo.shipments.create({
-      addressFrom: FROM_ADDRESS,
+      addressFrom: SHIPPO_FROM_ADDRESS,
       addressTo: {
         name: address.name || "Customer",
         street1: address.line1 || address.street1 || "",
@@ -106,12 +98,11 @@ export async function POST(request: NextRequest) {
       parcels: [parcel],
     });
 
-    console.log("Shippo shipment response:", JSON.stringify({
+    logger.info("Shippo shipment response", {
       objectId: shipment.objectId,
       status: shipment.status,
       ratesCount: shipment.rates.length,
-      messages: shipment.messages,
-    }));
+    });
 
     const rates = shipment.rates.map((r) => ({
       id: r.objectId,
@@ -130,7 +121,7 @@ export async function POST(request: NextRequest) {
 
     if (rates.length === 0) {
       const messages = shipment.messages?.map((m) => m.text).filter(Boolean) || [];
-      console.warn("Shippo returned 0 rates. Messages:", messages);
+      logger.warn("Shippo returned 0 rates", { messages });
       return NextResponse.json({
         rates: [],
         debug: messages,
@@ -139,7 +130,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ rates });
   } catch (err) {
-    console.error("Shippo rates error:", err);
+    logger.error("Shippo rates error", { error: String(err) });
     const message = err instanceof Error ? err.message : "Failed to calculate shipping rates";
     return NextResponse.json(
       { error: message },
