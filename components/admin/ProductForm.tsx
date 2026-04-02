@@ -60,7 +60,7 @@ function calculateSavings(
   return Math.round(((originalPrice - price) / originalPrice) * 100);
 }
 
-const BADGES = ["", "Best Seller", "Popular", "Hot", "New", "Best Value"];
+const BADGES = ["", "Best Seller", "Popular", "Hot", "New", "Best Value", "Backorder"];
 
 interface CoaForm {
   id?: string;

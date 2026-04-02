@@ -9,8 +9,8 @@ function escapeHtml(str: string): string {
     .replace(/'/g, "&#039;");
 }
 
-function formatCurrency(amount: number, currency = "USD"): string {
-  return new Intl.NumberFormat("en-US", {
+function formatCurrency(amount: number, currency = "CAD"): string {
+  return new Intl.NumberFormat("en-CA", {
     style: "currency",
     currency,
   }).format(amount);
@@ -82,7 +82,7 @@ export async function sendOrderConfirmation(
   const safePostal = escapeHtml(order.shipping_postal);
   const safeCountry = escapeHtml(order.shipping_country);
 
-  const currency = order.currency || "USD";
+  const currency = order.currency || "CAD";
 
   const itemRows = items
     .map((item) => {
@@ -248,7 +248,7 @@ export async function sendAdminOrderNotification(
   const customerEmail = order.guest_email
     ? escapeHtml(order.guest_email)
     : "N/A (logged-in user)";
-  const currency = order.currency || "USD";
+  const currency = order.currency || "CAD";
 
   const itemSummary = items
     .map((item) => {
