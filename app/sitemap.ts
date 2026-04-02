@@ -50,12 +50,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Fetch active products from Supabase
-  const supabase = createAdminClient();
-  const { data: products } = await supabase
-    .from("products")
-    .select("slug, updated_at, images")
-    .eq("active", true);
+  // Fetch active products from Supabase (gracefully skip if unavailable)
+  let products: { slug: string; updated_at: string; images: string[] | null }[] | null = null;
+  try {
+    const supabase = createAdminClient();
+    const { data } = await supabase
+      .from("products")
+      .select("slug, updated_at, images")
+      .eq("active", true);
+    products = data;
+  } catch {
+    // DB unavailable (e.g. CI build) — return static pages only
+  }
 
   const productPages: MetadataRoute.Sitemap = (products ?? []).map(
     (product) => ({
