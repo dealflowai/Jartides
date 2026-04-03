@@ -25,7 +25,12 @@ export async function GET(req: NextRequest) {
     .select("*, order_items:order_items(product_name, quantity, unit_price)")
     .order("created_at", { ascending: false });
 
-  if (status) query = query.eq("status", status);
+  // Exclude pending (unpaid) orders by default
+  if (status) {
+    query = query.eq("status", status);
+  } else {
+    query = query.neq("status", "pending");
+  }
   if (from) query = query.gte("created_at", from);
   if (to) query = query.lte("created_at", `${to}T23:59:59.999Z`);
 

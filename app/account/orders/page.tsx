@@ -12,6 +12,7 @@ export default async function OrdersPage() {
     .from("orders")
     .select("*")
     .eq("user_id", user!.id)
+    .neq("status", "pending")
     .order("created_at", { ascending: false })
     .returns<Order[]>();
 

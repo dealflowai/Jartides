@@ -40,19 +40,22 @@ export default async function AdminDashboard() {
     customersRes,
     recentRes,
     topProductsRes,
+    abandonedRes,
   ] = await Promise.all([
-    supabase.from("orders").select("id", { count: "exact", head: true }),
+    supabase.from("orders").select("id", { count: "exact", head: true }).neq("status", "pending"),
     supabase
       .from("orders")
       .select("total")
       .neq("status", "cancelled")
       .neq("status", "refunded")
+      .neq("status", "pending")
       .gte("created_at", thirtyDaysAgo.toISOString()),
     supabase
       .from("orders")
       .select("total")
       .neq("status", "cancelled")
-      .neq("status", "refunded"),
+      .neq("status", "refunded")
+      .neq("status", "pending"),
     supabase
       .from("products")
       .select("id", { count: "exact", head: true })
@@ -67,11 +70,18 @@ export default async function AdminDashboard() {
     supabase
       .from("orders")
       .select("*")
+      .neq("status", "pending")
       .order("created_at", { ascending: false })
       .limit(10),
     supabase
       .from("order_items")
       .select("product_id, product_name, quantity, unit_price"),
+    supabase
+      .from("orders")
+      .select("id, order_number, guest_email, total, created_at")
+      .eq("status", "pending")
+      .order("created_at", { ascending: false })
+      .limit(10),
   ]);
 
   const totalOrders = ordersRes.count ?? 0;
@@ -86,6 +96,7 @@ export default async function AdminDashboard() {
     ).length ?? 0;
   const totalCustomers = customersRes.count ?? 0;
   const recentOrders = (recentRes.data ?? []) as Order[];
+  const abandonedCheckouts = abandonedRes.data ?? [];
 
   // Aggregate top products by total quantity sold
   const productSales = new Map<
@@ -340,6 +351,66 @@ export default async function AdminDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Abandoned Checkouts */}
+      {abandonedCheckouts.length > 0 && (
+        <div className="mb-8 rounded-xl border border-amber-200 bg-amber-50/50">
+          <div className="border-b border-amber-200 px-5 py-4">
+            <h2 className="text-lg font-semibold text-amber-800">
+              Abandoned Checkouts
+            </h2>
+            <p className="text-xs text-amber-600">
+              Started checkout but didn&apos;t pay — consider following up via email
+            </p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-amber-200 text-xs uppercase text-amber-700">
+                <tr>
+                  <th className="px-5 py-3 font-medium">Order #</th>
+                  <th className="px-5 py-3 font-medium">Email</th>
+                  <th className="px-5 py-3 text-right font-medium">Total</th>
+                  <th className="px-5 py-3 font-medium">Started</th>
+                  <th className="px-5 py-3 font-medium">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-amber-100">
+                {abandonedCheckouts.map((checkout: { id: string; order_number: string; guest_email: string | null; total: number; created_at: string }) => (
+                  <tr key={checkout.id} className="hover:bg-amber-50">
+                    <td className="whitespace-nowrap px-5 py-3 font-medium text-gray-900">
+                      {checkout.order_number}
+                    </td>
+                    <td className="px-5 py-3 text-gray-700">
+                      {checkout.guest_email ?? "—"}
+                    </td>
+                    <td className="whitespace-nowrap px-5 py-3 text-right font-medium text-gray-900">
+                      {formatPrice(checkout.total)}
+                    </td>
+                    <td className="whitespace-nowrap px-5 py-3 text-gray-500">
+                      {new Date(checkout.created_at).toLocaleDateString("en-CA", {
+                        month: "short",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
+                    </td>
+                    <td className="px-5 py-3">
+                      {checkout.guest_email && (
+                        <a
+                          href={`mailto:${checkout.guest_email}?subject=Complete your Jartides order %23${checkout.order_number}&body=Hi! We noticed you started an order but didn't finish checkout. Your cart is still waiting — let us know if you need any help!`}
+                          className="inline-flex items-center gap-1 rounded-md bg-amber-600 px-3 py-1 text-xs font-medium text-white hover:bg-amber-700 transition-colors"
+                        >
+                          Send Email
+                        </a>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
