@@ -1,0 +1,116 @@
+import { NextRequest, NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin";
+import { verifyCsrf } from "@/lib/csrf";
+import { sendEmail } from "@/lib/email";
+import { logger } from "@/lib/logger";
+import { z } from "zod";
+
+const schema = z.object({
+  email: z.string().email(),
+  orderNumber: z.string().min(1),
+  total: z.number(),
+});
+
+export async function POST(req: NextRequest) {
+  const csrfError = verifyCsrf(req);
+  if (csrfError) return csrfError;
+
+  const admin = await requireAdmin();
+  if (!admin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const body = await req.json();
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+
+  const { email, orderNumber, total } = parsed.data;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://jartides.ca";
+
+  const formattedTotal = new Intl.NumberFormat("en-CA", {
+    style: "currency",
+    currency: "CAD",
+  }).format(total);
+
+  const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"/></head>
+<body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-serif;color:#333;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:24px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;">
+
+        <tr>
+          <td style="background:#111;padding:24px;text-align:center;">
+            <h1 style="margin:0;color:#fff;font-size:22px;letter-spacing:1px;">JARTIDES</h1>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:32px 24px 8px;">
+            <h2 style="margin:0 0 4px;font-size:20px;color:#111;">You left something behind!</h2>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:16px 24px;">
+            <p style="margin:0;font-size:15px;line-height:1.6;color:#555;">
+              We noticed you started an order <strong>(#${orderNumber})</strong> for <strong>${formattedTotal} CAD</strong> but didn&rsquo;t complete checkout. Your items are still waiting for you!
+            </p>
+            <p style="margin:16px 0 0;font-size:15px;line-height:1.6;color:#555;">
+              If you ran into any issues or have questions, just reply to this email &mdash; we&rsquo;re happy to help.
+            </p>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:8px 24px 24px;text-align:center;">
+            <a href="${siteUrl}/shop" style="display:inline-block;background:#0b3d7a;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:bold;">
+              Return to Shop
+            </a>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:16px 24px;background:#fdf6e3;border-top:1px solid #eee;">
+            <p style="margin:0;font-size:12px;color:#856404;line-height:1.5;text-align:center;">
+              <strong>For Research Use Only.</strong> Products sold by Jartides are intended solely for
+              laboratory and research purposes.
+            </p>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:20px 24px;background:#fafafa;text-align:center;border-top:1px solid #eee;">
+            <p style="margin:0;font-size:12px;color:#999;">
+              Questions? Reply to this email or contact us at
+              <a href="mailto:jartidesofficial@gmail.com" style="color:#666;">jartidesofficial@gmail.com</a>.
+            </p>
+            <p style="margin:8px 0 0;font-size:12px;color:#bbb;">&copy; Jartides. All rights reserved.</p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  const result = await sendEmail({
+    to: [email],
+    replyTo: "jartidesofficial@gmail.com",
+    subject: `You left something behind! Complete your Jartides order #${orderNumber}`,
+    html,
+  });
+
+  if (!result.success) {
+    logger.error("Failed to send abandoned checkout email", { email, orderNumber, error: result.error });
+    return NextResponse.json({ error: "Failed to send email" }, { status: 500 });
+  }
+
+  logger.info("Abandoned checkout email sent", { email, orderNumber });
+  return NextResponse.json({ success: true });
+}

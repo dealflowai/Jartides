@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import type { Order, OrderStatus } from "@/lib/types";
+import SendAbandonedEmailButton from "@/components/admin/SendAbandonedEmailButton";
 
 const statusColors: Record<OrderStatus, string> = {
   pending: "bg-yellow-100 text-yellow-800",
@@ -396,12 +397,11 @@ export default async function AdminDashboard() {
                     </td>
                     <td className="px-5 py-3">
                       {checkout.guest_email && (
-                        <a
-                          href={`mailto:${checkout.guest_email}?subject=Complete your Jartides order %23${checkout.order_number}&body=Hi! We noticed you started an order but didn't finish checkout. Your cart is still waiting — let us know if you need any help!`}
-                          className="inline-flex items-center gap-1 rounded-md bg-amber-600 px-3 py-1 text-xs font-medium text-white hover:bg-amber-700 transition-colors"
-                        >
-                          Send Email
-                        </a>
+                        <SendAbandonedEmailButton
+                          email={checkout.guest_email}
+                          orderNumber={checkout.order_number}
+                          total={checkout.total}
+                        />
                       )}
                     </td>
                   </tr>
