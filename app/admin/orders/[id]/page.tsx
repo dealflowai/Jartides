@@ -5,6 +5,7 @@ import { formatPrice } from "@/lib/utils";
 import OrderStatusUpdater from "@/components/admin/OrderStatusUpdater";
 import OrderNotes from "@/components/admin/OrderNotes";
 import ShippingLabelGenerator from "@/components/admin/ShippingLabelGenerator";
+import DeleteOrderButton from "@/components/admin/DeleteOrderButton";
 import type { Order, OrderItem, OrderStatus } from "@/lib/types";
 
 const statusColors: Record<OrderStatus, string> = {
@@ -51,11 +52,14 @@ export default async function AdminOrderDetailPage({
             {new Date(order.created_at).toLocaleString()}
           </p>
         </div>
-        <span
-          className={`rounded-full px-3 py-1 text-sm font-medium ${statusColors[order.status]}`}
-        >
-          {order.status}
-        </span>
+        <div className="flex items-center gap-3">
+          <span
+            className={`rounded-full px-3 py-1 text-sm font-medium ${statusColors[order.status]}`}
+          >
+            {order.status}
+          </span>
+          <DeleteOrderButton orderId={order.id} />
+        </div>
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
