@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Users,
   Star,
+  Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +29,7 @@ const navItems = [
   { label: "Reviews", href: "/admin/reviews", icon: Star },
   { label: "Discounts", href: "/admin/discounts", icon: Ticket },
   { label: "FAQ Manager", href: "/admin/faq", icon: MessageCircleQuestion },
+  { label: "Email", href: "/admin/email", icon: Mail },
   { label: "Compliance", href: "/admin/compliance", icon: ShieldCheck },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
