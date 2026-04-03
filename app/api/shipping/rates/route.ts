@@ -49,6 +49,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Canada-only shipping for now
+    const country = (address.country || "").toUpperCase();
+    if (country !== "CA") {
+      return NextResponse.json(
+        { error: "We currently only ship within Canada. International shipping is coming soon!" },
+        { status: 400 }
+      );
+    }
+
     // Fetch product dimensions from database
     const cartItems: CartItemInput[] = items || [];
     let parcel = {
@@ -124,7 +133,7 @@ export async function POST(request: NextRequest) {
       logger.warn("Shippo returned 0 rates", { messages });
       return NextResponse.json({
         rates: [],
-        debug: messages,
+        error: "No shipping options available for this address. Please verify your address or try a different one.",
       });
     }
 

@@ -149,9 +149,7 @@ export default function CheckoutPage() {
         setSelectedRate(data.rates[0]);
       } else {
         setSelectedRate(null);
-        if (data.debug && data.debug.length > 0) {
-          setRatesError(data.debug.join(" | "));
-        }
+        setRatesError(data.error || "No shipping options available for this address. Please verify your address or try a different one.");
       }
     } catch (err) {
       setRatesError(err instanceof Error ? err.message : "Failed to fetch rates");
