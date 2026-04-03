@@ -49,15 +49,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Canada-only shipping for now
-    const country = (address.country || "").toUpperCase();
-    if (country !== "CA") {
-      return NextResponse.json(
-        { error: "We currently only ship within Canada. International shipping is coming soon!" },
-        { status: 400 }
-      );
-    }
-
     // Fetch product dimensions from database
     const cartItems: CartItemInput[] = items || [];
     let parcel = {

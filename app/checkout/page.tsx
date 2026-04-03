@@ -22,7 +22,8 @@ import {
   Search,
   Check,
 } from "lucide-react";
-import { COUNTRIES, PRIORITY_COUNTRIES } from "@/lib/countries";
+import { COUNTRIES, PRIORITY_COUNTRIES, getCountryConfig } from "@/lib/countries";
+import type { CountryConfig } from "@/lib/countries";
 
 interface ShippingForm {
   fullName: string;
@@ -519,43 +520,68 @@ export default function CheckoutPage() {
                       )}
                     </div>
 
-                    {/* Province */}
-                    <div>
-                      <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                        Province / State
-                      </label>
-                      <input
-                        type="text"
-                        name="province"
-                        autoComplete="address-level1"
-                        value={shipping.province}
-                        onChange={handleChange}
-                        className={`${inputCls} ${fieldErrors.province ? "border-red-400 focus:border-red-400 focus:ring-red-200" : ""}`}
-                        placeholder="Ontario"
-                      />
-                      {fieldErrors.province && (
-                        <p className="mt-1 text-xs text-red-500">{fieldErrors.province}</p>
-                      )}
-                    </div>
+                    {/* Province / State — dynamic per country */}
+                    {(() => {
+                      const cc: CountryConfig = getCountryConfig(shipping.country);
+                      return (
+                        <div>
+                          <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                            {cc.regionLabel}
+                          </label>
+                          {cc.regions ? (
+                            <select
+                              name="province"
+                              autoComplete="address-level1"
+                              value={shipping.province}
+                              onChange={handleChange}
+                              className={`${inputCls} ${fieldErrors.province ? "border-red-400 focus:border-red-400 focus:ring-red-200" : ""}`}
+                            >
+                              <option value="">Select {cc.regionLabel.toLowerCase()}</option>
+                              {cc.regions.map((r) => (
+                                <option key={r.code} value={r.code}>{r.name}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <input
+                              type="text"
+                              name="province"
+                              autoComplete="address-level1"
+                              value={shipping.province}
+                              onChange={handleChange}
+                              className={`${inputCls} ${fieldErrors.province ? "border-red-400 focus:border-red-400 focus:ring-red-200" : ""}`}
+                              placeholder={cc.regionPlaceholder}
+                            />
+                          )}
+                          {fieldErrors.province && (
+                            <p className="mt-1 text-xs text-red-500">{fieldErrors.province}</p>
+                          )}
+                        </div>
+                      );
+                    })()}
 
-                    {/* Postal Code */}
-                    <div>
-                      <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                        Postal / ZIP Code
-                      </label>
-                      <input
-                        type="text"
-                        name="postalCode"
-                        autoComplete="postal-code"
-                        value={shipping.postalCode}
-                        onChange={handleChange}
-                        className={`${inputCls} ${fieldErrors.postalCode ? "border-red-400 focus:border-red-400 focus:ring-red-200" : ""}`}
-                        placeholder="M5V 1A1"
-                      />
-                      {fieldErrors.postalCode && (
-                        <p className="mt-1 text-xs text-red-500">{fieldErrors.postalCode}</p>
-                      )}
-                    </div>
+                    {/* Postal / ZIP Code — dynamic per country */}
+                    {(() => {
+                      const cc: CountryConfig = getCountryConfig(shipping.country);
+                      return (
+                        <div>
+                          <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                            {cc.postalLabel}
+                          </label>
+                          <input
+                            type="text"
+                            name="postalCode"
+                            autoComplete="postal-code"
+                            value={shipping.postalCode}
+                            onChange={handleChange}
+                            className={`${inputCls} ${fieldErrors.postalCode ? "border-red-400 focus:border-red-400 focus:ring-red-200" : ""}`}
+                            placeholder={cc.postalPlaceholder}
+                          />
+                          {fieldErrors.postalCode && (
+                            <p className="mt-1 text-xs text-red-500">{fieldErrors.postalCode}</p>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* Country */}
                     <div className="relative">
@@ -607,7 +633,7 @@ export default function CheckoutPage() {
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      setShipping((prev) => ({ ...prev, country: c.code }));
+                                      setShipping((prev) => ({ ...prev, country: c.code, province: "" }));
                                       setCountryDropdownOpen(false);
                                       setCountrySearch("");
                                     }}
