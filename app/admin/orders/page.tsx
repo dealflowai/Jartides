@@ -22,6 +22,7 @@ export default async function AdminOrdersPage() {
   const { data } = await supabase
     .from("orders")
     .select("*")
+    .neq("status", "pending")
     .order("created_at", { ascending: false });
 
   const orders = (data ?? []) as Order[];
