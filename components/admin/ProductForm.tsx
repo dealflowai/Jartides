@@ -248,16 +248,19 @@ export default function ProductForm({ product, categories, coaDocuments = [], al
     (product?.variants?.length ?? 0) > 0
   );
   const [variants, setVariants] = useState<VariantForm[]>(
-    product?.variants?.map((v: ProductVariant) => ({
-      id: v.id,
-      size: v.size,
-      price: v.price.toString(),
-      original_price: v.original_price?.toString() ?? "",
-      stock_quantity: v.stock_quantity.toString(),
-      low_stock_threshold: v.low_stock_threshold.toString(),
-      images: v.images ?? [],
-      active: v.active,
-    })) ?? []
+    product?.variants
+      ?.slice()
+      .sort((a: ProductVariant, b: ProductVariant) => a.sort_order - b.sort_order)
+      .map((v: ProductVariant) => ({
+        id: v.id,
+        size: v.size,
+        price: v.price.toString(),
+        original_price: v.original_price?.toString() ?? "",
+        stock_quantity: v.stock_quantity.toString(),
+        low_stock_threshold: v.low_stock_threshold.toString(),
+        images: v.images ?? [],
+        active: v.active,
+      })) ?? []
   );
 
   const [coas, setCoas] = useState<CoaForm[]>(
@@ -400,6 +403,16 @@ export default function ProductForm({ product, categories, coaDocuments = [], al
 
   function removeVariant(index: number) {
     setVariants((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function moveVariant(index: number, direction: "up" | "down") {
+    setVariants((prev) => {
+      const next = [...prev];
+      const targetIndex = direction === "up" ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= next.length) return prev;
+      [next[index], next[targetIndex]] = [next[targetIndex], next[index]];
+      return next;
+    });
   }
 
   async function handleVariantImageUpload(variantIndex: number, e: React.ChangeEvent<HTMLInputElement>) {
@@ -794,8 +807,26 @@ export default function ProductForm({ product, categories, coaDocuments = [], al
                         <span className="text-xs font-semibold text-gray-500 uppercase">
                           Variant {idx + 1}
                         </span>
-                        <div className="flex items-center gap-2">
-                          <label className="flex items-center gap-1.5 text-xs">
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => moveVariant(idx, "up")}
+                            disabled={idx === 0}
+                            className="p-1 text-gray-400 hover:text-[#0b3d7a] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                            title="Move up"
+                          >
+                            <ArrowUp className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveVariant(idx, "down")}
+                            disabled={idx === variants.length - 1}
+                            className="p-1 text-gray-400 hover:text-[#0b3d7a] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                            title="Move down"
+                          >
+                            <ArrowDown className="h-3.5 w-3.5" />
+                          </button>
+                          <label className="flex items-center gap-1.5 text-xs ml-2">
                             <input
                               type="checkbox"
                               checked={v.active}
@@ -807,7 +838,7 @@ export default function ProductForm({ product, categories, coaDocuments = [], al
                           <button
                             type="button"
                             onClick={() => removeVariant(idx)}
-                            className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                            className="p-1 text-gray-400 hover:text-red-500 transition-colors ml-1"
                             title="Remove variant"
                           >
                             <Trash2 className="h-3.5 w-3.5" />

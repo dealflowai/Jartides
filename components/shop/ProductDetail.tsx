@@ -70,7 +70,7 @@ export default function ProductDetail({ product, coaDocuments = [] }: ProductDet
     addViewed(product.id);
   }, [product.id, addViewed]);
 
-  const variants = product.variants?.filter((v) => v.active) ?? [];
+  const variants = (product.variants?.filter((v) => v.active) ?? []).sort((a, b) => a.sort_order - b.sort_order);
   const hasVariants = variants.length > 0;
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
     hasVariants ? variants[0].id : null

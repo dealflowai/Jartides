@@ -135,7 +135,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <p className="mt-1 text-xs text-gray-400">
           {product.category?.name}
           {hasVariants
-            ? <> &middot; {product.variants!.map((v) => v.size).join(", ")}</>
+            ? <> &middot; {product.variants!.slice().sort((a, b) => a.sort_order - b.sort_order).map((v) => v.size).join(", ")}</>
             : product.size && <> &middot; {product.size}</>}
         </p>
 
