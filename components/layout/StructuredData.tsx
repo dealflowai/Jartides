@@ -8,7 +8,7 @@ export default function StructuredData() {
     name: "Jartides",
     url: BASE_URL,
     description:
-      "Premium Canadian research peptides with 99%+ purity. Third-party tested with COAs. Same-day processing, worldwide shipping.",
+      "Premium research peptides with 99%+ purity. Third-party tested with COAs. Same-day processing, worldwide shipping.",
     contactPoint: {
       "@type": "ContactPoint",
       email: "jartidesofficial@gmail.com",

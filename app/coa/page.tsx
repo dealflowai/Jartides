@@ -6,7 +6,7 @@ import { FileText, FlaskConical } from "lucide-react";
 import { getCoaUrl } from "@/lib/coa-url";
 
 export const metadata = {
-  title: "Certificates of Analysis | Jartides",
+  title: "Certificates of Analysis",
   description:
     "Every product batch is independently tested for purity and identity. View our COAs.",
 };

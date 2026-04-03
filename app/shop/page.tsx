@@ -4,7 +4,7 @@ import ShopContent from "@/components/shop/ShopContent";
 import type { Product, Category, ProductTag } from "@/lib/types";
 
 export const metadata = {
-  title: "Shop All Products | Jartides",
+  title: "Shop All Products",
   description:
     "Browse our complete collection of research peptides, blends, nasal sprays, and laboratory supplies.",
 };

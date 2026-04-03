@@ -1,7 +1,7 @@
 export const SITE_NAME = "Jartides";
-export const SITE_TAGLINE = "Premium Canadian Research Peptides";
+export const SITE_TAGLINE = "Premium Research Peptides";
 export const SITE_DESCRIPTION =
-  "Premium Canadian research peptides with 99%+ purity. Third-party tested with COAs. Same-day processing, worldwide shipping.";
+  "Premium research peptides with 99%+ purity. Third-party tested with COAs. Same-day processing, worldwide shipping.";
 
 export const CONTACT_EMAIL = "jartidesofficial@gmail.com";
 export const BUSINESS_ADDRESS = "Windsor, Ontario, Canada";

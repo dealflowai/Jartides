@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   description: SITE_DESCRIPTION,
   keywords: [
     "research peptides",
-    "Canadian peptides",
+    "peptides online",
     "BPC-157",
     "peptide supplier",
     "lab research",

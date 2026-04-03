@@ -135,7 +135,7 @@ export default function MobileNav({ isOpen, onClose }: MobileNavProps) {
             </a>
           </div>
           <p className="text-xs text-gray-400 text-center">
-            Premium Canadian Research Peptides
+            Premium Research Peptides
           </p>
         </div>
       </div>

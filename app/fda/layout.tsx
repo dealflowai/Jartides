@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "FDA & Health Canada Disclaimer | Jartides",
+  title: "FDA & Health Canada Disclaimer",
   description:
     "Important regulatory information regarding our research peptides.",
 };

@@ -8,11 +8,11 @@ import HowPeptidesWork from "@/components/home/HowPeptidesWork";
 import CTABanner from "@/components/home/CTABanner";
 
 export const metadata: Metadata = {
-  title: "Jartides | Premium Canadian Research Peptides",
+  title: "Jartides | Premium Research Peptides",
   description:
     "Shop 99%+ purity research peptides with third-party COAs. Same-day processing, 3-8 business day delivery. Worldwide shipping.",
   openGraph: {
-    title: "Jartides | Premium Canadian Research Peptides",
+    title: "Jartides | Premium Research Peptides",
     description:
       "Shop 99%+ purity research peptides with third-party COAs. Same-day processing, 3-8 business day delivery. Worldwide shipping.",
   },

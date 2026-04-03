@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Subscribe | Jartides",
+  title: "Subscribe",
   description:
     "Get your research peptides delivered monthly at a discounted rate. Cancel anytime.",
 };

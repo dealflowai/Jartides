@@ -23,15 +23,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     .single();
 
   if (!product) {
-    return { title: "Product Not Found | Jartides" };
+    return { title: "Product Not Found" };
   }
 
   return {
-    title: product.meta_title || `${product.name} | Jartides`,
+    title: product.meta_title || product.name,
     description:
       product.meta_description ||
       product.description?.replace(/<[^>]*>/g, "").slice(0, 160) ||
-      `Shop ${product.name} — premium Canadian research peptide with 99%+ purity.`,
+      `Shop ${product.name} — premium research peptide with 99%+ purity.`,
   };
 }
 
