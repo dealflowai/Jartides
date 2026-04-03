@@ -90,6 +90,9 @@ export default function CheckoutPage() {
   const [applyingDiscount, setApplyingDiscount] = useState(false);
   const [discountError, setDiscountError] = useState<string | null>(null);
 
+  // Delivery method: "ship" or "pickup"
+  const [deliveryMethod, setDeliveryMethod] = useState<"ship" | "pickup">("ship");
+
   // Shipping rates state
   const [shippingRates, setShippingRates] = useState<ShippingRate[]>([]);
   const [selectedRate, setSelectedRate] = useState<ShippingRate | null>(null);
@@ -97,7 +100,7 @@ export default function CheckoutPage() {
   const [ratesError, setRatesError] = useState<string | null>(null);
   const [ratesFetched, setRatesFetched] = useState(false);
 
-  const shippingCost = selectedRate?.rate ?? 0;
+  const shippingCost = deliveryMethod === "pickup" ? 0 : (selectedRate?.rate ?? 0);
   const discountAmount = discountData?.discount ?? 0;
   const discountedSubtotal = Math.max(0, subtotal - discountAmount);
   const tax = Math.round(discountedSubtotal * TAX_RATE * 100) / 100;
@@ -222,10 +225,12 @@ export default function CheckoutPage() {
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(shipping.email)) {
       errors.email = "Please enter a valid email";
     }
-    if (!shipping.line1.trim()) errors.line1 = "Address is required";
-    if (!shipping.city.trim()) errors.city = "City is required";
-    if (!shipping.province.trim()) errors.province = "Province/State is required";
-    if (!shipping.postalCode.trim()) errors.postalCode = "Postal code is required";
+    if (deliveryMethod === "ship") {
+      if (!shipping.line1.trim()) errors.line1 = "Address is required";
+      if (!shipping.city.trim()) errors.city = "City is required";
+      if (!shipping.province.trim()) errors.province = "Province/State is required";
+      if (!shipping.postalCode.trim()) errors.postalCode = "Postal code is required";
+    }
 
     if (createAccount) {
       if (password.length < 8) {
@@ -253,7 +258,7 @@ export default function CheckoutPage() {
       return false;
     }
 
-    if (!selectedRate) {
+    if (deliveryMethod === "ship" && !selectedRate) {
       setError("Please select a shipping method.");
       setFieldErrors(errors);
       return false;
@@ -276,28 +281,40 @@ export default function CheckoutPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items,
-          shipping: {
-            fullName: shipping.fullName,
-            line1: shipping.line1,
-            line2: shipping.line2 || null,
-            city: shipping.city,
-            province: shipping.province,
-            postalCode: shipping.postalCode,
-            country: shipping.country,
-          },
+          shipping: deliveryMethod === "pickup"
+            ? {
+                fullName: shipping.fullName,
+                line1: "Local Pickup — Windsor, ON",
+                line2: null,
+                city: "Windsor",
+                province: "ON",
+                postalCode: "N8W 3T6",
+                country: "CA",
+              }
+            : {
+                fullName: shipping.fullName,
+                line1: shipping.line1,
+                line2: shipping.line2 || null,
+                city: shipping.city,
+                province: shipping.province,
+                postalCode: shipping.postalCode,
+                country: shipping.country,
+              },
           email: shipping.email,
           discountCode: discountData ? discountCode.trim() : undefined,
           paymentMethod: "stripe",
           researchDisclaimerAccepted: compliance.researchDisclaimer,
           ageVerified: compliance.ageVerified,
           termsAccepted: compliance.termsAccepted,
-          shippingRate: {
-            id: selectedRate!.id,
-            carrier: selectedRate!.carrier,
-            service: selectedRate!.service,
-            rate: selectedRate!.rate,
-            shipment_id: selectedRate!.shipment_id,
-          },
+          shippingRate: deliveryMethod === "pickup"
+            ? { id: "pickup", carrier: "Local Pickup", service: "In-Person", rate: 0, shipment_id: "pickup" }
+            : {
+                id: selectedRate!.id,
+                carrier: selectedRate!.carrier,
+                service: selectedRate!.service,
+                rate: selectedRate!.rate,
+                shipment_id: selectedRate!.shipment_id,
+              },
           createAccount: createAccount || undefined,
           password: createAccount ? password : undefined,
         }),
@@ -466,6 +483,69 @@ export default function CheckoutPage() {
                       )}
                     </div>
 
+                    {/* Delivery Method Toggle */}
+                    <div className="sm:col-span-2">
+                      <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                        Delivery Method
+                      </label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setDeliveryMethod("ship")}
+                          className={`flex items-center gap-3 rounded-lg border-2 px-4 py-3 transition-all ${
+                            deliveryMethod === "ship"
+                              ? "border-[#0b3d7a] bg-[#0b3d7a]/5"
+                              : "border-gray-200 hover:border-gray-300"
+                          }`}
+                        >
+                          <Truck className={`h-5 w-5 ${deliveryMethod === "ship" ? "text-[#0b3d7a]" : "text-gray-400"}`} />
+                          <div className="text-left">
+                            <p className={`text-sm font-medium ${deliveryMethod === "ship" ? "text-[#0b3d7a]" : "text-gray-700"}`}>
+                              Ship to Address
+                            </p>
+                            <p className="text-xs text-gray-400">Worldwide delivery</p>
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeliveryMethod("pickup")}
+                          className={`flex items-center gap-3 rounded-lg border-2 px-4 py-3 transition-all ${
+                            deliveryMethod === "pickup"
+                              ? "border-[#0b3d7a] bg-[#0b3d7a]/5"
+                              : "border-gray-200 hover:border-gray-300"
+                          }`}
+                        >
+                          <Package className={`h-5 w-5 ${deliveryMethod === "pickup" ? "text-[#0b3d7a]" : "text-gray-400"}`} />
+                          <div className="text-left">
+                            <p className={`text-sm font-medium ${deliveryMethod === "pickup" ? "text-[#0b3d7a]" : "text-gray-700"}`}>
+                              Local Pickup
+                            </p>
+                            <p className="text-xs text-gray-400">Windsor, ON</p>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Pickup Info */}
+                    {deliveryMethod === "pickup" && (
+                      <div className="sm:col-span-2 rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-2">
+                        <p className="text-sm font-semibold text-[#0b3d7a]">Local Pickup — Windsor, Ontario</p>
+                        <p className="text-sm text-gray-600">
+                          Free pickup is available in <strong>Windsor, Ontario, Canada</strong> only.
+                          To arrange a pickup time, email us at{" "}
+                          <a href="mailto:jartidesofficial@gmail.com" className="text-[#1a6de3] hover:underline font-medium">
+                            jartidesofficial@gmail.com
+                          </a>{" "}
+                          after placing your order. You can pay online now or in person at pickup.
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          We&apos;ll reply within 24 hours to confirm a pickup time and location.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Shipping Address Fields (hidden for pickup) */}
+                    {deliveryMethod === "ship" && (<>
                     {/* Address Line 1 */}
                     <div className="sm:col-span-2">
                       <label className="mb-1.5 block text-sm font-medium text-gray-700">
@@ -651,10 +731,12 @@ export default function CheckoutPage() {
                         </div>
                       )}
                     </div>
+                  </>)}
                   </div>
                 </div>
 
-                {/* Shipping Method Selection */}
+                {/* Shipping Method Selection (hidden for pickup) */}
+                {deliveryMethod === "ship" && (
                 <div className="rounded-xl bg-white p-6 shadow-sm sm:p-8">
                   <div className="flex items-center gap-2 mb-4">
                     <Package className="h-5 w-5 text-[#0b3d7a]" />
@@ -746,6 +828,7 @@ export default function CheckoutPage() {
                     </div>
                   )}
                 </div>
+                )}
 
                 {/* Research Compliance */}
                 <div className="rounded-xl bg-white p-6 shadow-sm sm:p-8">
@@ -999,11 +1082,13 @@ export default function CheckoutPage() {
                   </div>
                 )}
                 <div className="flex justify-between text-gray-600">
-                  <span>Shipping</span>
+                  <span>{deliveryMethod === "pickup" ? "Local Pickup" : "Shipping"}</span>
                   <span>
-                    {selectedRate
-                      ? formatPrice(shippingCost)
-                      : <span className="text-gray-400 italic">Select method</span>
+                    {deliveryMethod === "pickup"
+                      ? <span className="text-green-600 font-medium">Free</span>
+                      : selectedRate
+                        ? formatPrice(shippingCost)
+                        : <span className="text-gray-400 italic">Select method</span>
                     }
                   </span>
                 </div>
