@@ -132,8 +132,12 @@ export async function sendOrderConfirmation(
 
         <!-- Header -->
         <tr>
-          <td style="background:#111;padding:24px;text-align:center;">
-            <h1 style="margin:0;color:#fff;font-size:22px;letter-spacing:1px;">JARTIDES</h1>
+          <td style="background:#0b3d7a;padding:20px 24px;text-align:center;">
+            <img src="https://jartides.ca/images/logo.png" alt="Jartides" width="80" height="80" style="display:inline-block;vertical-align:middle;margin-right:8px;" />
+            <div style="display:inline-block;vertical-align:middle;text-align:left;">
+              <h1 style="margin:0;color:#fff;font-size:22px;font-weight:800;letter-spacing:0.5px;">JARTIDES</h1>
+              <p style="margin:0;color:#93bbf5;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;">Research Peptides</p>
+            </div>
           </td>
         </tr>
 
@@ -382,8 +386,12 @@ export async function sendShippingNotification(
       <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;">
 
         <tr>
-          <td style="background:#111;padding:24px;text-align:center;">
-            <h1 style="margin:0;color:#fff;font-size:22px;letter-spacing:1px;">JARTIDES</h1>
+          <td style="background:#0b3d7a;padding:20px 24px;text-align:center;">
+            <img src="https://jartides.ca/images/logo.png" alt="Jartides" width="80" height="80" style="display:inline-block;vertical-align:middle;margin-right:8px;" />
+            <div style="display:inline-block;vertical-align:middle;text-align:left;">
+              <h1 style="margin:0;color:#fff;font-size:22px;font-weight:800;letter-spacing:0.5px;">JARTIDES</h1>
+              <p style="margin:0;color:#93bbf5;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;">Research Peptides</p>
+            </div>
           </td>
         </tr>
 
@@ -628,8 +636,12 @@ export async function sendReviewRequest(
       <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;">
 
         <tr>
-          <td style="background:#111;padding:24px;text-align:center;">
-            <h1 style="margin:0;color:#fff;font-size:22px;letter-spacing:1px;">JARTIDES</h1>
+          <td style="background:#0b3d7a;padding:20px 24px;text-align:center;">
+            <img src="https://jartides.ca/images/logo.png" alt="Jartides" width="80" height="80" style="display:inline-block;vertical-align:middle;margin-right:8px;" />
+            <div style="display:inline-block;vertical-align:middle;text-align:left;">
+              <h1 style="margin:0;color:#fff;font-size:22px;font-weight:800;letter-spacing:0.5px;">JARTIDES</h1>
+              <p style="margin:0;color:#93bbf5;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;">Research Peptides</p>
+            </div>
           </td>
         </tr>
 
