@@ -58,10 +58,10 @@ export async function POST(req: NextRequest) {
         <tr>
           <td style="padding:16px 24px;">
             <p style="margin:0;font-size:15px;line-height:1.6;color:#555;">
-              We noticed you started an order <strong>(#${orderNumber})</strong> for <strong>${formattedTotal} CAD</strong> but didn&rsquo;t complete checkout. Your items are still waiting for you!
+              We noticed you started an order <strong>(#${orderNumber})</strong> for <strong>${formattedTotal} CAD</strong> but didn't complete checkout. Your items are still waiting for you!
             </p>
             <p style="margin:16px 0 0;font-size:15px;line-height:1.6;color:#555;">
-              If you ran into any issues or have questions, just reply to this email &mdash; we&rsquo;re happy to help.
+              If you ran into any issues or have questions, just reply to this email - we're happy to help.
             </p>
           </td>
         </tr>

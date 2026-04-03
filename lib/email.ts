@@ -36,7 +36,7 @@ export async function sendEmail(options: {
 }): Promise<{ success: boolean; error?: string }> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
-    console.warn("RESEND_API_KEY not configured — skipping email send");
+    console.warn("RESEND_API_KEY not configured -skipping email send");
     return { success: false, error: "RESEND_API_KEY not configured" };
   }
 
@@ -77,7 +77,7 @@ export async function sendOrderConfirmation(
   const customerEmail = order.guest_email;
   if (!customerEmail) {
     console.warn(
-      `Order ${order.order_number}: no customer email available — skipping confirmation`
+      `Order ${order.order_number}: no customer email available -skipping confirmation`
     );
     return;
   }
@@ -265,7 +265,7 @@ export async function sendAdminOrderNotification(
   const itemSummary = items
     .map((item) => {
       const name = escapeHtml(item.product_name);
-      return `<li>${name} &times; ${item.quantity} &mdash; ${formatCurrency(item.unit_price * item.quantity, currency)}</li>`;
+      return `<li>${name} &times; ${item.quantity}  - ${formatCurrency(item.unit_price * item.quantity, currency)}</li>`;
     })
     .join("");
 
@@ -322,7 +322,7 @@ export async function sendAdminOrderNotification(
 
   const result = await sendEmail({
     to: ["jartidesofficial@gmail.com"],
-    subject: `New Order #${safeOrderNumber} — ${formatCurrency(order.total, currency)}`,
+    subject: `New Order #${safeOrderNumber} -${formatCurrency(order.total, currency)}`,
     html,
   });
 
@@ -343,7 +343,7 @@ export async function sendShippingNotification(
   const customerEmail = order.guest_email;
   if (!customerEmail) {
     console.warn(
-      `Order ${order.order_number}: no customer email — skipping shipping notification`
+      `Order ${order.order_number}: no customer email -skipping shipping notification`
     );
     return;
   }
@@ -464,7 +464,7 @@ export async function sendLowStockAlert(
   const rows = products
     .map((p) => {
       const name = escapeHtml(p.name);
-      const sku = p.sku ? escapeHtml(p.sku) : "—";
+      const sku = p.sku ? escapeHtml(p.sku) : "-";
       const isOut = p.stock_quantity <= 0;
       const color = isOut ? "#dc2626" : "#d97706";
       const label = isOut ? "OUT OF STOCK" : "LOW STOCK";
@@ -598,7 +598,7 @@ export async function sendAdminNewAccountNotification(
 }
 
 // ---------------------------------------------------------------------------
-// Review request email — sent after delivery
+// Review request email -sent after delivery
 // ---------------------------------------------------------------------------
 
 export async function sendReviewRequest(
