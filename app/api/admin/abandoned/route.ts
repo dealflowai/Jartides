@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
               We noticed you started an order <strong>(#${orderNumber})</strong> for <strong>${formattedTotal} CAD</strong> but didn't complete checkout. Your items are still waiting for you!
             </p>
             <p style="margin:16px 0 0;font-size:15px;line-height:1.6;color:#555;">
-              If you ran into any issues or have questions, just reply to this email - we're happy to help.
+              If you ran into any issues or have questions, email us at <a href="mailto:jartidesofficial@gmail.com" style="color:#1a6de3;">jartidesofficial@gmail.com</a> - we're happy to help.
             </p>
           </td>
         </tr>
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
         <tr>
           <td style="padding:20px 24px;background:#fafafa;text-align:center;border-top:1px solid #eee;">
             <p style="margin:0;font-size:12px;color:#999;">
-              Questions? Reply to this email or contact us at
+              Questions? Email us at
               <a href="mailto:jartidesofficial@gmail.com" style="color:#666;">jartidesofficial@gmail.com</a>.
             </p>
             <p style="margin:8px 0 0;font-size:12px;color:#bbb;">&copy; Jartides. All rights reserved.</p>

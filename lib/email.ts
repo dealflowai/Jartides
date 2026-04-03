@@ -224,7 +224,7 @@ export async function sendOrderConfirmation(
         <tr>
           <td style="padding:20px 24px;background:#fafafa;text-align:center;border-top:1px solid #eee;">
             <p style="margin:0;font-size:12px;color:#999;">
-              If you have questions about your order, reply to this email or contact us at
+              Questions about your order? Email us at
               <a href="mailto:jartidesofficial@gmail.com" style="color:#666;">jartidesofficial@gmail.com</a>.
             </p>
             <p style="margin:8px 0 0;font-size:12px;color:#bbb;">&copy; Jartides. All rights reserved.</p>
@@ -432,7 +432,7 @@ export async function sendShippingNotification(
         <tr>
           <td style="padding:20px 24px;background:#fafafa;text-align:center;border-top:1px solid #eee;">
             <p style="margin:0;font-size:12px;color:#999;">
-              If you have questions, reply to this email or contact us at
+              Questions? Email us at
               <a href="mailto:jartidesofficial@gmail.com" style="color:#666;">jartidesofficial@gmail.com</a>.
             </p>
             <p style="margin:8px 0 0;font-size:12px;color:#bbb;">&copy; Jartides. All rights reserved.</p>
