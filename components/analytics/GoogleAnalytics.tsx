@@ -51,6 +51,9 @@ export default function GoogleAnalytics() {
           gtag('js', new Date());
           gtag('config', '${GA_ID}', {
             page_path: window.location.pathname,
+            send_page_view: true,
+            allow_google_signals: true,
+            allow_ad_personalization_signals: false,
           });
         `}
       </Script>

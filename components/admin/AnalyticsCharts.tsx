@@ -55,6 +55,10 @@ interface AnalyticsData {
     last30Revenue: number;
     last30Orders: number;
     revenueChange: number;
+    conversionRate: number;
+    repeatCustomerRate: number;
+    uniqueBuyers: number;
+    repeatBuyers: number;
   };
   revenueTimeSeries: { date: string; revenue: number; orders: number }[];
   orderStatusBreakdown: { status: string; count: number }[];
@@ -63,6 +67,15 @@ interface AnalyticsData {
   customerAcquisition: { month: string; count: number }[];
   aovTimeSeries: { week: string; aov: number; orders: number }[];
   topRegions: { region: string; orders: number; revenue: number }[];
+  revenueByCountry: { country: string; orders: number; revenue: number }[];
+  abandonedStats: {
+    pending: number;
+    cancelled: number;
+    total: number;
+    completed: number;
+    revenueLost: number;
+    recoveryRate: number;
+  };
 }
 
 interface RealtimeData {
@@ -105,6 +118,11 @@ const DEVICE_ICONS: Record<string, typeof Monitor> = {
 const COUNTRY_FLAGS: Record<string, string> = {
   CA: "🇨🇦", US: "🇺🇸", GB: "🇬🇧", AU: "🇦🇺", DE: "🇩🇪",
   FR: "🇫🇷", JP: "🇯🇵", IN: "🇮🇳", BR: "🇧🇷", MX: "🇲🇽",
+  AE: "🇦🇪", SA: "🇸🇦", QA: "🇶🇦", KW: "🇰🇼", BH: "🇧🇭",
+  OM: "🇴🇲", JO: "🇯🇴", LB: "🇱🇧", IQ: "🇮🇶", EG: "🇪🇬",
+  IL: "🇮🇱", TR: "🇹🇷", KR: "🇰🇷", NL: "🇳🇱", SE: "🇸🇪",
+  NO: "🇳🇴", DK: "🇩🇰", IE: "🇮🇪", NZ: "🇳🇿", CH: "🇨🇭",
+  IT: "🇮🇹", ES: "🇪🇸",
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -205,44 +223,58 @@ const TABS: { id: TabId; label: string; icon: typeof BarChart3 }[] = [
 
 // ─── Overview Tab ────────────────────────────────────────────────────────────
 
+function DateRangePicker({ range, setRange, customFrom, customTo, setCustomFrom, setCustomTo }: {
+  range: number; setRange: (r: number) => void;
+  customFrom: string; customTo: string;
+  setCustomFrom: (v: string) => void; setCustomTo: (v: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {[7, 14, 30, 60, 90].map((r) => (
+        <button key={r} onClick={() => setRange(r)} className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${range === r ? "bg-[#0b3d7a] text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+          {r}d
+        </button>
+      ))}
+      <span className="text-xs text-gray-400 ml-1">or</span>
+      <input type="date" value={customFrom} onChange={(e) => { setCustomFrom(e.target.value); setRange(0); }} className="rounded-lg border border-gray-200 px-2 py-1 text-xs text-gray-600" />
+      <span className="text-xs text-gray-400">to</span>
+      <input type="date" value={customTo} onChange={(e) => { setCustomTo(e.target.value); setRange(0); }} className="rounded-lg border border-gray-200 px-2 py-1 text-xs text-gray-600" />
+    </div>
+  );
+}
+
 function OverviewTab({ data }: { data: AnalyticsData }) {
-  const [range, setRange] = useState<30 | 60 | 90>(30);
+  const [range, setRange] = useState(30);
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
   const { kpis } = data;
 
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - range);
-  const cutoffStr = cutoff.toISOString().slice(0, 10);
-  const filtered = data.revenueTimeSeries.filter((d) => d.date >= cutoffStr);
+  const cutoffStr = range > 0
+    ? (() => { const d = new Date(); d.setDate(d.getDate() - range); return d.toISOString().slice(0, 10); })()
+    : customFrom || "1970-01-01";
+  const endStr = range > 0 ? new Date().toISOString().slice(0, 10) : (customTo || "9999-12-31");
+  const filtered = data.revenueTimeSeries.filter((d) => d.date >= cutoffStr && d.date <= endStr);
+  const rangeLabel = range > 0 ? `Last ${range} days` : `${customFrom} to ${customTo}`;
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KPICard label="Revenue (30d)" value={formatCurrency(kpis.last30Revenue)} sub="Last 30 days" icon={DollarSign} color="text-emerald-600 bg-emerald-50" change={kpis.revenueChange} />
-        <KPICard label="Total Revenue" value={formatCurrency(kpis.totalRevenue)} sub="All time" icon={TrendingUp} color="text-green-600 bg-green-50" />
-        <KPICard label="Orders (30d)" value={kpis.last30Orders.toLocaleString()} sub="Last 30 days" icon={ShoppingBag} color="text-blue-600 bg-blue-50" />
-        <KPICard label="Avg Order Value" value={formatCurrency(kpis.avgOrderValue)} sub="All time" icon={ShoppingCart} color="text-violet-600 bg-violet-50" />
+        <KPICard label="Conversion Rate" value={`${kpis.conversionRate}%`} sub="Checkouts completed" icon={ShoppingCart} color="text-blue-600 bg-blue-50" />
+        <KPICard label="Repeat Customers" value={`${kpis.repeatCustomerRate}%`} sub={`${kpis.repeatBuyers} of ${kpis.uniqueBuyers} buyers`} icon={UserPlus} color="text-violet-600 bg-violet-50" />
+        <KPICard label="Avg Order Value" value={formatCurrency(kpis.avgOrderValue)} sub="All time" icon={CreditCard} color="text-amber-600 bg-amber-50" />
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KPICard label="Total Orders" value={kpis.totalOrders.toLocaleString()} sub="All time (excl. pending)" icon={ShoppingBag} color="text-[#0b3d7a] bg-[#1a6de3]/10" />
+        <KPICard label="Total Revenue" value={formatCurrency(kpis.totalRevenue)} sub="All time" icon={TrendingUp} color="text-green-600 bg-green-50" />
+        <KPICard label="Total Orders" value={kpis.totalOrders.toLocaleString()} sub="Completed orders" icon={ShoppingBag} color="text-[#0b3d7a] bg-[#1a6de3]/10" />
         <KPICard label="Total Customers" value={kpis.totalCustomers.toLocaleString()} sub="Registered accounts" icon={Users} color="text-indigo-600 bg-indigo-50" />
         <KPICard label="Active Products" value={kpis.activeProducts.toLocaleString()} sub="In catalog" icon={Package} color="text-amber-600 bg-amber-50" />
-        <KPICard
-          label="Revenue / Order (30d)"
-          value={kpis.last30Orders > 0 ? formatCurrency(kpis.last30Revenue / kpis.last30Orders) : "$0"}
-          sub="Last 30 days avg"
-          icon={kpis.revenueChange >= 0 ? TrendingUp : TrendingDown}
-          color={kpis.revenueChange >= 0 ? "text-emerald-600 bg-emerald-50" : "text-red-600 bg-red-50"}
-        />
       </div>
 
-      <ChartCard title="Revenue Over Time" subtitle={`Daily revenue — last ${range} days`}>
-        <div className="mb-4 flex gap-2">
-          {([30, 60, 90] as const).map((r) => (
-            <button key={r} onClick={() => setRange(r)} className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${range === r ? "bg-[#0b3d7a] text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
-              {r}d
-            </button>
-          ))}
+      <ChartCard title="Revenue Over Time" subtitle={`Daily revenue - ${rangeLabel}`}>
+        <div className="mb-4">
+          <DateRangePicker range={range} setRange={setRange} customFrom={customFrom} customTo={customTo} setCustomFrom={setCustomFrom} setCustomTo={setCustomTo} />
         </div>
         <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
@@ -263,7 +295,7 @@ function OverviewTab({ data }: { data: AnalyticsData }) {
         </div>
       </ChartCard>
 
-      <ChartCard title="Orders Over Time" subtitle={`Daily orders — last ${range} days`}>
+      <ChartCard title="Orders Over Time" subtitle={`Daily orders - ${rangeLabel}`}>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={filtered}>
@@ -552,12 +584,16 @@ function RealtimeTab() {
 // ─── Sales Tab ───────────────────────────────────────────────────────────────
 
 function SalesTab({ data }: { data: AnalyticsData }) {
-  const [range, setRange] = useState<30 | 60 | 90>(30);
+  const [range, setRange] = useState(30);
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
 
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - range);
-  const cutoffStr = cutoff.toISOString().slice(0, 10);
-  const filtered = data.revenueTimeSeries.filter((d) => d.date >= cutoffStr);
+  const cutoffStr = range > 0
+    ? (() => { const d = new Date(); d.setDate(d.getDate() - range); return d.toISOString().slice(0, 10); })()
+    : customFrom || "1970-01-01";
+  const endStr = range > 0 ? new Date().toISOString().slice(0, 10) : (customTo || "9999-12-31");
+  const filtered = data.revenueTimeSeries.filter((d) => d.date >= cutoffStr && d.date <= endStr);
+  const rangeLabel = range > 0 ? `Last ${range} days` : `${customFrom} to ${customTo}`;
 
   return (
     <div className="space-y-6">
@@ -569,13 +605,9 @@ function SalesTab({ data }: { data: AnalyticsData }) {
       </div>
 
       {/* Revenue + Orders Combined Chart */}
-      <ChartCard title="Revenue & Orders" subtitle={`Last ${range} days`}>
-        <div className="mb-4 flex gap-2">
-          {([30, 60, 90] as const).map((r) => (
-            <button key={r} onClick={() => setRange(r)} className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${range === r ? "bg-[#0b3d7a] text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
-              {r}d
-            </button>
-          ))}
+      <ChartCard title="Revenue & Orders" subtitle={rangeLabel}>
+        <div className="mb-4">
+          <DateRangePicker range={range} setRange={setRange} customFrom={customFrom} customTo={customTo} setCustomFrom={setCustomFrom} setCustomTo={setCustomTo} />
         </div>
         <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
@@ -679,6 +711,87 @@ function SalesTab({ data }: { data: AnalyticsData }) {
               <Bar dataKey="revenue" name="Revenue" fill="#22c55e" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
+        </div>
+      </ChartCard>
+
+      {/* Revenue by Country */}
+      <ChartCard title="Revenue by Country" subtitle="Where your revenue comes from">
+        <div className="h-72">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data.revenueByCountry} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
+              <XAxis type="number" tickFormatter={(v) => `$${v}`} tick={{ fontSize: 11, fill: "#9ca3af" }} tickLine={false} axisLine={false} />
+              <YAxis type="category" dataKey="country" width={50} tick={{ fontSize: 12, fill: "#374151", fontWeight: 600 }} tickLine={false} axisLine={false} />
+              <Tooltip content={<CustomTooltip formatter={formatCurrency} />} cursor={{ fill: "#f9fafb" }} />
+              <Bar dataKey="revenue" name="Revenue" fill="#0b3d7a" radius={[0, 4, 4, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        {/* Country breakdown table */}
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="border-b bg-gray-50/50 text-xs uppercase text-gray-500">
+              <tr>
+                <th className="px-3 py-2 font-medium">Country</th>
+                <th className="px-3 py-2 text-right font-medium">Orders</th>
+                <th className="px-3 py-2 text-right font-medium">Revenue</th>
+                <th className="px-3 py-2 text-right font-medium">% of Total</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {data.revenueByCountry.map((c) => (
+                <tr key={c.country} className="hover:bg-gray-50/50">
+                  <td className="px-3 py-2 font-medium text-gray-900">
+                    {COUNTRY_FLAGS[c.country] ?? ""} {c.country}
+                  </td>
+                  <td className="px-3 py-2 text-right text-gray-600">{c.orders}</td>
+                  <td className="px-3 py-2 text-right font-semibold text-gray-900">{formatCurrency(c.revenue)}</td>
+                  <td className="px-3 py-2 text-right text-gray-500">
+                    {data.kpis.totalRevenue > 0 ? `${((c.revenue / data.kpis.totalRevenue) * 100).toFixed(1)}%` : "0%"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </ChartCard>
+
+      {/* Abandoned Checkout Stats */}
+      <ChartCard title="Checkout Funnel" subtitle="Completed vs abandoned checkouts">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+          <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-center">
+            <p className="text-2xl font-bold text-green-700">{data.abandonedStats.completed}</p>
+            <p className="text-xs font-medium text-green-600">Completed</p>
+          </div>
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-center">
+            <p className="text-2xl font-bold text-amber-700">{data.abandonedStats.pending}</p>
+            <p className="text-xs font-medium text-amber-600">Pending (Unpaid)</p>
+          </div>
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-center">
+            <p className="text-2xl font-bold text-red-700">{data.abandonedStats.cancelled}</p>
+            <p className="text-xs font-medium text-red-600">Cancelled / Expired</p>
+          </div>
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-center">
+            <p className="text-2xl font-bold text-blue-700">{data.abandonedStats.recoveryRate}%</p>
+            <p className="text-xs font-medium text-blue-600">Completion Rate</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex-1">
+            <div className="h-4 rounded-full bg-gray-100 overflow-hidden flex">
+              <div
+                className="h-full bg-green-500 transition-all"
+                style={{ width: `${data.abandonedStats.recoveryRate}%` }}
+              />
+              <div
+                className="h-full bg-red-400 transition-all"
+                style={{ width: `${100 - data.abandonedStats.recoveryRate}%` }}
+              />
+            </div>
+          </div>
+          <p className="text-sm text-gray-500 shrink-0">
+            {formatCurrency(data.abandonedStats.revenueLost)} lost
+          </p>
         </div>
       </ChartCard>
     </div>

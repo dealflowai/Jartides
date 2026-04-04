@@ -8,13 +8,17 @@ export async function GET() {
 
   const supabase = createAdminClient();
 
-  // Fetch all orders (excluding pending/abandoned) and order items in parallel
-  const [ordersRes, orderItemsRes, productsRes, customersRes] =
+  // Fetch all data in parallel — including pending orders for abandoned stats
+  const [ordersRes, pendingOrdersRes, orderItemsRes, productsRes, customersRes] =
     await Promise.all([
       supabase
         .from("orders")
-        .select("id, status, total, subtotal, shipping_cost, tax, payment_method, shipping_country, shipping_province, created_at")
+        .select("id, user_id, guest_email, status, total, subtotal, shipping_cost, tax, payment_method, shipping_country, shipping_province, created_at")
         .neq("status", "pending"),
+      supabase
+        .from("orders")
+        .select("id, status, total, created_at")
+        .eq("status", "pending"),
       supabase
         .from("order_items")
         .select("order_id, product_id, product_name, quantity, unit_price"),
@@ -28,6 +32,7 @@ export async function GET() {
     ]);
 
   const orders = ordersRes.data ?? [];
+  const pendingOrders = pendingOrdersRes.data ?? [];
   const orderItems = orderItemsRes.data ?? [];
   const products = productsRes.data ?? [];
   const customers = customersRes.data ?? [];
@@ -193,6 +198,57 @@ export async function GET() {
         ? 100
         : 0;
 
+  // --- Conversion rate (completed checkouts / total checkout attempts) ---
+  const totalCheckoutAttempts = orders.length + pendingOrders.length;
+  const conversionRate = totalCheckoutAttempts > 0
+    ? Math.round((completedOrders.length / totalCheckoutAttempts) * 1000) / 10
+    : 0;
+
+  // --- Repeat customer rate ---
+  const customerOrderCounts = new Map<string, number>();
+  for (const order of completedOrders) {
+    const key = order.user_id || order.guest_email || order.id;
+    customerOrderCounts.set(key, (customerOrderCounts.get(key) ?? 0) + 1);
+  }
+  const uniqueBuyers = customerOrderCounts.size;
+  const repeatBuyers = Array.from(customerOrderCounts.values()).filter((c) => c > 1).length;
+  const repeatCustomerRate = uniqueBuyers > 0
+    ? Math.round((repeatBuyers / uniqueBuyers) * 1000) / 10
+    : 0;
+
+  // --- Revenue by country ---
+  const countryCounts: Record<string, { orders: number; revenue: number }> = {};
+  for (const order of completedOrders) {
+    const country = order.shipping_country || "Unknown";
+    if (!countryCounts[country]) countryCounts[country] = { orders: 0, revenue: 0 };
+    countryCounts[country].orders++;
+    countryCounts[country].revenue += order.total ?? 0;
+  }
+  const revenueByCountry = Object.entries(countryCounts)
+    .sort(([, a], [, b]) => b.revenue - a.revenue)
+    .slice(0, 15)
+    .map(([country, data]) => ({
+      country,
+      orders: data.orders,
+      revenue: Math.round(data.revenue * 100) / 100,
+    }));
+
+  // --- Abandoned checkout stats ---
+  const cancelledOrders = orders.filter((o) => o.status === "cancelled");
+  const abandonedTotal = pendingOrders.length + cancelledOrders.length;
+  const abandonedRevenueLost = [...pendingOrders, ...cancelledOrders]
+    .reduce((s, o) => s + (o.total ?? 0), 0);
+  const abandonedStats = {
+    pending: pendingOrders.length,
+    cancelled: cancelledOrders.length,
+    total: abandonedTotal,
+    completed: completedOrders.length,
+    revenueLost: Math.round(abandonedRevenueLost * 100) / 100,
+    recoveryRate: totalCheckoutAttempts > 0
+      ? Math.round((completedOrders.length / totalCheckoutAttempts) * 1000) / 10
+      : 0,
+  };
+
   return NextResponse.json({
     kpis: {
       totalRevenue: Math.round(totalRevenue * 100) / 100,
@@ -203,6 +259,10 @@ export async function GET() {
       last30Revenue: Math.round(last30Revenue * 100) / 100,
       last30Orders,
       revenueChange: Math.round(revenueChange * 10) / 10,
+      conversionRate,
+      repeatCustomerRate,
+      uniqueBuyers,
+      repeatBuyers,
     },
     revenueTimeSeries,
     orderStatusBreakdown,
@@ -211,5 +271,7 @@ export async function GET() {
     customerAcquisition,
     aovTimeSeries,
     topRegions,
+    revenueByCountry,
+    abandonedStats,
   });
 }
