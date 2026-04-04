@@ -633,25 +633,24 @@ function SalesTab({ data }: { data: AnalyticsData }) {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Order Status */}
         <ChartCard title="Order Status Breakdown" subtitle="All orders by status">
-          <div className="flex items-center justify-center">
-            <div className="h-64 w-full max-w-xs">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={data.orderStatusBreakdown} cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={3} dataKey="count" nameKey="status" label={(props) => `${props.name ?? ""} (${props.value})`}>
-                    {data.orderStatusBreakdown.map((entry) => (
-                      <Cell key={entry.status} fill={STATUS_COLORS[entry.status] ?? "#9ca3af"} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={data.orderStatusBreakdown} cx="50%" cy="45%" innerRadius={50} outerRadius={85} paddingAngle={3} dataKey="count" nameKey="status">
+                  {data.orderStatusBreakdown.map((entry) => (
+                    <Cell key={entry.status} fill={STATUS_COLORS[entry.status] ?? "#9ca3af"} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
-          <div className="mt-2 flex flex-wrap justify-center gap-3">
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-2">
             {data.orderStatusBreakdown.map((entry) => (
-              <div key={entry.status} className="flex items-center gap-1.5 text-xs text-gray-600">
-                <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: STATUS_COLORS[entry.status] ?? "#9ca3af" }} />
+              <div key={entry.status} className="flex items-center gap-1.5 text-sm text-gray-600">
+                <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: STATUS_COLORS[entry.status] ?? "#9ca3af" }} />
                 <span className="capitalize">{entry.status}</span>
+                <span className="font-semibold text-gray-900">({entry.count})</span>
               </div>
             ))}
           </div>
@@ -659,25 +658,24 @@ function SalesTab({ data }: { data: AnalyticsData }) {
 
         {/* Payment Methods */}
         <ChartCard title="Payment Methods" subtitle="How customers pay">
-          <div className="flex items-center justify-center">
-            <div className="h-64 w-full max-w-xs">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={data.paymentBreakdown} cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={3} dataKey="count" nameKey="method" label={(props) => `${props.name ?? ""} (${props.value})`}>
-                    {data.paymentBreakdown.map((_, i) => (
-                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={data.paymentBreakdown} cx="50%" cy="45%" innerRadius={50} outerRadius={85} paddingAngle={3} dataKey="count" nameKey="method">
+                  {data.paymentBreakdown.map((_, i) => (
+                    <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
-          <div className="mt-2 flex flex-wrap justify-center gap-3">
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-2">
             {data.paymentBreakdown.map((entry, i) => (
-              <div key={entry.method} className="flex items-center gap-1.5 text-xs text-gray-600">
-                <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
+              <div key={entry.method} className="flex items-center gap-1.5 text-sm text-gray-600">
+                <div className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
                 <span>{entry.method}</span>
+                <span className="font-semibold text-gray-900">({entry.count})</span>
               </div>
             ))}
           </div>
