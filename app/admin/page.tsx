@@ -354,7 +354,6 @@ export default async function AdminDashboard() {
           </div>
         </div>
       </div>
-      </DashboardTabs>
 
       {/* Abandoned Checkouts */}
       {abandonedCheckouts.length > 0 && (
@@ -414,6 +413,7 @@ export default async function AdminDashboard() {
           </div>
         </div>
       )}
+      </DashboardTabs>
     </div>
   );
 }
