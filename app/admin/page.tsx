@@ -82,7 +82,7 @@ export default async function AdminDashboard() {
       .select("product_id, product_name, quantity, unit_price"),
     supabase
       .from("orders")
-      .select("id, order_number, guest_email, total, created_at")
+      .select("id, order_number, guest_email, total, created_at, stripe_payment_intent_id")
       .eq("status", "pending")
       .order("created_at", { ascending: false })
       .limit(10),
@@ -407,10 +407,17 @@ export default async function AdminDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-amber-100">
-                {abandonedCheckouts.map((checkout: { id: string; order_number: string; guest_email: string | null; total: number; created_at: string }) => (
-                  <tr key={checkout.id} className="hover:bg-amber-50">
+                {abandonedCheckouts.map((checkout: { id: string; order_number: string; guest_email: string | null; total: number; created_at: string; stripe_payment_intent_id: string | null }) => (
+                  <tr key={checkout.id} className={`hover:bg-amber-50 ${checkout.stripe_payment_intent_id ? "bg-green-50/50" : ""}`}>
                     <td className="whitespace-nowrap px-5 py-3 font-medium text-gray-900">
-                      {checkout.order_number}
+                      <Link href={`/admin/orders/${checkout.id}`} className="text-blue-600 hover:text-blue-700">
+                        {checkout.order_number}
+                      </Link>
+                      {checkout.stripe_payment_intent_id && (
+                        <span className="ml-2 inline-block rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700">
+                          May have paid
+                        </span>
+                      )}
                     </td>
                     <td className="px-5 py-3 text-gray-700">
                       {checkout.guest_email ?? "—"}
