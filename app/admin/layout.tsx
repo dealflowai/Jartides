@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import AdminNav from "@/components/admin/AdminNav";
+import AdminNotifications from "@/components/admin/AdminNotifications";
 import type { Profile } from "@/lib/types";
 
 export default async function AdminLayout({
@@ -36,8 +37,14 @@ export default async function AdminLayout({
         <AdminNav />
       </aside>
 
-      <div className="ml-64 flex-1 overflow-y-auto bg-gray-50 p-8">
-        {children}
+      <div className="ml-64 flex-1 overflow-y-auto bg-gray-50">
+        {/* Top bar with notifications */}
+        <div className="sticky top-0 z-20 flex items-center justify-end bg-gray-50 px-8 py-3 border-b border-gray-200/50">
+          <AdminNotifications />
+        </div>
+        <div className="p-8 pt-4">
+          {children}
+        </div>
       </div>
     </div>
   );
