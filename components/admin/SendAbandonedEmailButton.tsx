@@ -110,13 +110,9 @@ export default function SendAbandonedEmailButton({ email, orderNumber, total }: 
             <div className="p-5">
               <div className="border border-gray-200 rounded-lg overflow-hidden bg-[#f5f5f5]">
                 {/* Branded header */}
-                <div className="bg-[#0b3d7a] px-5 py-4 text-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/images/logo.png" alt="Jartides" width={50} height={50} className="inline-block align-middle mr-2" />
-                  <div className="inline-block align-middle text-left">
-                    <p className="text-white text-base font-extrabold tracking-wide m-0">JARTIDES</p>
-                    <p className="text-blue-200 text-[9px] font-bold tracking-[2px] uppercase m-0">Research Peptides</p>
-                  </div>
+                <div className="bg-[#0b3d7a] px-5 py-3 text-center">
+                  <p className="text-white text-lg font-extrabold tracking-[1.5px] m-0">JARTIDES</p>
+                  <p className="text-blue-200 text-[9px] font-bold tracking-[3px] uppercase m-0 mt-0.5">Research Peptides</p>
                 </div>
 
                 {/* Body */}

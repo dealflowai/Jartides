@@ -166,13 +166,9 @@ export default function AdminEmailPage() {
               <div className="rounded-xl border border-gray-200 overflow-hidden bg-[#f5f5f5]">
                 <div style={{ maxWidth: 600, margin: "0 auto" }} className="bg-white rounded-lg overflow-hidden my-6 mx-auto shadow-sm">
                   {/* Header */}
-                  <div className="bg-[#0b3d7a] px-6 py-5 text-center">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/images/logo.png" alt="Jartides" width={60} height={60} className="inline-block align-middle mr-2" />
-                    <div className="inline-block align-middle text-left">
-                      <p className="text-white text-lg font-extrabold tracking-wide m-0">JARTIDES</p>
-                      <p className="text-blue-200 text-[10px] font-bold tracking-[2px] uppercase m-0">Research Peptides</p>
-                    </div>
+                  <div className="bg-[#0b3d7a] px-6 py-3.5 text-center">
+                    <p className="text-white text-xl font-extrabold tracking-[1.5px] m-0">JARTIDES</p>
+                    <p className="text-blue-200 text-[9px] font-bold tracking-[3px] uppercase m-0 mt-0.5">Research Peptides</p>
                   </div>
                   {/* Body */}
                   <div className="px-6 py-8">
