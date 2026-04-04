@@ -44,9 +44,12 @@ export async function POST(req: NextRequest) {
       <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;">
 
         <tr>
-          <td style="background:#0b3d7a;padding:14px 24px;text-align:center;">
-            <h1 style="margin:0;color:#fff;font-size:20px;font-weight:800;letter-spacing:1.5px;">JARTIDES</h1>
-            <p style="margin:2px 0 0;color:#93bbf5;font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;">Research Peptides</p>
+          <td style="background:#0b3d7a;padding:16px 24px;text-align:center;">
+            <img src="https://jartides.ca/images/logo.png" alt="Jartides" width="40" height="40" style="display:inline-block;vertical-align:middle;margin-right:10px;border-radius:50%;background:#fff;padding:3px;" />
+            <div style="display:inline-block;vertical-align:middle;text-align:left;">
+              <h1 style="margin:0;color:#fff;font-size:18px;font-weight:800;letter-spacing:1.5px;">JARTIDES</h1>
+              <p style="margin:1px 0 0;color:#93bbf5;font-size:8px;font-weight:700;letter-spacing:3px;text-transform:uppercase;">Research Peptides</p>
+            </div>
           </td>
         </tr>
 
