@@ -22,6 +22,11 @@ function getAdminLimiter(): Ratelimit | null {
 }
 
 export async function middleware(request: NextRequest) {
+  // Skip middleware for webhook routes — they need raw body for signature verification
+  if (request.nextUrl.pathname.startsWith("/api/webhooks/")) {
+    return NextResponse.next();
+  }
+
   // Handle CORS preflight for API routes
   if (
     request.nextUrl.pathname.startsWith("/api/") &&

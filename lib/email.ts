@@ -82,6 +82,7 @@ export async function sendOrderConfirmation(
     return;
   }
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://jartides.ca";
   const safeOrderNumber = escapeHtml(order.order_number);
   const safeName = escapeHtml(order.shipping_name);
   const safeLine1 = escapeHtml(order.shipping_line1);
@@ -212,6 +213,20 @@ export async function sendOrderConfirmation(
             <p style="margin:0;font-size:14px;line-height:1.6;color:#555;">${addressBlock}</p>
           </td>
         </tr>
+
+        <!-- Create Account CTA (guest orders only) -->
+        ${!order.user_id ? `
+        <tr>
+          <td style="padding:20px 24px;text-align:center;border-top:1px solid #eee;">
+            <p style="margin:0 0 12px;font-size:14px;color:#333;">
+              <strong>Track your order and save your info for next time!</strong>
+            </p>
+            <a href="${siteUrl}/register" style="display:inline-block;background:#0b3d7a;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:bold;">
+              Create a Free Account
+            </a>
+            <p style="margin:8px 0 0;font-size:12px;color:#999;">View order history, save addresses, and check out faster.</p>
+          </td>
+        </tr>` : ""}
 
         <!-- Disclaimer -->
         <tr>

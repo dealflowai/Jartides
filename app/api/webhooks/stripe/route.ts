@@ -51,18 +51,25 @@ export async function POST(request: NextRequest) {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
 
         // Update order status to processing (only if still pending — idempotency)
-        const { data: order, error: orderError } = await supabase
+        const { data: updatedOrders, error: orderError } = await supabase
           .from("orders")
           .update({ status: "processing", updated_at: new Date().toISOString() })
           .eq("stripe_payment_intent_id", paymentIntent.id)
           .eq("status", "pending")
-          .select("id")
-          .single();
+          .select("id");
 
-        if (orderError || !order) {
+        if (orderError) {
           log.error("Failed to update order on payment success", {
             paymentIntentId: paymentIntent.id,
-            error: orderError?.message,
+            error: orderError.message,
+          });
+          break;
+        }
+
+        const order = updatedOrders?.[0];
+        if (!order) {
+          log.info("No pending order found for payment intent (may already be processed)", {
+            paymentIntentId: paymentIntent.id,
           });
           break;
         }
