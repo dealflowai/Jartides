@@ -41,13 +41,19 @@ const CheckoutSchema = z.object({
   items: z.array(CartItemSchema).min(1, "Cart cannot be empty"),
   shipping: ShippingSchema,
   email: z.string().email(),
-  paymentMethod: z.enum(["stripe"]),
+  paymentMethod: z.enum(["stripe", "paypal"]),
   researchDisclaimerAccepted: z.literal(true),
   ageVerified: z.literal(true),
   termsAccepted: z.literal(true),
   shippingRate: ShippingRateSchema,
   createAccount: z.boolean().optional(),
-  password: z.string().min(8).optional(),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password must contain an uppercase letter")
+    .regex(/[0-9]/, "Password must contain a number")
+    .regex(/[^A-Za-z0-9]/, "Password must contain a special character")
+    .optional(),
 });
 
 import { TAX_RATE } from "@/lib/constants";
@@ -230,44 +236,49 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create Stripe PaymentIntent with full order context
+    // Create payment session based on selected method
     let clientSecret: string | null = null;
 
-    try {
-      const paymentIntent = await getStripe().paymentIntents.create({
-        amount: Math.round(total * 100),
-        currency: "cad",
-        automatic_payment_methods: { enabled: true },
-        receipt_email: email,
-        shipping: {
-          name: shipping.fullName,
-          address: {
-            line1: shipping.line1,
-            line2: shipping.line2 || undefined,
-            city: shipping.city,
-            state: shipping.province,
-            postal_code: shipping.postalCode,
-            country: shipping.country,
+    if (paymentMethod === "stripe") {
+      try {
+        const paymentIntent = await getStripe().paymentIntents.create({
+          amount: Math.round(total * 100),
+          currency: "cad",
+          automatic_payment_methods: { enabled: true },
+          receipt_email: email,
+          shipping: {
+            name: shipping.fullName,
+            address: {
+              line1: shipping.line1,
+              line2: shipping.line2 || undefined,
+              city: shipping.city,
+              state: shipping.province,
+              postal_code: shipping.postalCode,
+              country: shipping.country,
+            },
           },
-        },
-        metadata: { orderNumber, email, orderId: order.id },
-      });
+          metadata: { orderNumber, email, orderId: order.id },
+        });
 
-      clientSecret = paymentIntent.client_secret;
+        clientSecret = paymentIntent.client_secret;
 
-      // Link PaymentIntent to order
-      await supabase
-        .from("orders")
-        .update({ stripe_payment_intent_id: paymentIntent.id })
-        .eq("id", order.id);
-    } catch (stripeErr) {
-      log.error("Stripe PaymentIntent error", { orderId: order.id, error: String(stripeErr) });
-      await supabase.from("orders").delete().eq("id", order.id);
-      return NextResponse.json(
-        { error: "Failed to initialize payment. Please try again." },
-        { status: 500 }
-      );
+        // Link PaymentIntent to order
+        await supabase
+          .from("orders")
+          .update({ stripe_payment_intent_id: paymentIntent.id })
+          .eq("id", order.id);
+      } catch (stripeErr) {
+        log.error("Stripe PaymentIntent error", { orderId: order.id, error: String(stripeErr) });
+        await supabase.from("orders").delete().eq("id", order.id);
+        return NextResponse.json(
+          { error: "Failed to initialize payment. Please try again." },
+          { status: 500 }
+        );
+      }
     }
+    // For PayPal: order is created with "pending" status.
+    // Frontend will call /api/paypal/create-order with the orderId,
+    // then redirect to PayPal, then call /api/paypal/capture-order.
 
     // Create account if opted in (uses signUp to trigger verification email)
     let accountCreated = false;

@@ -8,6 +8,7 @@ export default function ClearCart() {
 
   useEffect(() => {
     clearCart();
+    try { sessionStorage.removeItem("jartides_checkout"); } catch { /* ignore */ }
   }, [clearCart]);
 
   return null;

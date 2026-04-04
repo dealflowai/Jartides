@@ -304,10 +304,21 @@ begin
 end $$;
 
 -- ===== Stock Decrement Function =====
+-- Returns true if stock was successfully decremented, false if insufficient.
+-- The WHERE clause prevents overselling by only updating if enough stock exists.
 create or replace function decrement_stock(p_product_id uuid, p_quantity int)
-returns void as $$
-  update products set stock_quantity = greatest(stock_quantity - p_quantity, 0) where id = p_product_id;
-$$ language sql security definer;
+returns boolean as $$
+declare
+  rows_affected int;
+begin
+  update products
+  set stock_quantity = stock_quantity - p_quantity
+  where id = p_product_id
+    and stock_quantity >= p_quantity;
+  get diagnostics rows_affected = row_count;
+  return rows_affected > 0;
+end;
+$$ language plpgsql security definer;
 
 -- ===== Discount Codes =====
 CREATE TABLE discount_codes (

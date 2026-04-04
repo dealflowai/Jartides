@@ -1,8 +1,25 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 
 const ALLOWED_ORIGIN =
   process.env.NEXT_PUBLIC_SITE_URL || "https://jartides.ca";
+
+// Admin API rate limiter: 30 requests per 60 seconds per IP
+let adminLimiter: Ratelimit | null = null;
+function getAdminLimiter(): Ratelimit | null {
+  if (adminLimiter) return adminLimiter;
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token || url.startsWith("your_")) return null;
+  adminLimiter = new Ratelimit({
+    redis: new Redis({ url, token }),
+    limiter: Ratelimit.slidingWindow(30, "60 s"),
+    prefix: "rl:admin",
+  });
+  return adminLimiter;
+}
 
 export async function middleware(request: NextRequest) {
   // Handle CORS preflight for API routes
@@ -76,6 +93,28 @@ export async function middleware(request: NextRequest) {
     url.pathname = redirect;
     url.searchParams.delete("redirect");
     return NextResponse.redirect(url);
+  }
+
+  // Rate-limit admin API routes (30 req/min per IP)
+  if (pathname.startsWith("/api/admin/")) {
+    const limiter = getAdminLimiter();
+    if (limiter) {
+      const ip =
+        request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+        request.headers.get("x-real-ip") ||
+        "unknown";
+      const { success, reset } = await limiter.limit(`admin:${ip}`);
+      if (!success) {
+        const retryAfter = Math.ceil((reset - Date.now()) / 1000);
+        return NextResponse.json(
+          { error: "Too many requests. Please try again later." },
+          {
+            status: 429,
+            headers: { "Retry-After": String(Math.max(retryAfter, 1)) },
+          }
+        );
+      }
+    }
   }
 
   // Attach CORS headers to API responses

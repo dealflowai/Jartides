@@ -69,7 +69,14 @@ export default function CheckoutPage() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [accountCreated, setAccountCreated] = useState(false);
-  const [shipping, setShipping] = useState<ShippingForm>(INITIAL_SHIPPING);
+  const [shipping, setShipping] = useState<ShippingForm>(() => {
+    if (typeof window === "undefined") return INITIAL_SHIPPING;
+    try {
+      const saved = sessionStorage.getItem("jartides_checkout");
+      if (saved) return { ...INITIAL_SHIPPING, ...JSON.parse(saved) };
+    } catch { /* ignore */ }
+    return INITIAL_SHIPPING;
+  });
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof ShippingForm, string>>>({});
   const [compliance, setCompliance] = useState({
     researchDisclaimer: false,
@@ -111,6 +118,14 @@ export default function CheckoutPage() {
       router.push("/shop");
     }
   }, [items, router, clientSecret, orderId]);
+
+  // Autosave shipping form to sessionStorage (debounced)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try { sessionStorage.setItem("jartides_checkout", JSON.stringify(shipping)); } catch { /* ignore */ }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [shipping]);
 
   const fetchShippingRates = useCallback(async () => {
     if (!shipping.city || !shipping.country || !shipping.postalCode || !shipping.line1) return;

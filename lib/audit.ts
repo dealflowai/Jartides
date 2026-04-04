@@ -16,7 +16,8 @@ export type AuditAction =
   | "coa.update"
   | "coa.delete"
   | "settings.update"
-  | "upload.file";
+  | "upload.file"
+  | "back_in_stock.notify";
 
 interface AuditEntry {
   admin_id: string;

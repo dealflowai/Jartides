@@ -614,6 +614,103 @@ export async function sendAdminNewAccountNotification(
 }
 
 // ---------------------------------------------------------------------------
+// Back-in-stock notification email to customer
+// ---------------------------------------------------------------------------
+
+export async function sendBackInStockNotification(
+  email: string,
+  productName: string,
+  productSlug: string
+): Promise<void> {
+  const safeName = escapeHtml(productName);
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://jartides.ca";
+
+  const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"/></head>
+<body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,Helvetica,sans-serif;color:#333;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:24px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;">
+
+        <tr>
+          <td style="background:#0b3d7a;padding:14px 24px;">
+            <table cellpadding="0" cellspacing="0" border="0"><tr>
+              <td style="vertical-align:middle;padding-right:12px;">
+                <img src="https://jartides.ca/icon.png" alt="" width="42" height="42" style="display:block;border-radius:50%;" />
+              </td>
+              <td style="vertical-align:middle;">
+                <h1 style="margin:0;color:#fff;font-size:20px;font-weight:800;letter-spacing:1.5px;font-family:Arial,Helvetica,sans-serif;">JARTIDES</h1>
+                <p style="margin:1px 0 0;color:#7fb3f0;font-size:8px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;">Research Peptides</p>
+              </td>
+            </tr></table>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:32px 24px 8px;">
+            <h2 style="margin:0 0 4px;font-size:20px;color:#111;">Good News &mdash; It&apos;s Back in Stock!</h2>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:16px 24px 0;">
+            <p style="margin:0;font-size:15px;line-height:1.6;">
+              You asked us to let you know when <strong>${safeName}</strong> was back in stock. Great news &mdash; it&apos;s available again! Grab yours before it sells out.
+            </p>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:24px;text-align:center;">
+            <a href="${siteUrl}/shop/${productSlug}" style="display:inline-block;background:#0b3d7a;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:bold;">
+              Shop Now
+            </a>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:16px 24px;background:#fdf6e3;border-top:1px solid #eee;">
+            <p style="margin:0;font-size:12px;color:#856404;line-height:1.5;text-align:center;">
+              <strong>For Research Use Only.</strong> Products sold by Jartides are intended solely for
+              laboratory and research purposes.
+            </p>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:20px 24px;background:#fafafa;text-align:center;border-top:1px solid #eee;">
+            <p style="margin:0;font-size:12px;color:#999;">
+              Questions? Email us at
+              <a href="mailto:jartidesofficial@gmail.com" style="color:#666;">jartidesofficial@gmail.com</a>.
+            </p>
+            <p style="margin:8px 0 0;font-size:12px;color:#bbb;">&copy; Jartides. All rights reserved.</p>
+            ${unsubscribeFooter(email)}
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  const result = await sendEmail({
+    to: [email],
+    replyTo: "jartidesofficial@gmail.com",
+    subject: `${safeName} is Back in Stock!`,
+    html,
+  });
+
+  if (!result.success) {
+    console.error(`Failed to send back-in-stock notification to ${email}: ${result.error}`);
+  } else {
+    console.log(`Back-in-stock notification sent to ${email} for ${productName}`);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Review request email -sent after delivery
 // ---------------------------------------------------------------------------
 
