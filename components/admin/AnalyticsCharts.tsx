@@ -40,6 +40,7 @@ import {
   UserPlus,
   CreditCard,
   AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -317,14 +318,21 @@ function OverviewTab({ data }: { data: AnalyticsData }) {
 function RealtimeTab() {
   const [rt, setRt] = useState<RealtimeData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const fetchRealtime = useCallback(() => {
     fetch("/api/admin/analytics/realtime")
       .then((r) => r.json())
-      .then(setRt)
+      .then((data) => { setRt(data); setLastUpdated(new Date()); })
       .catch(() => {})
-      .finally(() => setLoading(false));
+      .finally(() => { setLoading(false); setRefreshing(false); });
   }, []);
+
+  function handleRefresh() {
+    setRefreshing(true);
+    fetchRealtime();
+  }
 
   useEffect(() => {
     fetchRealtime();
@@ -359,6 +367,27 @@ function RealtimeTab() {
 
   return (
     <div className="space-y-6">
+      {/* Refresh bar */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-xs text-gray-400">
+          <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+          Auto-refreshes every 10s
+          {lastUpdated && (
+            <span>
+              - last updated {lastUpdated.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit", second: "2-digit" })}
+            </span>
+          )}
+        </div>
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
+          {refreshing ? "Refreshing..." : "Refresh Now"}
+        </button>
+      </div>
+
       {/* Live KPIs */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border border-gray-200 bg-white p-5">
