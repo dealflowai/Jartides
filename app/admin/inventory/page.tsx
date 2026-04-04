@@ -1,11 +1,11 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminPage } from "@/lib/admin";
 import InventoryTable from "@/components/admin/InventoryTable";
 import type { Product } from "@/lib/types";
 
 export default async function AdminInventoryPage() {
   await requireAdminPage();
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data } = await supabase
     .from("products")

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminPage } from "@/lib/admin";
 import { formatPrice } from "@/lib/utils";
 import CleanupOrdersButton from "@/components/admin/CleanupOrdersButton";
@@ -17,7 +17,7 @@ const statusColors: Record<OrderStatus, string> = {
 
 export default async function AdminOrdersPage() {
   await requireAdminPage();
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data } = await supabase
     .from("orders")

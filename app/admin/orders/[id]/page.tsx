@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminPage } from "@/lib/admin";
 import { formatPrice } from "@/lib/utils";
 import OrderStatusUpdater from "@/components/admin/OrderStatusUpdater";
@@ -24,7 +24,7 @@ export default async function AdminOrderDetailPage({
 }) {
   await requireAdminPage();
   const { id } = await params;
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data: order } = await supabase
     .from("orders")
