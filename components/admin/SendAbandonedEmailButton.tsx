@@ -29,12 +29,26 @@ export default function SendAbandonedEmailButton({ email, orderNumber, total }: 
       });
 
       if (!res.ok) throw new Error();
-      setSentAt(new Date().toLocaleString("en-CA", {
+      const now = new Date();
+      setSentAt(now.toLocaleString("en-CA", {
         month: "short",
         day: "numeric",
         hour: "numeric",
         minute: "2-digit",
       }));
+
+      // Save to shared sent history so /admin/email page shows it too
+      try {
+        const saved = JSON.parse(localStorage.getItem("jartides_sent_emails") || "[]");
+        const entry = {
+          to: email,
+          subject: `You left something behind! Complete your Jartides order #${orderNumber}`,
+          body: `We noticed you started an order (#${orderNumber}) for ${formattedTotal} CAD but didn't complete checkout. Your items are still waiting for you!\n\nIf you ran into any issues or have questions, email us at jartidesofficial@gmail.com - we're happy to help.`,
+          sentAt: now.toISOString(),
+        };
+        localStorage.setItem("jartides_sent_emails", JSON.stringify([entry, ...saved].slice(0, 50)));
+      } catch { /* ignore */ }
+
       setStatus("sent");
     } catch {
       setStatus("error");
