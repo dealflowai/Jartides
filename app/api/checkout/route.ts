@@ -307,11 +307,12 @@ export async function POST(request: NextRequest) {
 
       if (signupData?.user) {
         accountCreated = true;
-        // Link this order and any previous guest orders to the new account
+        // Link previous paid guest orders to the new account (not pending ones)
         await supabase
           .from("orders")
           .update({ user_id: signupData.user.id })
-          .eq("guest_email", email);
+          .eq("guest_email", email)
+          .neq("status", "pending");
       }
     }
 

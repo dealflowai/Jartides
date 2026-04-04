@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
       .update({ user_id: user.id })
       .eq("guest_email", user.email)
       .is("user_id", null)
+      .neq("status", "pending")
       .select("id");
 
     return NextResponse.json({ linked: data?.length ?? 0 });
