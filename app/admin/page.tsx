@@ -15,6 +15,7 @@ import {
 import Link from "next/link";
 import type { Order, OrderStatus } from "@/lib/types";
 import SendAbandonedEmailButton from "@/components/admin/SendAbandonedEmailButton";
+import DashboardTabs from "@/components/admin/DashboardTabs";
 
 const statusColors: Record<OrderStatus, string> = {
   pending: "bg-yellow-100 text-yellow-800",
@@ -209,6 +210,7 @@ export default async function AdminDashboard() {
         </div>
       </div>
 
+      <DashboardTabs>
       {/* Stats grid */}
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {stats.map((stat) => {
@@ -352,6 +354,7 @@ export default async function AdminDashboard() {
           </div>
         </div>
       </div>
+      </DashboardTabs>
 
       {/* Abandoned Checkouts */}
       {abandonedCheckouts.length > 0 && (
