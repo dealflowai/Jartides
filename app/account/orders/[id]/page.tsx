@@ -17,11 +17,12 @@ export default async function OrderDetailPage({ params }: PageProps) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Try by user_id first, then fall back to guest_email match
   const { data: order } = await supabase
     .from("orders")
     .select("*")
     .eq("id", id)
-    .eq("user_id", user!.id)
+    .or(`user_id.eq.${user!.id},guest_email.eq.${user!.email}`)
     .single<Order>();
 
   if (!order) {

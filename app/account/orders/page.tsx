@@ -11,7 +11,7 @@ export default async function OrdersPage() {
   const { data: orders } = await supabase
     .from("orders")
     .select("*")
-    .eq("user_id", user!.id)
+    .or(`user_id.eq.${user!.id},guest_email.eq.${user!.email}`)
     .neq("status", "pending")
     .order("created_at", { ascending: false })
     .returns<Order[]>();

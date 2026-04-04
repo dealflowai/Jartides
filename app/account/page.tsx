@@ -17,14 +17,15 @@ export default async function AccountPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Link any guest orders made with this email
+  // Link any paid guest orders made with this email (skip pending/unpaid)
   if (user?.email) {
     const admin = createAdminClient();
     await admin
       .from("orders")
       .update({ user_id: user.id })
       .eq("guest_email", user.email)
-      .is("user_id", null);
+      .is("user_id", null)
+      .neq("status", "pending");
   }
 
   const { data: profile } = await supabase
@@ -36,7 +37,8 @@ export default async function AccountPage() {
   const { data: orders, count } = await supabase
     .from("orders")
     .select("*", { count: "exact" })
-    .eq("user_id", user!.id)
+    .or(`user_id.eq.${user!.id},guest_email.eq.${user!.email}`)
+    .neq("status", "pending")
     .order("created_at", { ascending: false })
     .limit(5)
     .returns<Order[]>();
