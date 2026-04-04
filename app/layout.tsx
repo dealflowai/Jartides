@@ -11,6 +11,7 @@ import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 import SentryInit from "@/components/analytics/SentryInit";
 import CookieConsent from "@/components/layout/CookieConsent";
 import WebVitals from "@/components/analytics/WebVitals";
+import SiteTracker from "@/components/analytics/SiteTracker";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -76,6 +77,7 @@ export default function RootLayout({
         <GoogleAnalytics />
         <SentryInit />
         <WebVitals />
+        <SiteTracker />
         <StructuredData />
         <CartProvider>
           <WishlistProvider>
