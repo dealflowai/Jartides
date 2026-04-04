@@ -3,6 +3,7 @@ import { requireAdminPage } from "@/lib/admin";
 import { formatPrice } from "@/lib/utils";
 import {
   ShoppingBag,
+  ShoppingCart,
   DollarSign,
   Package,
   AlertTriangle,
@@ -11,6 +12,7 @@ import {
   Plus,
   ClipboardList,
   Settings,
+  CreditCard,
 } from "lucide-react";
 import Link from "next/link";
 import type { Order, OrderStatus } from "@/lib/types";
@@ -122,6 +124,9 @@ export default async function AdminDashboard() {
     .sort((a, b) => b.totalQty - a.totalQty)
     .slice(0, 5);
 
+  const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+  const abandonedCount = abandonedCheckouts.length;
+
   const stats = [
     {
       label: "Total Revenue",
@@ -129,6 +134,7 @@ export default async function AdminDashboard() {
       sub: "All time",
       icon: DollarSign,
       color: "text-emerald-600 bg-emerald-50",
+      href: "/admin/analytics",
     },
     {
       label: "Revenue (30 days)",
@@ -136,6 +142,7 @@ export default async function AdminDashboard() {
       sub: "Last 30 days",
       icon: TrendingUp,
       color: "text-green-600 bg-green-50",
+      href: "/admin/analytics",
     },
     {
       label: "Total Orders",
@@ -143,6 +150,7 @@ export default async function AdminDashboard() {
       sub: "All time",
       icon: ShoppingBag,
       color: "text-blue-600 bg-blue-50",
+      href: "/admin/orders",
     },
     {
       label: "Total Customers",
@@ -150,6 +158,7 @@ export default async function AdminDashboard() {
       sub: "Registered accounts",
       icon: Users,
       color: "text-violet-600 bg-violet-50",
+      href: "/admin/customers",
     },
     {
       label: "Active Products",
@@ -157,6 +166,7 @@ export default async function AdminDashboard() {
       sub: "In catalog",
       icon: Package,
       color: "text-[#0b3d7a] bg-[#1a6de3]/10",
+      href: "/admin/products",
     },
     {
       label: "Low Stock",
@@ -165,6 +175,24 @@ export default async function AdminDashboard() {
       icon: AlertTriangle,
       color:
         lowStock > 0 ? "text-red-600 bg-red-50" : "text-gray-600 bg-gray-50",
+      href: "/admin/inventory",
+    },
+    {
+      label: "Avg Order Value",
+      value: formatPrice(avgOrderValue),
+      sub: "All time",
+      icon: CreditCard,
+      color: "text-amber-600 bg-amber-50",
+      href: "/admin/analytics",
+    },
+    {
+      label: "Abandoned Carts",
+      value: abandonedCount.toLocaleString(),
+      sub: abandonedCount > 0 ? "Awaiting follow-up" : "None pending",
+      icon: ShoppingCart,
+      color:
+        abandonedCount > 0 ? "text-orange-600 bg-orange-50" : "text-gray-600 bg-gray-50",
+      href: "#abandoned",
     },
   ];
 
@@ -216,23 +244,24 @@ export default async function AdminDashboard() {
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (
-            <div
+            <Link
               key={stat.label}
-              className="rounded-xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-md"
+              href={stat.href}
+              className="rounded-xl border border-gray-200 bg-white p-5 transition-all hover:shadow-md hover:border-[#1a6de3]/30 group cursor-pointer"
             >
               <div className="flex items-center gap-4">
                 <div className={`rounded-lg p-2.5 ${stat.color}`}>
                   <Icon className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm text-gray-500">{stat.label}</p>
+                  <p className="text-sm text-gray-500 group-hover:text-[#0b3d7a] transition-colors">{stat.label}</p>
                   <p className="truncate text-2xl font-bold text-gray-900">
                     {stat.value}
                   </p>
                   <p className="text-xs text-gray-400">{stat.sub}</p>
                 </div>
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>
@@ -246,7 +275,7 @@ export default async function AdminDashboard() {
             </h2>
             <p className="text-xs text-gray-400">By units sold</p>
           </div>
-          <div className="divide-y">
+          <div className="divide-y max-h-[280px] overflow-y-auto">
             {topProducts.map((product, i) => (
               <div
                 key={product.name}
@@ -292,9 +321,9 @@ export default async function AdminDashboard() {
               </Link>
             </div>
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto max-h-[440px] overflow-y-auto">
             <table className="w-full text-left text-sm">
-              <thead className="border-b bg-gray-50/50 text-xs uppercase text-gray-500">
+              <thead className="border-b bg-gray-50/50 text-xs uppercase text-gray-500 sticky top-0 bg-white z-10">
                 <tr>
                   <th className="px-5 py-3 font-medium">Order</th>
                   <th className="px-5 py-3 font-medium">Customer</th>
@@ -357,18 +386,18 @@ export default async function AdminDashboard() {
 
       {/* Abandoned Checkouts */}
       {abandonedCheckouts.length > 0 && (
-        <div className="mb-8 rounded-xl border border-amber-200 bg-amber-50/50">
+        <div id="abandoned" className="mb-8 rounded-xl border border-amber-200 bg-amber-50/50">
           <div className="border-b border-amber-200 px-5 py-4">
             <h2 className="text-lg font-semibold text-amber-800">
               Abandoned Checkouts
             </h2>
             <p className="text-xs text-amber-600">
-              Started checkout but didn&apos;t pay — consider following up via email
+              Started checkout but didn&apos;t pay - consider following up via email
             </p>
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto max-h-[440px] overflow-y-auto">
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-amber-200 text-xs uppercase text-amber-700">
+              <thead className="border-b border-amber-200 text-xs uppercase text-amber-700 sticky top-0 bg-amber-50 z-10">
                 <tr>
                   <th className="px-5 py-3 font-medium">Order #</th>
                   <th className="px-5 py-3 font-medium">Email</th>
