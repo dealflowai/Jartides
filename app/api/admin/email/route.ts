@@ -48,10 +48,16 @@ export async function POST(req: NextRequest) {
       <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;">
 
         <tr>
-          <td style="background:#0b3d7a;padding:18px 24px;text-align:center;">
-            <img src="https://jartides.ca/images/logo.png" alt="" width="56" height="56" style="display:block;margin:0 auto 8px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);" />
-            <h1 style="margin:0;color:#fff;font-size:22px;font-weight:800;letter-spacing:2px;font-family:Arial,Helvetica,sans-serif;">JARTIDES</h1>
-            <p style="margin:2px 0 0;color:#7fb3f0;font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;">Research Peptides</p>
+          <td style="background:#0b3d7a;padding:14px 24px;">
+            <table cellpadding="0" cellspacing="0" border="0"><tr>
+              <td style="vertical-align:middle;padding-right:12px;">
+                <img src="https://jartides.ca/icon.png" alt="" width="42" height="42" style="display:block;border-radius:50%;" />
+              </td>
+              <td style="vertical-align:middle;">
+                <h1 style="margin:0;color:#fff;font-size:20px;font-weight:800;letter-spacing:1.5px;font-family:Arial,Helvetica,sans-serif;">JARTIDES</h1>
+                <p style="margin:1px 0 0;color:#7fb3f0;font-size:8px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;">Research Peptides</p>
+              </td>
+            </tr></table>
           </td>
         </tr>
 
