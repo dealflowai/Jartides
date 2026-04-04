@@ -16,6 +16,7 @@ import {
   Users,
   Star,
   Mail,
+  Inbox,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +24,7 @@ const navItems = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { label: "Orders", href: "/admin/orders", icon: ShoppingBag },
   { label: "Customers", href: "/admin/customers", icon: Users },
+  { label: "Inbox", href: "/admin/inbox", icon: Inbox },
   { label: "Email", href: "/admin/email", icon: Mail },
   { label: "Products", href: "/admin/products", icon: Package },
   { label: "Inventory", href: "/admin/inventory", icon: Warehouse },

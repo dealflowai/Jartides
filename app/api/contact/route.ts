@@ -4,6 +4,8 @@ import { rateLimit } from "@/lib/rate-limit";
 import { verifyCsrf } from "@/lib/csrf";
 import { logger } from "@/lib/logger";
 import { CONTACT_EMAIL } from "@/lib/constants";
+import { createAdminClient } from "@/lib/supabase/admin";
+import crypto from "crypto";
 
 function escapeHtml(str: string): string {
   return str
@@ -47,6 +49,24 @@ export async function POST(request: NextRequest) {
     const safeEmail = escapeHtml(email);
     const safeCategory = escapeHtml(category);
     const safeMessage = escapeHtml(message);
+
+    // Save to inbox database
+    const threadId = crypto.randomUUID();
+    try {
+      const db = createAdminClient();
+      await db.from("inbox_messages").insert({
+        thread_id: threadId,
+        direction: "inbound",
+        sender_name: `${firstName} ${lastName}`,
+        sender_email: email,
+        subject: `[${category}] Contact from ${firstName} ${lastName}`,
+        category,
+        body: message,
+        is_read: false,
+      });
+    } catch (dbErr) {
+      logger.error("Failed to save contact message to inbox", { error: String(dbErr) });
+    }
 
     // Send email via Resend if configured
     if (process.env.RESEND_API_KEY) {
