@@ -17,6 +17,7 @@ import {
 import Link from "next/link";
 import type { Order, OrderStatus } from "@/lib/types";
 import SendAbandonedEmailButton from "@/components/admin/SendAbandonedEmailButton";
+import DeleteAbandonedButton from "@/components/admin/DeleteAbandonedButton";
 import DashboardTabs from "@/components/admin/DashboardTabs";
 
 const statusColors: Record<OrderStatus, string> = {
@@ -434,13 +435,16 @@ export default async function AdminDashboard() {
                       })}
                     </td>
                     <td className="px-5 py-3">
-                      {checkout.guest_email && (
-                        <SendAbandonedEmailButton
-                          email={checkout.guest_email}
-                          orderNumber={checkout.order_number}
-                          total={checkout.total}
-                        />
-                      )}
+                      <div className="flex items-center gap-2">
+                        {checkout.guest_email && (
+                          <SendAbandonedEmailButton
+                            email={checkout.guest_email}
+                            orderNumber={checkout.order_number}
+                            total={checkout.total}
+                          />
+                        )}
+                        <DeleteAbandonedButton orderId={checkout.id} />
+                      </div>
                     </td>
                   </tr>
                 ))}
