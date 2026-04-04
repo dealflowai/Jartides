@@ -68,8 +68,9 @@ After deploying, set up webhooks pointing to your production URL:
 
 | Service | Webhook URL | Events |
 |---------|------------|--------|
-| **Stripe** | `https://jartides.ca/api/webhooks/stripe` | `checkout.session.completed`, `payment_intent.succeeded`, `payment_intent.payment_failed` |
-| **Shippo** | `https://jartides.ca/api/webhooks/shippo` | Track status updates |
+| **Stripe** | `https://www.jartides.ca/api/webhooks/stripe` | `payment_intent.succeeded`, `payment_intent.payment_failed`, `payment_intent.canceled`, `charge.refunded` |
+| **Shippo** | `https://www.jartides.ca/api/webhooks/shippo` | Track status updates |
+| **Resend** | `https://www.jartides.ca/api/webhooks/resend` | `email.bounced`, `email.complained`, `email.delivered` |
 
 ### Custom Domain
 
