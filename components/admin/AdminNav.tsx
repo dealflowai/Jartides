@@ -22,16 +22,16 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
-  { label: "Products", href: "/admin/products", icon: Package },
-  { label: "COA Documents", href: "/admin/coa", icon: FileCheck },
   { label: "Orders", href: "/admin/orders", icon: ShoppingBag },
   { label: "Customers", href: "/admin/customers", icon: Users },
+  { label: "Email", href: "/admin/email", icon: Mail },
+  { label: "Products", href: "/admin/products", icon: Package },
   { label: "Inventory", href: "/admin/inventory", icon: Warehouse },
+  { label: "COA Documents", href: "/admin/coa", icon: FileCheck },
   { label: "Reviews", href: "/admin/reviews", icon: Star },
   { label: "Discounts", href: "/admin/discounts", icon: Ticket },
+  { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
   { label: "FAQ Manager", href: "/admin/faq", icon: MessageCircleQuestion },
-  { label: "Email", href: "/admin/email", icon: Mail },
   { label: "Compliance", href: "/admin/compliance", icon: ShieldCheck },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
