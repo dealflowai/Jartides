@@ -4,7 +4,7 @@ import { requireAdminPage } from "@/lib/admin";
 import { formatPrice } from "@/lib/utils";
 import CleanupOrdersButton from "@/components/admin/CleanupOrdersButton";
 import ExportOrdersButton from "@/components/admin/ExportOrdersButton";
-import type { Order, OrderStatus } from "@/lib/types";
+import type { Order, OrderItem, OrderStatus } from "@/lib/types";
 
 const statusColors: Record<OrderStatus, string> = {
   pending: "bg-yellow-100 text-yellow-800",
@@ -21,11 +21,11 @@ export default async function AdminOrdersPage() {
 
   const { data } = await supabase
     .from("orders")
-    .select("*")
+    .select("*, order_items(*)")
     .neq("status", "pending")
     .order("created_at", { ascending: false });
 
-  const orders = (data ?? []) as Order[];
+  const orders = (data ?? []) as (Order & { order_items: OrderItem[] })[];
 
   return (
     <div>
@@ -43,6 +43,7 @@ export default async function AdminOrdersPage() {
             <tr>
               <th className="px-4 py-3">Order</th>
               <th className="px-4 py-3">Customer</th>
+              <th className="px-4 py-3">Items</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3 text-right">Total</th>
               <th className="px-4 py-3">Date</th>
@@ -57,6 +58,19 @@ export default async function AdminOrdersPage() {
                 </td>
                 <td className="px-4 py-3 text-gray-600">
                   {order.guest_email ?? "—"}
+                </td>
+                <td className="px-4 py-3 text-gray-600 text-xs max-w-[250px]">
+                  {order.order_items?.length > 0 ? (
+                    <div className="space-y-0.5">
+                      {order.order_items.map((item) => (
+                        <div key={item.id}>
+                          {item.product_name} <span className="font-medium">&times;{item.quantity}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    "—"
+                  )}
                 </td>
                 <td className="px-4 py-3">
                   <span
@@ -83,7 +97,7 @@ export default async function AdminOrdersPage() {
             ))}
             {orders.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
+                <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
                   No orders yet.
                 </td>
               </tr>
