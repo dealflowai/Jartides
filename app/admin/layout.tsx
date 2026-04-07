@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import AdminNav from "@/components/admin/AdminNav";
 import AdminNotifications from "@/components/admin/AdminNotifications";
 import type { Profile } from "@/lib/types";
+import type { StaffRole } from "@/lib/admin";
 
 export default async function AdminLayout({
   children,
@@ -24,7 +25,11 @@ export default async function AdminLayout({
     .eq("id", user.id)
     .single<Profile>();
 
-  if (!profile || profile.role !== "admin") redirect("/");
+  if (!profile || (profile.role !== "admin" && profile.role !== "fulfillment")) {
+    redirect("/");
+  }
+
+  const role = profile.role as StaffRole;
 
   return (
     <div className="flex h-screen">
@@ -34,7 +39,7 @@ export default async function AdminLayout({
             JARTIDES ADMIN
           </h1>
         </div>
-        <AdminNav />
+        <AdminNav role={role} />
       </aside>
 
       <div className="ml-64 flex-1 overflow-y-auto bg-gray-50">

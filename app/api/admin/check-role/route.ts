@@ -21,7 +21,12 @@ export async function GET() {
       .eq("id", user.id)
       .single();
 
-    return NextResponse.json({ isAdmin: profile?.role === "admin" });
+    const role = profile?.role ?? "customer";
+    return NextResponse.json({
+      isAdmin: role === "admin",
+      isStaff: role === "admin" || role === "fulfillment",
+      role,
+    });
   } catch {
     return NextResponse.json({ isAdmin: false });
   }

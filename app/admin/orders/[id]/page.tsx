@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireAdminPage } from "@/lib/admin";
+import { requireStaffPage } from "@/lib/admin";
 import { formatPrice } from "@/lib/utils";
 import OrderStatusUpdater from "@/components/admin/OrderStatusUpdater";
 import OrderNotes from "@/components/admin/OrderNotes";
@@ -22,7 +22,8 @@ export default async function AdminOrderDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireAdminPage();
+  const staff = await requireStaffPage();
+  const isAdmin = staff.role === "admin";
   const { id } = await params;
   const supabase = createAdminClient();
 
@@ -58,7 +59,7 @@ export default async function AdminOrderDetailPage({
           >
             {order.status}
           </span>
-          <DeleteOrderButton orderId={order.id} />
+          {isAdmin && <DeleteOrderButton orderId={order.id} />}
         </div>
       </div>
 
@@ -128,7 +129,12 @@ export default async function AdminOrderDetailPage({
           <tbody className="divide-y">
             {orderItems.map((item) => (
               <tr key={item.id}>
-                <td className="px-5 py-3">{item.product_name}</td>
+                <td className="px-5 py-3">
+                  {item.product_name}
+                  {item.variant_size && (
+                    <span className="ml-2 text-xs text-gray-500">({item.variant_size})</span>
+                  )}
+                </td>
                 <td className="px-5 py-3 text-right">{item.quantity}</td>
                 <td className="px-5 py-3 text-right">
                   {formatPrice(item.unit_price)}

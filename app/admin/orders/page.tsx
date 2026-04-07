@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireAdminPage } from "@/lib/admin";
+import { requireStaffPage } from "@/lib/admin";
 import { formatPrice } from "@/lib/utils";
 import CleanupOrdersButton from "@/components/admin/CleanupOrdersButton";
 import ExportOrdersButton from "@/components/admin/ExportOrdersButton";
@@ -16,7 +16,7 @@ const statusColors: Record<OrderStatus, string> = {
 };
 
 export default async function AdminOrdersPage() {
-  await requireAdminPage();
+  await requireStaffPage();
   const supabase = createAdminClient();
 
   const { data } = await supabase
@@ -64,7 +64,7 @@ export default async function AdminOrdersPage() {
                     <div className="space-y-0.5">
                       {order.order_items.map((item) => (
                         <div key={item.id}>
-                          {item.product_name} <span className="font-medium">&times;{item.quantity}</span>
+                          {item.product_name}{item.variant_size && ` (${item.variant_size})`} <span className="font-medium">&times;{item.quantity}</span>
                         </div>
                       ))}
                     </div>

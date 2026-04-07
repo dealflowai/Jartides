@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireAdmin } from "@/lib/admin";
+import { requireStaff } from "@/lib/admin";
 import { verifyCsrf } from "@/lib/csrf";
 import { sendShippingNotification, sendReviewRequest } from "@/lib/email";
 import { writeAuditLog } from "@/lib/audit";
@@ -9,7 +9,7 @@ import { logger } from "@/lib/logger";
 import { z } from "zod";
 
 export async function GET(req: NextRequest) {
-  const admin = await requireAdmin();
+  const admin = await requireStaff();
   if (!admin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -53,7 +53,7 @@ export async function PUT(req: NextRequest) {
   const csrfError = verifyCsrf(req);
   if (csrfError) return csrfError;
 
-  const admin = await requireAdmin();
+  const admin = await requireStaff();
   if (!admin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

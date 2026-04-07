@@ -16,13 +16,21 @@ import {
   Users,
   Star,
   Mail,
-  Inbox,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { StaffRole } from "@/lib/admin";
 
-const navItems = [
+interface NavItem {
+  label: string;
+  href: string;
+  icon: typeof LayoutDashboard;
+  /** Which roles can see this item. Omit = admin only. */
+  roles?: StaffRole[];
+}
+
+const navItems: NavItem[] = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { label: "Orders", href: "/admin/orders", icon: ShoppingBag },
+  { label: "Orders", href: "/admin/orders", icon: ShoppingBag, roles: ["admin", "fulfillment"] },
   { label: "Customers", href: "/admin/customers", icon: Users },
   { label: "Email", href: "/admin/email", icon: Mail },
   { label: "Products", href: "/admin/products", icon: Package },
@@ -35,7 +43,7 @@ const navItems = [
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
-export default function AdminNav() {
+export default function AdminNav({ role }: { role: StaffRole }) {
   const pathname = usePathname();
 
   function isActive(href: string) {
@@ -43,10 +51,16 @@ export default function AdminNav() {
     return pathname.startsWith(href);
   }
 
+  // Filter nav items: show item if no roles specified (admin-only default) and user is admin,
+  // or if user's role is in the allowed roles list
+  const visibleItems = navItems.filter(
+    (item) => !item.roles ? role === "admin" : item.roles.includes(role)
+  );
+
   return (
     <nav className="flex flex-1 flex-col justify-between px-3 py-2">
       <ul className="space-y-1">
-        {navItems.map((item) => {
+        {visibleItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
           return (

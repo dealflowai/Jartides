@@ -1,5 +1,6 @@
+import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireAdminPage } from "@/lib/admin";
+import { requireStaffPage } from "@/lib/admin";
 import { formatPrice } from "@/lib/utils";
 import {
   ShoppingBag,
@@ -30,7 +31,10 @@ const statusColors: Record<OrderStatus, string> = {
 };
 
 export default async function AdminDashboard() {
-  await requireAdminPage();
+  const staff = await requireStaffPage();
+
+  // Fulfillment users can only access orders — redirect them
+  if (staff.role === "fulfillment") redirect("/admin/orders");
   const supabase = createAdminClient();
 
   const thirtyDaysAgo = new Date();

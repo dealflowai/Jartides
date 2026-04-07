@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireAdmin } from "@/lib/admin";
+import { requireStaff } from "@/lib/admin";
 
 /**
  * GET /api/admin/orders/export?status=processing&from=2026-01-01&to=2026-12-31
@@ -8,7 +8,7 @@ import { requireAdmin } from "@/lib/admin";
  * Exports orders as CSV for accounting/tax purposes.
  */
 export async function GET(req: NextRequest) {
-  const admin = await requireAdmin();
+  const admin = await requireStaff();
   if (!admin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

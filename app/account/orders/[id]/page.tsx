@@ -101,6 +101,9 @@ export default async function OrderDetailPage({ params }: PageProps) {
               <tr key={item.id}>
                 <td className="px-5 py-4 text-sm text-gray-900">
                   {item.product_name}
+                  {item.variant_size && (
+                    <span className="ml-2 text-xs text-gray-500">({item.variant_size})</span>
+                  )}
                 </td>
                 <td className="px-5 py-4 text-sm text-gray-600 text-center">
                   {item.quantity}

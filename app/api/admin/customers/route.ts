@@ -71,7 +71,7 @@ export async function PATCH(req: NextRequest) {
   const body = await req.json();
   const { userId, role } = body as { userId?: string; role?: string };
 
-  if (!userId || !role || !["customer", "admin"].includes(role)) {
+  if (!userId || !role || !["customer", "admin", "fulfillment"].includes(role)) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 

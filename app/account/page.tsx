@@ -43,7 +43,8 @@ export default async function AccountPage() {
     .limit(5)
     .returns<Order[]>();
 
-  const isAdmin = profile?.role === "admin";
+  const isStaff = profile?.role === "admin" || profile?.role === "fulfillment";
+  const isAdmin = isStaff;
   const displayName = profile?.full_name || user!.email || "User";
   const memberSince = new Date(user!.created_at).toLocaleDateString("en-CA", {
     year: "numeric",

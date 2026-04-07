@@ -11,6 +11,8 @@ import {
   CheckCircle2,
   XCircle,
   X,
+  ShoppingBag,
+  Package,
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -21,7 +23,7 @@ interface Customer {
   email: string;
   full_name: string | null;
   phone: string | null;
-  role: "customer" | "admin";
+  role: "customer" | "admin" | "fulfillment";
   created_at: string;
   order_count: number;
   total_spent: number;
@@ -142,7 +144,7 @@ export default function AdminCustomersPage() {
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState<SortField>("created_at");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
-  const [roleFilter, setRoleFilter] = useState<"all" | "customer" | "admin">("all");
+  const [roleFilter, setRoleFilter] = useState<"all" | "customer" | "admin" | "fulfillment">("all");
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [updatingRole, setUpdatingRole] = useState<string | null>(null);
 
@@ -180,9 +182,9 @@ export default function AdminCustomersPage() {
     load();
   }, []);
 
-  /* ---------- Role toggle ---------- */
-  async function toggleRole(customer: Customer) {
-    const newRole = customer.role === "admin" ? "customer" : "admin";
+  /* ---------- Role change ---------- */
+  async function changeRole(customer: Customer, newRole: Customer["role"]) {
+    if (newRole === customer.role) return;
     setUpdatingRole(customer.id);
 
     try {
@@ -270,6 +272,7 @@ export default function AdminCustomersPage() {
   /* ---------- Stats ---------- */
   const totalCustomers = customers.length;
   const totalAdmins = customers.filter((c) => c.role === "admin").length;
+  const totalFulfillment = customers.filter((c) => c.role === "fulfillment").length;
   const totalRevenue = customers.reduce((sum, c) => sum + c.total_spent, 0);
 
   /* ---------- Loading ---------- */
@@ -316,7 +319,7 @@ export default function AdminCustomersPage() {
       <h1 className="mb-6 text-2xl font-bold text-gray-900">Customers</h1>
 
       {/* Stats */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-blue-50 p-2 text-[#1a6de3]">
@@ -336,6 +339,17 @@ export default function AdminCustomersPage() {
             <div>
               <p className="text-sm text-gray-500">Admins</p>
               <p className="text-2xl font-bold text-gray-900">{totalAdmins}</p>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-purple-50 p-2 text-purple-600">
+              <ShoppingBag className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Fulfillment</p>
+              <p className="text-2xl font-bold text-gray-900">{totalFulfillment}</p>
             </div>
           </div>
         </div>
@@ -366,7 +380,7 @@ export default function AdminCustomersPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          {(["all", "customer", "admin"] as const).map((r) => (
+          {(["all", "customer", "admin", "fulfillment"] as const).map((r) => (
             <button
               key={r}
               onClick={() => setRoleFilter(r)}
@@ -376,7 +390,7 @@ export default function AdminCustomersPage() {
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
-              {r === "all" ? "All" : r === "customer" ? "Customers" : "Admins"}
+              {r === "all" ? "All" : r === "customer" ? "Customers" : r === "admin" ? "Admins" : "Fulfillment"}
             </button>
           ))}
         </div>
@@ -415,10 +429,13 @@ export default function AdminCustomersPage() {
                     className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
                       customer.role === "admin"
                         ? "bg-amber-100 text-amber-800"
-                        : "bg-gray-100 text-gray-700"
+                        : customer.role === "fulfillment"
+                          ? "bg-purple-100 text-purple-800"
+                          : "bg-gray-100 text-gray-700"
                     }`}
                   >
                     {customer.role === "admin" && <Crown className="h-3 w-3" />}
+                    {customer.role === "fulfillment" && <Package className="h-3 w-3" />}
                     {customer.role}
                   </span>
                 </td>
@@ -432,21 +449,16 @@ export default function AdminCustomersPage() {
                   {formatDate(customer.created_at)}
                 </td>
                 <td className="px-4 py-3">
-                  <button
-                    onClick={() => toggleRole(customer)}
+                  <select
+                    value={customer.role}
+                    onChange={(e) => changeRole(customer, e.target.value as Customer["role"])}
                     disabled={updatingRole === customer.id}
-                    className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors disabled:opacity-50 ${
-                      customer.role === "admin"
-                        ? "border border-red-200 text-red-600 hover:bg-red-50"
-                        : "border border-blue-200 text-[#1a6de3] hover:bg-blue-50"
-                    }`}
+                    className="rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-700 transition-colors hover:border-gray-400 focus:border-[#1a6de3] focus:outline-none focus:ring-1 focus:ring-[#1a6de3] disabled:opacity-50"
                   >
-                    {updatingRole === customer.id
-                      ? "Updating..."
-                      : customer.role === "admin"
-                        ? "Remove Admin"
-                        : "Make Admin"}
-                  </button>
+                    <option value="customer">Customer</option>
+                    <option value="fulfillment">Fulfillment</option>
+                    <option value="admin">Admin</option>
+                  </select>
                 </td>
               </tr>
             ))}

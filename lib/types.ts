@@ -98,7 +98,7 @@ export interface Profile {
   email: string;
   full_name: string | null;
   phone: string | null;
-  role: "customer" | "admin";
+  role: "customer" | "admin" | "fulfillment";
   created_at: string;
 }
 
@@ -160,6 +160,8 @@ export interface OrderItem {
   order_id: string;
   product_id: string;
   product_name: string;
+  variant_id: string | null;
+  variant_size: string | null;
   quantity: number;
   unit_price: number;
   purchase_type: "one-time" | "subscription";
