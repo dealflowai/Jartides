@@ -22,9 +22,10 @@ export default function ProductCard({ product }: ProductCardProps) {
   const wishlisted = isWishlisted(product.id);
 
   const hasVariants = (product.variants?.length ?? 0) > 0;
-  const isOutOfStock = hasVariants
+  const isBackorder = product.badge?.toLowerCase() === "backorder";
+  const isOutOfStock = isBackorder || (hasVariants
     ? product.variants!.every((v) => (v.stock_quantity ?? 0) <= 0)
-    : (product.stock_quantity ?? 0) <= 0;
+    : (product.stock_quantity ?? 0) <= 0);
   const minPrice = hasVariants
     ? Math.min(...product.variants!.map((v) => v.price))
     : product.price;

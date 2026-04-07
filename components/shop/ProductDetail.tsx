@@ -29,11 +29,15 @@ const FEATURES = [
   "For Research Use Only",
 ];
 
+function isBackorder(product: Product) {
+  return product.badge?.toLowerCase() === "backorder";
+}
+
 function getStockStatus(product: Product) {
   const qty = product.stock_quantity ?? 0;
   const threshold = product.low_stock_threshold ?? 10;
 
-  if (qty <= 0) {
+  if (qty <= 0 || isBackorder(product)) {
     return {
       label: "Out of Stock — Back in 1–2 Weeks",
       color: "text-red-600",
@@ -89,7 +93,7 @@ export default function ProductDetail({ product, coaDocuments = [] }: ProductDet
   const stockProduct = { ...product, stock_quantity: activeStock, low_stock_threshold: activeLowThreshold };
   const stockStatus = getStockStatus(stockProduct);
   const StockIcon = stockStatus.icon;
-  const isOutOfStock = activeStock <= 0;
+  const isOutOfStock = activeStock <= 0 || isBackorder(product);
 
   const displayPrice = selectedVariant?.price ?? product.price;
   const displayOriginalPrice = selectedVariant?.original_price ?? product.original_price;

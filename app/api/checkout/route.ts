@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
     const productIds = items.map((item) => item.productId);
     const { data: products, error: productsError } = await supabase
       .from("products")
-      .select("id, name, price, stock_quantity, active")
+      .select("id, name, price, stock_quantity, active, badge")
       .in("id", productIds);
 
     if (productsError || !products) {
@@ -124,6 +124,12 @@ export async function POST(request: NextRequest) {
       if (!product.active) {
         return NextResponse.json(
           { error: `Product is no longer available: ${product.name}` },
+          { status: 400 }
+        );
+      }
+      if (product.badge?.toLowerCase() === "backorder") {
+        return NextResponse.json(
+          { error: `${product.name} is currently on backorder and cannot be purchased yet.` },
           { status: 400 }
         );
       }
