@@ -4,6 +4,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/admin";
 import { verifyCsrf } from "@/lib/csrf";
 import { writeAuditLog } from "@/lib/audit";
+import { sendBackInStockNotification } from "@/lib/email";
+import { logger } from "@/lib/logger";
 import { z } from "zod";
 
 const variantSchema = z.object({
@@ -225,6 +227,16 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // Check old variant stock before replacing (to detect restock)
+  const { data: oldVariants } = await db
+    .from("product_variants")
+    .select("stock_quantity")
+    .eq("product_id", id);
+  const wasAllOutOfStock =
+    oldVariants && oldVariants.length > 0
+      ? oldVariants.every((v) => (v.stock_quantity ?? 0) <= 0)
+      : (data.stock_quantity ?? 0) <= 0;
+
   // Replace all variants: delete existing, insert submitted set
   await db.from("product_variants").delete().eq("product_id", id);
   if (variants && variants.length > 0) {
@@ -240,6 +252,58 @@ export async function PUT(req: NextRequest) {
       active: v.active,
     }));
     await db.from("product_variants").insert(variantRows);
+  }
+
+  // Send back-in-stock notifications if product was out of stock and now has stock
+  const nowHasStock = variants
+    ? variants.some((v) => v.stock_quantity > 0)
+    : productData.stock_quantity > 0;
+
+  if (wasAllOutOfStock && nowHasStock) {
+    try {
+      const { data: requests } = await db
+        .from("back_in_stock_requests")
+        .select("id, email, product_name")
+        .eq("product_id", id)
+        .eq("notified", false);
+
+      if (requests && requests.length > 0) {
+        let sent = 0;
+        for (const request of requests) {
+          try {
+            await sendBackInStockNotification(
+              request.email,
+              request.product_name,
+              data.slug
+            );
+            sent++;
+          } catch (err) {
+            logger.error("Back-in-stock email failed", {
+              email: request.email,
+              product_id: id,
+              error: err instanceof Error ? err.message : String(err),
+            });
+          }
+        }
+
+        const reqIds = requests.map((r) => r.id);
+        await db
+          .from("back_in_stock_requests")
+          .update({ notified: true })
+          .in("id", reqIds);
+
+        logger.info("Back-in-stock notifications auto-sent on product update", {
+          product_id: id,
+          sent,
+          total: requests.length,
+        });
+      }
+    } catch (err) {
+      logger.error("Back-in-stock auto-notify failed", {
+        product_id: id,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
   }
 
   // Replace tags

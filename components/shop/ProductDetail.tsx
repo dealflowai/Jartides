@@ -35,7 +35,7 @@ function getStockStatus(product: Product) {
 
   if (qty <= 0) {
     return {
-      label: "Out of Stock",
+      label: "Out of Stock — Back in 1–2 Weeks",
       color: "text-red-600",
       bgColor: "bg-red-50",
       borderColor: "border-red-200",
@@ -292,6 +292,7 @@ export default function ProductDetail({ product, coaDocuments = [] }: ProductDet
         </div>
 
         {/* Purchase Type */}
+        {!isOutOfStock && (
         <div className="mt-6 flex flex-col gap-2">
           <div className="flex items-center gap-3 rounded-lg border-2 border-[#0b3d7a] bg-[#0b3d7a]/5 px-4 py-3">
             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-[#0b3d7a] bg-[#0b3d7a]">
@@ -314,8 +315,10 @@ export default function ProductDetail({ product, coaDocuments = [] }: ProductDet
             </span>
           </div>
         </div>
+        )}
 
         {/* Quantity Selector */}
+        {!isOutOfStock && (
         <div className="mt-6 flex items-center gap-3">
           <span className="text-sm font-medium text-gray-700 font-[family-name:var(--font-body)]">
             Quantity
@@ -351,6 +354,7 @@ export default function ProductDetail({ product, coaDocuments = [] }: ProductDet
             </button>
           </div>
         </div>
+        )}
 
         {/* Add to Cart */}
         <Button

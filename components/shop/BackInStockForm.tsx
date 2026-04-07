@@ -40,9 +40,14 @@ export default function BackInStockForm({ productId, productName }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="mt-4 rounded-lg bg-amber-50 border border-amber-200 p-4">
-      <div className="flex items-center gap-2 mb-2">
-        <Bell className="h-4 w-4 text-amber-600" />
-        <span className="text-sm font-medium text-amber-800">Notify me when back in stock</span>
+      <div className="mb-2">
+        <div className="flex items-center gap-2">
+          <Bell className="h-4 w-4 text-amber-600" />
+          <span className="text-sm font-medium text-amber-800">Get Notified When It&apos;s Back</span>
+        </div>
+        <p className="mt-1 text-xs text-amber-700">
+          This item is currently out of stock. Expected back in <strong>1–2 weeks</strong>. Enter your email and we&apos;ll let you know as soon as it&apos;s available.
+        </p>
       </div>
       <div className="flex gap-2">
         <input

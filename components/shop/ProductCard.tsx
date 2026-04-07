@@ -7,7 +7,7 @@ import type { Product } from "@/lib/types";
 import { formatPrice, calculateSavings } from "@/lib/utils";
 import { useCart } from "@/hooks/useCart";
 import { useWishlist } from "@/hooks/useWishlist";
-import { ShoppingCart, Heart, Star } from "lucide-react";
+import { ShoppingCart, Heart, Star, Bell } from "lucide-react";
 import { useState } from "react";
 
 interface ProductCardProps {
@@ -22,6 +22,9 @@ export default function ProductCard({ product }: ProductCardProps) {
   const wishlisted = isWishlisted(product.id);
 
   const hasVariants = (product.variants?.length ?? 0) > 0;
+  const isOutOfStock = hasVariants
+    ? product.variants!.every((v) => (v.stock_quantity ?? 0) <= 0)
+    : (product.stock_quantity ?? 0) <= 0;
   const minPrice = hasVariants
     ? Math.min(...product.variants!.map((v) => v.price))
     : product.price;
@@ -101,11 +104,11 @@ export default function ProductCard({ product }: ProductCardProps) {
                 src={image}
                 alt={product.name}
                 fill
-                className="object-contain p-1 transition-opacity duration-300"
-                style={{ opacity: hovered && hoverImage ? 0 : 1 }}
+                className={`object-contain p-1 transition-opacity duration-300 ${isOutOfStock ? "opacity-60 grayscale-[30%]" : ""}`}
+                style={{ opacity: hovered && hoverImage && !isOutOfStock ? 0 : isOutOfStock ? 0.6 : 1 }}
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
               />
-              {hoverImage && (
+              {hoverImage && !isOutOfStock && (
                 <Image
                   src={hoverImage}
                   alt={`${product.name} - Certificate of Analysis`}
@@ -119,6 +122,14 @@ export default function ProductCard({ product }: ProductCardProps) {
           ) : (
             <div className="flex h-full items-center justify-center text-gray-300">
               <ShoppingCart className="h-12 w-12" />
+            </div>
+          )}
+
+          {/* Out of Stock overlay */}
+          {isOutOfStock && (
+            <div className="absolute inset-x-0 bottom-0 bg-red-600/90 backdrop-blur-sm px-3 py-2 text-center">
+              <p className="text-xs font-bold text-white uppercase tracking-wide">Out of Stock</p>
+              <p className="text-[10px] text-red-100">Back in 1–2 Weeks</p>
             </div>
           )}
         </div>
@@ -168,13 +179,23 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         {/* Actions */}
         <div className="mt-4 flex gap-2">
-          <button
-            onClick={handleAddToCart}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#1a6de3] px-3 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#155ec7]"
-          >
-            <ShoppingCart className="h-3.5 w-3.5" />
-            {hasVariants ? "Select Size" : "Add to Cart"}
-          </button>
+          {isOutOfStock ? (
+            <Link
+              href={`/shop/${product.slug}`}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-amber-500 px-3 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-amber-600"
+            >
+              <Bell className="h-3.5 w-3.5" />
+              Notify Me
+            </Link>
+          ) : (
+            <button
+              onClick={handleAddToCart}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#1a6de3] px-3 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#155ec7]"
+            >
+              <ShoppingCart className="h-3.5 w-3.5" />
+              {hasVariants ? "Select Size" : "Add to Cart"}
+            </button>
+          )}
           <Link
             href={`/shop/${product.slug}`}
             className="inline-flex items-center justify-center rounded-lg border border-gray-200 px-3 py-2.5 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50"
