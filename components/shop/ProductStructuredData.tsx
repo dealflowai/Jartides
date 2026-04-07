@@ -35,7 +35,9 @@ export default function ProductStructuredData({ product }: Props) {
       price: product.price,
       priceCurrency: "CAD",
       availability:
-        product.stock_quantity > 0
+        (product.variants && product.variants.length > 0
+          ? product.variants.some((v) => (v.stock_quantity ?? 0) > 0)
+          : product.stock_quantity > 0)
           ? "https://schema.org/InStock"
           : "https://schema.org/OutOfStock",
       url: `${BASE_URL}/shop/${product.slug}`,
