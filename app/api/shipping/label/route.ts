@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireAdmin } from "@/lib/admin";
+import { requireStaff } from "@/lib/admin";
 import { verifyCsrf } from "@/lib/csrf";
 import { sendShippingNotification } from "@/lib/email";
 import { logger } from "@/lib/logger";
@@ -19,8 +19,8 @@ export async function POST(request: NextRequest) {
   if (csrfError) return csrfError;
 
   try {
-    const admin = await requireAdmin();
-    if (!admin) {
+    const staff = await requireStaff();
+    if (!staff) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
