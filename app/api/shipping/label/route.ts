@@ -11,6 +11,7 @@ import { Shippo } from "shippo";
 const labelSchema = z.object({
   orderId: z.string().uuid("Invalid order ID"),
   rateId: z.string().optional(),
+  regenerate: z.boolean().optional(),
 });
 
 // Generate shipping label via Shippo (admin only)
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { orderId, rateId } = parsed.data;
+    const { orderId, rateId, regenerate } = parsed.data;
     const db = createAdminClient();
 
     // Fetch order
@@ -49,8 +50,9 @@ export async function POST(request: NextRequest) {
 
     const shippo = new Shippo({ apiKeyHeader: process.env.SHIPPO_API_TOKEN! });
 
-    let shipmentId = rateId ? undefined : order.shippo_shipment_id;
-    let selectedRateId = rateId || order.shippo_rate_id;
+    // When regenerating, ignore existing shipment/rate so a fresh one is created
+    let shipmentId = (rateId || regenerate) ? undefined : order.shippo_shipment_id;
+    let selectedRateId = regenerate ? undefined : (rateId || order.shippo_rate_id);
 
     // If no existing shipment/rate, create one with real product dimensions
     if (!shipmentId && !selectedRateId) {

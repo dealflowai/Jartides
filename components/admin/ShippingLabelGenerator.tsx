@@ -33,6 +33,40 @@ export default function ShippingLabelGenerator({
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  async function handleRegenerate() {
+    if (!confirm("This will generate a new shipping label and replace the existing one. Continue?")) return;
+    setGenerating(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/shipping/label", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId, regenerate: true }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        const errMsg = typeof data.error === "string" ? data.error : JSON.stringify(data.error);
+        throw new Error(errMsg || "Failed to regenerate label");
+      }
+
+      setResult({
+        trackingNumber: data.trackingNumber,
+        labelUrl: data.labelUrl,
+        trackingUrl: data.trackingUrl,
+        carrier: data.carrier,
+      });
+
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to regenerate label");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
   async function handleGenerate() {
     setGenerating(true);
     setError(null);
@@ -109,6 +143,23 @@ export default function ShippingLabelGenerator({
                 Track Package
               </a>
             )}
+            <button
+              onClick={handleRegenerate}
+              disabled={generating}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-orange-300 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700 transition hover:bg-orange-100 disabled:opacity-50"
+            >
+              {generating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Regenerating...
+                </>
+              ) : (
+                <>
+                  <Package className="h-4 w-4" />
+                  Regenerate Label
+                </>
+              )}
+            </button>
           </div>
         </div>
       </div>
