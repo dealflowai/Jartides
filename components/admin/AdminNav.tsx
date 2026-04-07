@@ -16,6 +16,7 @@ import {
   Users,
   Star,
   Mail,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { StaffRole } from "@/lib/admin";
@@ -35,6 +36,7 @@ const navItems: NavItem[] = [
   { label: "Email", href: "/admin/email", icon: Mail },
   { label: "Products", href: "/admin/products", icon: Package },
   { label: "Inventory", href: "/admin/inventory", icon: Warehouse },
+  { label: "Back-in-Stock", href: "/admin/back-in-stock", icon: Bell },
   { label: "COA Documents", href: "/admin/coa", icon: FileCheck },
   { label: "Reviews", href: "/admin/reviews", icon: Star },
   { label: "Discounts", href: "/admin/discounts", icon: Ticket },
