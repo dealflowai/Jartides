@@ -84,9 +84,16 @@ export default function ProductDetail({ product, coaDocuments = [] }: ProductDet
     : null;
 
   const sku = product.sku || selectedVariant?.sku || `JRT-${product.id.slice(0, 4).toUpperCase()}`;
-  const variantImages = selectedVariant?.images?.length ? selectedVariant.images : null;
-  const images = variantImages ?? (product.images?.length ? product.images : []);
+  const cleanImages = (arr: string[] | null | undefined) =>
+    (arr ?? []).filter((u): u is string => typeof u === "string" && u.trim().length > 0);
+  const variantImages = cleanImages(selectedVariant?.images);
+  const productImages = cleanImages(product.images);
+  const images = variantImages.length > 0 ? variantImages : productImages;
   const hasImages = images.length > 0;
+
+  useEffect(() => {
+    setMainImage(0);
+  }, [selectedVariantId]);
 
   const activeStock = selectedVariant?.stock_quantity ?? product.stock_quantity;
   const activeLowThreshold = selectedVariant?.low_stock_threshold ?? product.low_stock_threshold;
