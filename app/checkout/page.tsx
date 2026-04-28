@@ -3,17 +3,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Elements } from "@stripe/react-stripe-js";
-import { stripePromise } from "@/lib/stripe-client";
 import { useCart } from "@/hooks/useCart";
 import { formatPrice } from "@/lib/utils";
 import { TAX_RATE } from "@/lib/constants";
-import StripePaymentForm from "@/components/checkout/StripePaymentForm";
 import {
-  CreditCard,
   Truck,
   ChevronRight,
-  ChevronLeft,
   Loader2,
   Shield,
   Lock,
@@ -62,13 +57,9 @@ const inputCls =
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { items, subtotal, clearCart } = useCart();
-  const [currentStep, setCurrentStep] = useState(1);
+  const { items, subtotal } = useCart();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [orderId, setOrderId] = useState<string | null>(null);
-  const [accountCreated, setAccountCreated] = useState(false);
   const [shipping, setShipping] = useState<ShippingForm>(() => {
     if (typeof window === "undefined") return INITIAL_SHIPPING;
     try {
@@ -114,10 +105,10 @@ export default function CheckoutPage() {
   const total = Math.round((discountedSubtotal + shippingCost + tax) * 100) / 100;
 
   useEffect(() => {
-    if (items.length === 0 && !clientSecret && !orderId) {
+    if (items.length === 0) {
       router.push("/shop");
     }
-  }, [items, router, clientSecret, orderId]);
+  }, [items, router]);
 
   // Autosave shipping form to sessionStorage (debounced)
   useEffect(() => {
@@ -317,7 +308,7 @@ export default function CheckoutPage() {
               },
           email: shipping.email,
           discountCode: discountData ? discountCode.trim() : undefined,
-          paymentMethod: "stripe",
+          paymentMethod: "paypal_manual",
           researchDisclaimerAccepted: compliance.researchDisclaimer,
           ageVerified: compliance.ageVerified,
           termsAccepted: compliance.termsAccepted,
@@ -341,65 +332,26 @@ export default function CheckoutPage() {
         throw new Error(data.error || "Failed to create order");
       }
 
-      setClientSecret(data.clientSecret);
-      setOrderId(data.orderId);
-      setAccountCreated(data.accountCreated === true);
-      setCurrentStep(2);
+      const params = new URLSearchParams({ order_id: data.orderId });
+      if (data.accountCreated) params.set("account_created", "1");
+      router.push(`/checkout/payment-instructions?${params.toString()}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
       setIsSubmitting(false);
     }
   }
 
-  if (items.length === 0 && !clientSecret && !orderId) return null;
+  if (items.length === 0) return null;
 
   const canFetchRates = shipping.line1.trim() && shipping.city.trim() && shipping.postalCode.trim() && shipping.country;
 
   return (
     <main className="min-h-screen bg-[#f8f9fc] py-8 sm:py-12">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        {/* Progress */}
-        <nav className="mb-8">
-          <div className="flex items-center justify-center gap-4">
-            <div className="flex items-center gap-2">
-              <span
-                className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
-                  currentStep >= 1
-                    ? "bg-[#0b3d7a] text-white"
-                    : "bg-gray-200 text-gray-500"
-                }`}
-              >
-                1
-              </span>
-              <span className={`text-sm font-medium ${currentStep >= 1 ? "text-[#0b3d7a]" : "text-gray-400"}`}>
-                Shipping
-              </span>
-            </div>
-            <div className="h-px w-12 bg-gray-300" />
-            <div className="flex items-center gap-2">
-              <span
-                className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
-                  currentStep >= 2
-                    ? "bg-[#0b3d7a] text-white"
-                    : "bg-gray-200 text-gray-500"
-                }`}
-              >
-                2
-              </span>
-              <span className={`text-sm font-medium ${currentStep >= 2 ? "text-[#0b3d7a]" : "text-gray-400"}`}>
-                Payment
-              </span>
-            </div>
-          </div>
-        </nav>
-
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Main Content */}
           <div className="lg:col-span-2">
-            {/* Step 1: Shipping */}
-            {currentStep === 1 && (
-              <form onSubmit={handleContinueToPayment} className="space-y-6">
+            <form onSubmit={handleContinueToPayment} className="space-y-6">
                 <div className="rounded-xl bg-white p-6 shadow-sm sm:p-8">
                   <div className="flex items-center gap-2 mb-6">
                     <Truck className="h-5 w-5 text-[#0b3d7a]" />
@@ -909,88 +861,21 @@ export default function CheckoutPage() {
                       {isSubmitting ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />
-                          Creating order...
+                          Placing order...
                         </>
                       ) : (
                         <>
-                          Continue to Payment
+                          Place Order &amp; Continue to Payment
                           <ChevronRight className="h-4 w-4" />
                         </>
                       )}
                     </button>
+                    <p className="mt-2 text-center text-xs text-gray-500">
+                      Payment is completed via PayPal on the next step.
+                    </p>
                   </div>
                 </div>
               </form>
-            )}
-
-            {/* Step 2: Payment */}
-            {currentStep === 2 && clientSecret && orderId && (
-              <div className="rounded-xl bg-white p-6 shadow-sm sm:p-8">
-                <div className="flex items-center gap-2 mb-6">
-                  <CreditCard className="h-5 w-5 text-[#0b3d7a]" />
-                  <h2 className="text-xl font-bold text-[#0b3d7a]">
-                    Payment
-                  </h2>
-                </div>
-
-                {/* Shipping summary */}
-                <div className="mb-6 rounded-lg bg-gray-50 border border-gray-200 p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{shipping.fullName}</p>
-                      <p className="text-xs text-gray-500">
-                        {shipping.line1}
-                        {shipping.line2 ? `, ${shipping.line2}` : ""}, {shipping.city}, {shipping.province} {shipping.postalCode}
-                      </p>
-                      <p className="text-xs text-gray-500">{shipping.email}</p>
-                      {selectedRate && (
-                        <p className="text-xs text-[#0b3d7a] font-medium mt-1">
-                          {selectedRate.carrier} &mdash; {selectedRate.service} ({selectedRate.delivery_days})
-                        </p>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setCurrentStep(1)}
-                      className="text-xs font-medium text-[#1a6de3] hover:underline"
-                    >
-                      Edit
-                    </button>
-                  </div>
-                </div>
-
-                <Elements
-                  stripe={stripePromise}
-                  options={{
-                    clientSecret,
-                    appearance: {
-                      theme: "stripe",
-                      variables: {
-                        colorPrimary: "#0b3d7a",
-                        borderRadius: "8px",
-                        fontFamily: "inherit",
-                      },
-                      rules: {
-                        ".Input": {
-                          padding: "12px 16px",
-                        },
-                      },
-                    },
-                  }}
-                >
-                  <StripePaymentForm total={total} orderId={orderId} accountCreated={accountCreated} />
-                </Elements>
-
-                <button
-                  type="button"
-                  onClick={() => setCurrentStep(1)}
-                  className="mt-4 flex items-center gap-1 text-sm font-medium text-gray-500 hover:text-[#1a6de3]"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Back to Shipping
-                </button>
-              </div>
-            )}
           </div>
 
           {/* Order Summary Sidebar */}
@@ -1125,7 +1010,7 @@ export default function CheckoutPage() {
                 </div>
                 <div className="flex items-center gap-2 text-xs text-gray-500">
                   <Shield className="h-3.5 w-3.5 text-green-500" />
-                  Secure payment via Stripe
+                  Payment via PayPal
                 </div>
                 <div className="flex items-center gap-2 text-xs text-gray-500">
                   <Truck className="h-3.5 w-3.5 text-[#1a6de3]" />

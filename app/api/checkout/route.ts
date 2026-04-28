@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getStripe } from "@/lib/stripe";
 import { generateOrderNumber } from "@/lib/utils";
 import { rateLimit } from "@/lib/rate-limit";
 import { verifyCsrf } from "@/lib/csrf";
@@ -41,7 +40,7 @@ const CheckoutSchema = z.object({
   items: z.array(CartItemSchema).min(1, "Cart cannot be empty"),
   shipping: ShippingSchema,
   email: z.string().email(),
-  paymentMethod: z.enum(["stripe", "paypal"]),
+  paymentMethod: z.literal("paypal_manual"),
   researchDisclaimerAccepted: z.literal(true),
   ageVerified: z.literal(true),
   termsAccepted: z.literal(true),
@@ -175,13 +174,15 @@ export async function POST(request: NextRequest) {
 
     const orderNumber = generateOrderNumber();
 
-    // Create order in database first
+    // Create order in database first.
+    // Status starts as `awaiting_payment` — payment is via manual PayPal F&F transfer.
+    // Admin manually flips to `processing` after verifying the PayPal payment.
     const { data: order, error: orderError } = await supabase
       .from("orders")
       .insert({
         order_number: orderNumber,
         guest_email: email,
-        status: "pending",
+        status: "awaiting_payment",
         subtotal,
         shipping_cost: shippingCost,
         tax,
@@ -242,49 +243,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create payment session based on selected method
-    let clientSecret: string | null = null;
-
-    if (paymentMethod === "stripe") {
-      try {
-        const paymentIntent = await getStripe().paymentIntents.create({
-          amount: Math.round(total * 100),
-          currency: "cad",
-          automatic_payment_methods: { enabled: true },
-          receipt_email: email,
-          shipping: {
-            name: shipping.fullName,
-            address: {
-              line1: shipping.line1,
-              line2: shipping.line2 || undefined,
-              city: shipping.city,
-              state: shipping.province,
-              postal_code: shipping.postalCode,
-              country: shipping.country,
-            },
-          },
-          metadata: { orderNumber, email, orderId: order.id },
-        });
-
-        clientSecret = paymentIntent.client_secret;
-
-        // Link PaymentIntent to order
-        await supabase
-          .from("orders")
-          .update({ stripe_payment_intent_id: paymentIntent.id })
-          .eq("id", order.id);
-      } catch (stripeErr) {
-        log.error("Stripe PaymentIntent error", { orderId: order.id, error: String(stripeErr) });
-        await supabase.from("orders").delete().eq("id", order.id);
-        return NextResponse.json(
-          { error: "Failed to initialize payment. Please try again." },
-          { status: 500 }
-        );
-      }
-    }
-    // For PayPal: order is created with "pending" status.
-    // Frontend will call /api/paypal/create-order with the orderId,
-    // then redirect to PayPal, then call /api/paypal/capture-order.
+    // No payment session — customer pays manually via PayPal F&F.
+    // The frontend redirects to /checkout/payment-instructions?order_id=...
+    // Admin verifies the incoming payment and flips the status to processing.
 
     // Create account if opted in (uses signUp to trigger verification email)
     let accountCreated = false;
@@ -313,7 +274,7 @@ export async function POST(request: NextRequest) {
 
       if (signupData?.user) {
         accountCreated = true;
-        // Link previous paid guest orders to the new account (not pending ones)
+        // Link guest orders (including the one just placed) to the new account
         await supabase
           .from("orders")
           .update({ user_id: signupData.user.id })
@@ -325,7 +286,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       orderId: order.id,
       orderNumber,
-      clientSecret,
       accountCreated,
     });
   } catch (err) {

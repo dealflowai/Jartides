@@ -6,12 +6,23 @@ import type { OrderStatus } from "@/lib/types";
 
 const STATUSES: OrderStatus[] = [
   "pending",
+  "awaiting_payment",
   "processing",
   "shipped",
   "delivered",
   "cancelled",
   "refunded",
 ];
+
+const STATUS_LABELS: Record<OrderStatus, string> = {
+  pending: "Pending",
+  awaiting_payment: "Awaiting Payment",
+  processing: "Processing",
+  shipped: "Shipped",
+  delivered: "Delivered",
+  cancelled: "Cancelled",
+  refunded: "Refunded",
+};
 
 export default function OrderStatusUpdater({
   orderId,
@@ -54,7 +65,7 @@ export default function OrderStatusUpdater({
         >
           {STATUSES.map((s) => (
             <option key={s} value={s}>
-              {s}
+              {STATUS_LABELS[s]}
             </option>
           ))}
         </select>

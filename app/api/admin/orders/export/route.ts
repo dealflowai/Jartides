@@ -25,11 +25,18 @@ export async function GET(req: NextRequest) {
     .select("*, order_items:order_items(product_name, quantity, unit_price)")
     .order("created_at", { ascending: false });
 
-  // Exclude pending (unpaid) orders by default
+  // Exclude unpaid orders by default. Fulfillment users never see
+  // awaiting_payment orders, even if they request a specific status.
   if (status) {
+    if (admin.role !== "admin" && status === "awaiting_payment") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
     query = query.eq("status", status);
   } else {
-    query = query.neq("status", "pending");
+    const excluded = admin.role === "admin"
+      ? "(pending)"
+      : "(pending,awaiting_payment)";
+    query = query.not("status", "in", excluded);
   }
   if (from) query = query.gte("created_at", from);
   if (to) query = query.lte("created_at", `${to}T23:59:59.999Z`);

@@ -117,6 +117,7 @@ export interface Address {
 
 export type OrderStatus =
   | "pending"
+  | "awaiting_payment"
   | "processing"
   | "shipped"
   | "delivered"

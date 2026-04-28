@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireStaffPage } from "@/lib/admin";
 import { formatPrice } from "@/lib/utils";
@@ -6,15 +6,27 @@ import OrderStatusUpdater from "@/components/admin/OrderStatusUpdater";
 import OrderNotes from "@/components/admin/OrderNotes";
 import ShippingLabelGenerator from "@/components/admin/ShippingLabelGenerator";
 import DeleteOrderButton from "@/components/admin/DeleteOrderButton";
+import MarkAsPaidButton from "@/components/admin/MarkAsPaidButton";
 import type { Order, OrderItem, OrderStatus } from "@/lib/types";
 
 const statusColors: Record<OrderStatus, string> = {
   pending: "bg-yellow-100 text-yellow-800",
+  awaiting_payment: "bg-amber-100 text-amber-800",
   processing: "bg-blue-100 text-blue-800",
   shipped: "bg-purple-100 text-purple-800",
   delivered: "bg-green-100 text-green-800",
   cancelled: "bg-red-100 text-red-800",
   refunded: "bg-gray-100 text-gray-800",
+};
+
+const statusLabels: Record<OrderStatus, string> = {
+  pending: "Pending",
+  awaiting_payment: "Awaiting Payment",
+  processing: "Processing",
+  shipped: "Shipped",
+  delivered: "Delivered",
+  cancelled: "Cancelled",
+  refunded: "Refunded",
 };
 
 export default async function AdminOrderDetailPage({
@@ -34,6 +46,11 @@ export default async function AdminOrderDetailPage({
     .single<Order>();
 
   if (!order) notFound();
+
+  // Fulfillment users only access paid orders. Bounce them off unpaid orders.
+  if (!isAdmin && order.status === "awaiting_payment") {
+    redirect("/admin/orders");
+  }
 
   const { data: items } = await supabase
     .from("order_items")
@@ -57,11 +74,30 @@ export default async function AdminOrderDetailPage({
           <span
             className={`rounded-full px-3 py-1 text-sm font-medium ${statusColors[order.status]}`}
           >
-            {order.status}
+            {statusLabels[order.status]}
           </span>
           {isAdmin && <DeleteOrderButton orderId={order.id} />}
         </div>
       </div>
+
+      {/* Awaiting payment banner */}
+      {order.status === "awaiting_payment" && (
+        <div className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="font-semibold text-amber-900">Awaiting customer PayPal payment</p>
+              <p className="mt-1 text-sm text-amber-800">
+                Verify the F&amp;F payment came in for{" "}
+                <span className="font-mono font-semibold">{formatPrice(order.total)} {order.currency.toUpperCase()}</span>{" "}
+                with note{" "}
+                <span className="font-mono font-semibold">{order.guest_email ?? "—"}</span>,
+                then click below to confirm. This decrements stock and emails the customer.
+              </p>
+            </div>
+            <MarkAsPaidButton orderId={order.id} />
+          </div>
+        </div>
+      )}
 
       <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* Customer */}

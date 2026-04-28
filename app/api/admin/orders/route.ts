@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireStaff } from "@/lib/admin";
 import { verifyCsrf } from "@/lib/csrf";
-import { sendShippingNotification, sendReviewRequest } from "@/lib/email";
+import { sendShippingNotification, sendReviewRequest, sendOrderConfirmation, sendAdminOrderNotification } from "@/lib/email";
 import { writeAuditLog } from "@/lib/audit";
 import { logger } from "@/lib/logger";
 import { z } from "zod";
@@ -39,6 +39,7 @@ const updateSchema = z.object({
   id: z.string().uuid(),
   status: z.enum([
     "pending",
+    "awaiting_payment",
     "processing",
     "shipped",
     "delivered",
@@ -77,6 +78,17 @@ export async function PUT(req: NextRequest) {
     .eq("id", id)
     .single();
 
+  // Only admins can verify/mark PayPal payments. Fulfillment can't touch
+  // awaiting_payment orders, nor can they move orders into that state.
+  if (admin.role !== "admin") {
+    if (currentOrder?.status === "awaiting_payment" || updates.status === "awaiting_payment") {
+      return NextResponse.json(
+        { error: "Only admins can change payment status." },
+        { status: 403 }
+      );
+    }
+  }
+
   const { data, error } = await db
     .from("orders")
     .update({ ...updates, updated_at: new Date().toISOString() })
@@ -101,6 +113,49 @@ export async function PUT(req: NextRequest) {
       carrier: updates.carrier ?? null,
     },
   });
+
+  // Manual payment confirmation: transitioning from awaiting_payment → processing
+  // means the admin verified PayPal F&F payment came in. Decrement stock + send
+  // customer confirmation + admin notification, mirroring the Stripe webhook path.
+  if (
+    updates.status === "processing" &&
+    currentOrder?.status === "awaiting_payment"
+  ) {
+    try {
+      const { data: orderItemsForStock } = await db
+        .from("order_items")
+        .select("product_id, quantity")
+        .eq("order_id", id);
+
+      for (const item of orderItemsForStock ?? []) {
+        const { error: stockError } = await db.rpc("decrement_stock", {
+          p_product_id: item.product_id,
+          p_quantity: item.quantity,
+        });
+        if (stockError) {
+          logger.error("Failed to decrement stock on manual payment", {
+            orderId: id,
+            productId: item.product_id,
+            error: stockError.message,
+          });
+        }
+      }
+
+      const { data: fullItems } = await db
+        .from("order_items")
+        .select("*")
+        .eq("order_id", id);
+
+      if (fullItems) {
+        await Promise.allSettled([
+          sendOrderConfirmation(data, fullItems),
+          sendAdminOrderNotification(data, fullItems),
+        ]);
+      }
+    } catch (e) {
+      logger.error("Failed post-payment processing", { orderId: id, error: String(e) });
+    }
+  }
 
   // Send shipping notification when status changes to "shipped"
   if (

@@ -23,6 +23,7 @@ import DashboardTabs from "@/components/admin/DashboardTabs";
 
 const statusColors: Record<OrderStatus, string> = {
   pending: "bg-yellow-100 text-yellow-800",
+  awaiting_payment: "bg-amber-100 text-amber-800",
   processing: "bg-blue-100 text-blue-800",
   shipped: "bg-purple-100 text-purple-800",
   delivered: "bg-green-100 text-green-800",
@@ -51,20 +52,16 @@ export default async function AdminDashboard() {
     topProductsRes,
     abandonedRes,
   ] = await Promise.all([
-    supabase.from("orders").select("id", { count: "exact", head: true }).neq("status", "pending"),
+    supabase.from("orders").select("id", { count: "exact", head: true }).not("status", "in", "(pending,awaiting_payment)"),
     supabase
       .from("orders")
       .select("total")
-      .neq("status", "cancelled")
-      .neq("status", "refunded")
-      .neq("status", "pending")
+      .not("status", "in", "(pending,awaiting_payment,cancelled,refunded)")
       .gte("created_at", thirtyDaysAgo.toISOString()),
     supabase
       .from("orders")
       .select("total")
-      .neq("status", "cancelled")
-      .neq("status", "refunded")
-      .neq("status", "pending"),
+      .not("status", "in", "(pending,awaiting_payment,cancelled,refunded)"),
     supabase
       .from("products")
       .select("id", { count: "exact", head: true })

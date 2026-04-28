@@ -8,6 +8,7 @@ import type { Order, OrderItem, OrderStatus } from "@/lib/types";
 
 const statusColors: Record<OrderStatus, string> = {
   pending: "bg-yellow-100 text-yellow-800",
+  awaiting_payment: "bg-amber-100 text-amber-800",
   processing: "bg-blue-100 text-blue-800",
   shipped: "bg-purple-100 text-purple-800",
   delivered: "bg-green-100 text-green-800",
@@ -15,14 +16,31 @@ const statusColors: Record<OrderStatus, string> = {
   refunded: "bg-gray-100 text-gray-800",
 };
 
+const statusLabels: Record<OrderStatus, string> = {
+  pending: "Pending",
+  awaiting_payment: "Awaiting Payment",
+  processing: "Processing",
+  shipped: "Shipped",
+  delivered: "Delivered",
+  cancelled: "Cancelled",
+  refunded: "Refunded",
+};
+
 export default async function AdminOrdersPage() {
-  await requireStaffPage();
+  const staff = await requireStaffPage();
+  const isAdmin = staff.role === "admin";
   const supabase = createAdminClient();
+
+  // Fulfillment users only see paid orders. Admins also see awaiting_payment so
+  // they can verify PayPal F&F payments and click "Mark as Paid".
+  const excludedStatuses = isAdmin
+    ? "(pending)"
+    : "(pending,awaiting_payment)";
 
   const { data } = await supabase
     .from("orders")
     .select("*, order_items(*)")
-    .neq("status", "pending")
+    .not("status", "in", excludedStatuses)
     .order("created_at", { ascending: false });
 
   const orders = (data ?? []) as (Order & { order_items: OrderItem[] })[];
@@ -76,7 +94,7 @@ export default async function AdminOrdersPage() {
                   <span
                     className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColors[order.status]}`}
                   >
-                    {order.status}
+                    {statusLabels[order.status]}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-right">

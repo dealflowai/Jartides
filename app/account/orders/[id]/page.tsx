@@ -37,12 +37,16 @@ export default async function OrderDetailPage({ params }: PageProps) {
 
   const statusColors: Record<string, string> = {
     pending: "bg-yellow-100 text-yellow-800",
+    awaiting_payment: "bg-amber-100 text-amber-800",
     processing: "bg-blue-100 text-blue-800",
     shipped: "bg-purple-100 text-purple-800",
     delivered: "bg-green-100 text-green-800",
     cancelled: "bg-red-100 text-red-800",
     refunded: "bg-gray-100 text-gray-700",
   };
+
+  const statusLabel =
+    order.status === "awaiting_payment" ? "Awaiting Payment" : order.status;
 
   return (
     <div className="space-y-6">
@@ -77,10 +81,26 @@ export default async function OrderDetailPage({ params }: PageProps) {
               statusColors[order.status] || "bg-gray-100 text-gray-700"
             }`}
           >
-            {order.status}
+            {statusLabel}
           </span>
         </div>
       </div>
+
+      {/* Awaiting payment banner */}
+      {order.status === "awaiting_payment" && (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 p-5">
+          <p className="font-semibold text-amber-900">Payment required</p>
+          <p className="mt-1 text-sm text-amber-800">
+            Your order is reserved but won&apos;t ship until payment is received via PayPal. Follow the steps to complete your payment.
+          </p>
+          <Link
+            href={`/checkout/payment-instructions?order_id=${order.id}`}
+            className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#0b3d7a] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#09326a]"
+          >
+            View Payment Instructions
+          </Link>
+        </div>
+      )}
 
       {/* Items */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
