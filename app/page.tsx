@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { sortInStockFirst } from "@/lib/utils";
 import type { Product } from "@/lib/types";
 import Hero from "@/components/home/Hero";
 import TrustStrip from "@/components/home/TrustStrip";
@@ -31,7 +32,7 @@ export default async function HomePage() {
       .order("created_at", { ascending: false })
       .limit(6);
 
-    if (data) products = data as Product[];
+    if (data) products = sortInStockFirst(data as Product[]);
   } catch {
     // Supabase may not be connected yet — fall back to empty array
   }

@@ -39,7 +39,7 @@ function getStockStatus(product: Product) {
 
   if (qty <= 0 || isBackorder(product)) {
     return {
-      label: "Out of Stock — Back in 1–2 Weeks",
+      label: "Out of Stock",
       color: "text-red-600",
       bgColor: "bg-red-50",
       borderColor: "border-red-200",

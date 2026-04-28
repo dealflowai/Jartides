@@ -7,6 +7,7 @@ import ProductCard from "@/components/shop/ProductCard";
 import ProductStructuredData from "@/components/shop/ProductStructuredData";
 import type { Product, CoaDocument } from "@/lib/types";
 import type { Metadata } from "next";
+import { sortInStockFirst } from "@/lib/utils";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -112,6 +113,9 @@ export default async function ProductPage({ params }: PageProps) {
 
       relatedProducts = [...relatedProducts, ...((more as Product[]) ?? [])];
     }
+
+    // Push out-of-stock related products to the bottom.
+    relatedProducts = sortInStockFirst(relatedProducts);
   } catch {
     relatedProducts = [];
   }

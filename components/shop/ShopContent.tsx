@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { X, ChevronDown, SlidersHorizontal } from "lucide-react";
 import ProductCard from "@/components/shop/ProductCard";
-import { cn } from "@/lib/utils";
+import { cn, sortInStockFirst } from "@/lib/utils";
 import { CATEGORIES } from "@/lib/constants";
 import type { Product, Category, ProductTag } from "@/lib/types";
 
@@ -158,7 +158,9 @@ export default function ShopContent({ products, categories, tags = [] }: ShopCon
         break;
     }
 
-    return sorted;
+    // Always push out-of-stock products to the bottom, preserving the
+    // user's chosen sort order within each group.
+    return sortInStockFirst(sorted);
   }, [activeFilter, searchQuery, products, categories, priceMin, priceMax, sortBy, activeTag]);
 
   return (

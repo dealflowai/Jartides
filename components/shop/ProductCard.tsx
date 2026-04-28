@@ -130,7 +130,6 @@ export default function ProductCard({ product }: ProductCardProps) {
           {isOutOfStock && (
             <div className="absolute inset-x-0 bottom-0 bg-red-600/90 backdrop-blur-sm px-3 py-2 text-center">
               <p className="text-xs font-bold text-white uppercase tracking-wide">Out of Stock</p>
-              <p className="text-[10px] text-red-100">Back in 1–2 Weeks</p>
             </div>
           )}
         </div>

@@ -46,7 +46,7 @@ export default function BackInStockForm({ productId, productName }: Props) {
           <span className="text-sm font-medium text-amber-800">Get Notified When It&apos;s Back</span>
         </div>
         <p className="mt-1 text-xs text-amber-700">
-          This item is currently out of stock. Expected back in <strong>1–2 weeks</strong>. Enter your email and we&apos;ll let you know as soon as it&apos;s available.
+          This item is currently out of stock. Enter your email and we&apos;ll let you know as soon as it&apos;s back.
         </p>
       </div>
       <div className="flex gap-2">
