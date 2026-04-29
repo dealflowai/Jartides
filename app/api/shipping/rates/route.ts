@@ -10,6 +10,16 @@ interface CartItemInput {
   quantity: number;
 }
 
+type ProductRow = {
+  id: string;
+  name?: string | null;
+  price?: number | null;
+  weight_grams: number | null;
+  length_cm: number | null;
+  width_cm: number | null;
+  height_cm: number | null;
+};
+
 function calculateParcel(
   products: { weight_grams: number | null; length_cm: number | null; width_cm: number | null; height_cm: number | null }[]
 ) {
@@ -60,15 +70,17 @@ export async function POST(request: NextRequest) {
       massUnit: "kg" as const,
     };
 
+    let products: ProductRow[] = [];
     if (cartItems.length > 0) {
       const db = createAdminClient();
       const productIds = cartItems.map((i) => i.productId);
-      const { data: products } = await db
+      const { data: productRows } = await db
         .from("products")
-        .select("id, weight_grams, length_cm, width_cm, height_cm")
+        .select("id, name, price, weight_grams, length_cm, width_cm, height_cm")
         .in("id", productIds);
 
-      if (products && products.length > 0) {
+      if (productRows && productRows.length > 0) {
+        products = productRows as ProductRow[];
         // Expand products by quantity
         const expanded = cartItems.flatMap((item) => {
           const product = products.find((p) => p.id === item.productId);
@@ -84,6 +96,61 @@ export async function POST(request: NextRequest) {
 
     const shippo = new Shippo({ apiKeyHeader: process.env.SHIPPO_API_TOKEN! });
 
+    // International shipment? Build a customs declaration so carriers (FedEx etc.)
+    // return rates and can issue commercial invoices at label time.
+    const toCountry = String(address.country || "").toUpperCase();
+    const fromCountry = (SHIPPO_FROM_ADDRESS.country || "US").toUpperCase();
+    let customsDeclarationId: string | undefined;
+
+    if (toCountry && toCountry !== fromCountry) {
+      const currency = address.currency || "USD";
+      const originCountry = process.env.SHIPPO_CUSTOMS_ORIGIN_COUNTRY || fromCountry;
+      const customsItems = cartItems
+        .map((item) => {
+          const product = products.find((p) => p.id === item.productId);
+          if (!product) return null;
+          const qty = item.quantity || 1;
+          const unitWeightKg = Math.max((product.weight_grams || 100) / 1000, 0.01);
+          const lineValue = (product.price || 1) * qty;
+          return {
+            description: product.name || "Merchandise",
+            quantity: qty,
+            netWeight: unitWeightKg.toFixed(3),
+            massUnit: "kg" as const,
+            valueAmount: lineValue.toFixed(2),
+            valueCurrency: currency,
+            originCountry,
+          };
+        })
+        .filter((x): x is NonNullable<typeof x> => x !== null);
+
+      if (customsItems.length === 0) {
+        customsItems.push({
+          description: "Merchandise",
+          quantity: 1,
+          netWeight: parcel.weight,
+          massUnit: "kg" as const,
+          valueAmount: "1.00",
+          valueCurrency: currency,
+          originCountry,
+        });
+      }
+
+      try {
+        const customsDeclaration = await shippo.customsDeclarations.create({
+          contentsType: "MERCHANDISE",
+          nonDeliveryOption: "RETURN",
+          certify: true,
+          certifySigner: process.env.SHIPPO_CUSTOMS_SIGNER || SHIPPO_FROM_ADDRESS.name,
+          incoterm: "DDU",
+          items: customsItems,
+        });
+        customsDeclarationId = customsDeclaration.objectId;
+      } catch (e) {
+        logger.warn("Customs declaration create failed, continuing without it", { error: String(e) });
+      }
+    }
+
     const shipment = await shippo.shipments.create({
       addressFrom: SHIPPO_FROM_ADDRESS,
       addressTo: {
@@ -96,6 +163,7 @@ export async function POST(request: NextRequest) {
         country: address.country,
       },
       parcels: [parcel],
+      ...(customsDeclarationId ? { customsDeclaration: customsDeclarationId } : {}),
     });
 
     logger.info("Shippo shipment response", {

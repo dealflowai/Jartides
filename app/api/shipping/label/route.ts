@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       // Fetch order items and their product dimensions
       const { data: orderItems } = await db
         .from("order_items")
-        .select("product_id, quantity")
+        .select("product_id, product_name, quantity, unit_price")
         .eq("order_id", orderId);
 
       let parcel = {
@@ -70,6 +70,9 @@ export async function POST(request: NextRequest) {
         weight: "1",
         massUnit: "kg" as const,
       };
+
+      // Per-item weight in kg, keyed by product_id (used for customs items)
+      const itemWeightsKg = new Map<string, number>();
 
       if (orderItems && orderItems.length > 0) {
         const productIds = orderItems.map((i: { product_id: string }) => i.product_id);
@@ -88,10 +91,12 @@ export async function POST(request: NextRequest) {
             const product = products.find((p: { id: string }) => p.id === item.product_id);
             if (!product) continue;
             const qty = item.quantity || 1;
-            totalWeightGrams += (product.weight_grams || 100) * qty;
+            const unitWeightG = product.weight_grams || 100;
+            totalWeightGrams += unitWeightG * qty;
             maxLength = Math.max(maxLength, product.length_cm || 15);
             maxWidth = Math.max(maxWidth, product.width_cm || 10);
             totalHeight += (product.height_cm || 5) * qty;
+            itemWeightsKg.set(item.product_id, Math.max(unitWeightG / 1000, 0.01));
           }
 
           parcel = {
@@ -105,6 +110,53 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      // International shipment? Build a customs declaration so FedEx/UPS/etc. can issue a commercial invoice.
+      const toCountry = (order.shipping_country || "CA").toUpperCase();
+      const fromCountry = (SHIPPO_FROM_ADDRESS.country || "US").toUpperCase();
+      let customsDeclarationId: string | undefined;
+
+      if (toCountry !== fromCountry) {
+        const currency = order.currency || "USD";
+        const originCountry = process.env.SHIPPO_CUSTOMS_ORIGIN_COUNTRY || fromCountry;
+        const customsItems = (orderItems || []).map((item: { product_id: string; product_name: string; quantity: number; unit_price: number }) => {
+          const qty = item.quantity || 1;
+          const lineValue = (item.unit_price || 0) * qty;
+          const netWeightKg = itemWeightsKg.get(item.product_id) ?? 0.1;
+          return {
+            description: item.product_name || "Merchandise",
+            quantity: qty,
+            netWeight: netWeightKg.toFixed(3),
+            massUnit: "kg" as const,
+            valueAmount: lineValue.toFixed(2),
+            valueCurrency: currency,
+            originCountry,
+          };
+        });
+
+        if (customsItems.length === 0) {
+          customsItems.push({
+            description: "Merchandise",
+            quantity: 1,
+            netWeight: parcel.weight,
+            massUnit: "kg" as const,
+            valueAmount: (Number(order.subtotal) || 1).toFixed(2),
+            valueCurrency: currency,
+            originCountry,
+          });
+        }
+
+        const customsDeclaration = await shippo.customsDeclarations.create({
+          contentsType: "MERCHANDISE",
+          nonDeliveryOption: "RETURN",
+          certify: true,
+          certifySigner: process.env.SHIPPO_CUSTOMS_SIGNER || SHIPPO_FROM_ADDRESS.name,
+          incoterm: "DDU",
+          items: customsItems,
+        });
+
+        customsDeclarationId = customsDeclaration.objectId;
+      }
+
       const shipment = await shippo.shipments.create({
         addressFrom: SHIPPO_FROM_ADDRESS,
         addressTo: {
@@ -114,9 +166,11 @@ export async function POST(request: NextRequest) {
           city: order.shipping_city || "",
           state: order.shipping_province || "",
           zip: order.shipping_postal || "",
-          country: order.shipping_country || "CA",
+          country: toCountry,
+          email: order.guest_email || undefined,
         },
         parcels: [parcel],
+        ...(customsDeclarationId ? { customsDeclaration: customsDeclarationId } : {}),
       });
 
       shipmentId = shipment.objectId;
