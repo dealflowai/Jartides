@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CheckCircle, Loader2, Package, XCircle } from "lucide-react";
+import { CheckCircle, Download, Loader2, Package, XCircle } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import type { Order, OrderItem, OrderStatus } from "@/lib/types";
 
@@ -35,10 +35,34 @@ type RowResult =
   | { state: "success"; trackingNumber: string; labelUrl: string }
   | { state: "error"; message: string };
 
+async function downloadMergedLabels(labelUrls: string[]) {
+  if (labelUrls.length === 0) return;
+  const res = await fetch("/api/shipping/labels/merge", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ labelUrls }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(typeof data.error === "string" ? data.error : "Merge failed");
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `shipping-labels-${new Date().toISOString().slice(0, 10)}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 export default function OrdersBulkLabelTable({ orders }: { orders: OrderRow[] }) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [running, setRunning] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
   const [results, setResults] = useState<Record<string, RowResult>>({});
 
   // Eligible: paid order, not yet labeled, not cancelled/refunded
@@ -79,6 +103,7 @@ export default function OrdersBulkLabelTable({ orders }: { orders: OrderRow[] })
   async function handleGenerate() {
     if (selected.size === 0 || running) return;
     setRunning(true);
+    setDownloadError(null);
 
     const ids = Array.from(selected);
     setResults(Object.fromEntries(ids.map((id) => [id, { state: "pending" } as RowResult])));
@@ -120,15 +145,39 @@ export default function OrdersBulkLabelTable({ orders }: { orders: OrderRow[] })
     setRunning(false);
     router.refresh();
 
-    // Auto-open all successful labels in new tabs (best-effort; popup blocker may stop after the first)
-    for (const url of successUrls) {
-      window.open(url, "_blank", "noopener");
+    // Merge all successful labels into a single PDF and auto-download.
+    if (successUrls.length > 0) {
+      setDownloading(true);
+      try {
+        await downloadMergedLabels(successUrls);
+      } catch (e) {
+        setDownloadError(e instanceof Error ? e.message : "Auto-download failed");
+      } finally {
+        setDownloading(false);
+      }
     }
   }
 
   function clearResults() {
     setResults({});
     setSelected(new Set());
+    setDownloadError(null);
+  }
+
+  async function handleRedownload() {
+    const urls = Object.values(results)
+      .filter((r): r is Extract<RowResult, { state: "success" }> => r.state === "success")
+      .map((r) => r.labelUrl);
+    if (urls.length === 0) return;
+    setDownloading(true);
+    setDownloadError(null);
+    try {
+      await downloadMergedLabels(urls);
+    } catch (e) {
+      setDownloadError(e instanceof Error ? e.message : "Download failed");
+    } finally {
+      setDownloading(false);
+    }
   }
 
   const summary = useMemo(() => {
@@ -211,9 +260,28 @@ export default function OrdersBulkLabelTable({ orders }: { orders: OrderRow[] })
                 {summary.error} failed
               </span>
             )}
-            <span className="text-gray-400">
-              Tip: if your browser blocked some tabs, the label links are listed in the rows below.
-            </span>
+            {downloading && (
+              <span className="inline-flex items-center gap-1 text-gray-600">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Preparing combined PDF...
+              </span>
+            )}
+            {summary.success > 0 && !downloading && (
+              <button
+                type="button"
+                onClick={handleRedownload}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition hover:bg-gray-50"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Download all labels (PDF)
+              </button>
+            )}
+            {downloadError && (
+              <span className="text-red-700">
+                <XCircle className="mr-1 inline h-4 w-4" />
+                {downloadError}
+              </span>
+            )}
           </div>
         </div>
       )}
