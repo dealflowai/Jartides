@@ -142,6 +142,7 @@ export interface Order {
   shipping_province: string;
   shipping_postal: string;
   shipping_country: string;
+  shipping_phone: string | null;
   tracking_number: string | null;
   shipping_label_url: string | null;
   shippo_shipment_id: string | null;

@@ -23,6 +23,7 @@ import type { CountryConfig } from "@/lib/countries";
 interface ShippingForm {
   fullName: string;
   email: string;
+  phone: string;
   line1: string;
   line2: string;
   city: string;
@@ -44,6 +45,7 @@ interface ShippingRate {
 const INITIAL_SHIPPING: ShippingForm = {
   fullName: "",
   email: "",
+  phone: "",
   line1: "",
   line2: "",
   city: "",
@@ -137,6 +139,7 @@ export default function CheckoutPage() {
             province: shipping.province,
             postal: shipping.postalCode,
             country: shipping.country,
+            phone: shipping.phone || "",
           },
           items: items.map((item) => ({
             productId: item.productId,
@@ -236,6 +239,10 @@ export default function CheckoutPage() {
       if (!shipping.city.trim()) errors.city = "City is required";
       if (!shipping.province.trim()) errors.province = "Province/State is required";
       if (!shipping.postalCode.trim()) errors.postalCode = "Postal code is required";
+      // Phone required for international (carriers refuse to issue commercial invoices without it)
+      if (shipping.country !== "CA" && !shipping.phone.trim()) {
+        errors.phone = "Phone number is required for international shipments";
+      }
     }
 
     if (createAccount) {
@@ -296,6 +303,7 @@ export default function CheckoutPage() {
                 province: "ON",
                 postalCode: "N8W 3T6",
                 country: "CA",
+                phone: shipping.phone.trim() || null,
               }
             : {
                 fullName: shipping.fullName,
@@ -305,6 +313,7 @@ export default function CheckoutPage() {
                 province: shipping.province,
                 postalCode: shipping.postalCode,
                 country: shipping.country,
+                phone: shipping.phone.trim() || null,
               },
           email: shipping.email,
           discountCode: discountData ? discountCode.trim() : undefined,
@@ -404,6 +413,29 @@ export default function CheckoutPage() {
                         <p className="mt-1 text-xs text-red-500">{fieldErrors.email}</p>
                       )}
                       <p className="mt-1 text-xs text-gray-400">Order confirmation and tracking will be sent here.</p>
+                    </div>
+
+                    {/* Phone */}
+                    <div className="sm:col-span-2">
+                      <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                        Phone Number{" "}
+                        <span className="text-gray-400">
+                          {shipping.country !== "CA" ? "(required for international)" : "(recommended)"}
+                        </span>
+                      </label>
+                      <input
+                        type="tel"
+                        name="phone"
+                        autoComplete="tel"
+                        value={shipping.phone}
+                        onChange={handleChange}
+                        className={`${inputCls} ${fieldErrors.phone ? "border-red-400 focus:border-red-400 focus:ring-red-200" : ""}`}
+                        placeholder="+1 555 123 4567"
+                      />
+                      {fieldErrors.phone && (
+                        <p className="mt-1 text-xs text-red-500">{fieldErrors.phone}</p>
+                      )}
+                      <p className="mt-1 text-xs text-gray-400">Used by the carrier if there&apos;s a delivery issue or customs question.</p>
                     </div>
 
                     {/* Optional Account Creation */}

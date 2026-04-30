@@ -26,6 +26,7 @@ const ShippingSchema = z.object({
   province: z.string().min(1),
   postalCode: z.string().min(1),
   country: z.string().min(1),
+  phone: z.string().nullable().optional(),
 });
 
 const ShippingRateSchema = z.object({
@@ -195,6 +196,7 @@ export async function POST(request: NextRequest) {
         shipping_province: shipping.province,
         shipping_postal: shipping.postalCode,
         shipping_country: shipping.country,
+        shipping_phone: shipping.phone || null,
         payment_method: paymentMethod,
         carrier: shippingRate.carrier,
         shippo_shipment_id: shippingRate.shipment_id,

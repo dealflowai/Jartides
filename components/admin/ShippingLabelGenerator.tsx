@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Package, Download, ExternalLink, Loader2, CheckCircle } from "lucide-react";
+import { Package, Download, ExternalLink, Loader2, CheckCircle, Phone } from "lucide-react";
 
 interface Props {
   orderId: string;
@@ -12,6 +12,8 @@ interface Props {
   existingTrackingUrl: string | null;
   existingCarrier: string | null;
   rateId: string | null;
+  shippingPhone: string | null;
+  shippingCountry: string | null;
 }
 
 export default function ShippingLabelGenerator({
@@ -22,9 +24,14 @@ export default function ShippingLabelGenerator({
   existingTrackingUrl,
   existingCarrier,
   rateId,
+  shippingPhone,
+  shippingCountry,
 }: Props) {
   const router = useRouter();
   const [generating, setGenerating] = useState(false);
+  const [phone, setPhone] = useState(shippingPhone || "");
+  const [savingPhone, setSavingPhone] = useState(false);
+  const [phoneSaved, setPhoneSaved] = useState(false);
   const [result, setResult] = useState<{
     trackingNumber: string;
     labelUrl: string;
@@ -32,6 +39,30 @@ export default function ShippingLabelGenerator({
     carrier: string;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const isInternational = shippingCountry && shippingCountry.toUpperCase() !== "US";
+
+  async function savePhone() {
+    setSavingPhone(true);
+    setPhoneSaved(false);
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}/phone`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: phone.trim() }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(typeof data.error === "string" ? data.error : "Save failed");
+      }
+      setPhoneSaved(true);
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to save phone");
+    } finally {
+      setSavingPhone(false);
+    }
+  }
 
   async function handleRegenerate() {
     if (!confirm("This will generate a new shipping label and replace the existing one. Continue?")) return;
@@ -217,9 +248,56 @@ export default function ShippingLabelGenerator({
           {error}
         </div>
       )}
+
+      {/* Recipient phone editor — required by carriers for international shipments */}
+      <div className="mb-4 rounded-lg border border-gray-200 bg-white p-4">
+        <div className="mb-2 flex items-center gap-2">
+          <Phone className="h-4 w-4 text-gray-500" />
+          <label className="text-sm font-medium text-gray-700">
+            Recipient phone
+            {isInternational && (
+              <span className="ml-1 text-xs font-normal text-amber-700">
+                (required for {shippingCountry?.toUpperCase()})
+              </span>
+            )}
+          </label>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <input
+            type="tel"
+            value={phone}
+            onChange={(e) => {
+              setPhone(e.target.value);
+              setPhoneSaved(false);
+            }}
+            placeholder="+1 555 123 4567"
+            className="flex-1 min-w-[200px] rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#1a6de3] focus:outline-none focus:ring-2 focus:ring-[#1a6de3]/20"
+          />
+          <button
+            type="button"
+            onClick={savePhone}
+            disabled={savingPhone || phone.trim() === (shippingPhone || "").trim()}
+            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+          >
+            {savingPhone ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : phoneSaved ? (
+              <CheckCircle className="h-4 w-4 text-green-600" />
+            ) : (
+              "Save"
+            )}
+          </button>
+        </div>
+        {!phone.trim() && isInternational && (
+          <p className="mt-2 text-xs text-amber-700">
+            Carriers (FedEx etc.) require a phone for international labels.
+          </p>
+        )}
+      </div>
+
       <button
         onClick={handleGenerate}
-        disabled={generating}
+        disabled={generating || (!!isInternational && !phone.trim())}
         className="inline-flex items-center gap-2 rounded-lg bg-[#0b3d7a] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#09326a] disabled:opacity-50"
       >
         {generating ? (

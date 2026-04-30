@@ -171,6 +171,11 @@ export async function POST(request: NextRequest) {
         customsDeclarationId = customsDeclaration.objectId;
       }
 
+      const recipientPhone =
+        (order.shipping_phone && String(order.shipping_phone).trim()) ||
+        process.env.SHIPPO_FROM_PHONE ||
+        "";
+
       const shipment = await shippo.shipments.create({
         addressFrom: SHIPPO_FROM_ADDRESS,
         addressTo: {
@@ -181,6 +186,7 @@ export async function POST(request: NextRequest) {
           state: order.shipping_province || "",
           zip: order.shipping_postal || "",
           country: toCountry,
+          phone: recipientPhone,
           email: order.guest_email || undefined,
         },
         parcels: [parcel],

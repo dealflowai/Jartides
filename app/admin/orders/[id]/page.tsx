@@ -233,6 +233,8 @@ export default async function AdminOrderDetailPage({
           existingTrackingUrl={order.tracking_url_provider}
           existingCarrier={order.carrier}
           rateId={order.shippo_rate_id}
+          shippingPhone={order.shipping_phone}
+          shippingCountry={order.shipping_country}
         />
       </div>
 
