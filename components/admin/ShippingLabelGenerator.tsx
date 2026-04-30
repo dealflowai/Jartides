@@ -64,6 +64,37 @@ export default function ShippingLabelGenerator({
     }
   }
 
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+
+  async function downloadLabelWithSlip() {
+    setDownloadingPdf(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/shipping/labels/merge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderIds: [orderId], includePackingSlips: true }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(typeof data.error === "string" ? data.error : "Download failed");
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `label-${orderId.slice(0, 8)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to download");
+    } finally {
+      setDownloadingPdf(false);
+    }
+  }
+
   async function handleRegenerate() {
     if (!confirm("This will generate a new shipping label and replace the existing one. Continue?")) return;
     setGenerating(true);
@@ -128,6 +159,13 @@ export default function ShippingLabelGenerator({
       });
 
       router.refresh();
+
+      // Auto-download combined label + packing slip
+      try {
+        await downloadLabelWithSlip();
+      } catch {
+        // best-effort; user can click the button manually
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to generate label");
     } finally {
@@ -153,15 +191,28 @@ export default function ShippingLabelGenerator({
             </p>
           )}
           <div className="flex flex-wrap gap-2 mt-3">
+            <button
+              type="button"
+              onClick={downloadLabelWithSlip}
+              disabled={downloadingPdf}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#0b3d7a] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#09326a] disabled:opacity-50"
+            >
+              {downloadingPdf ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              Label + Packing Slip
+            </button>
             {existingLabelUrl && (
               <a
                 href={existingLabelUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-lg bg-[#0b3d7a] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#09326a]"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
               >
                 <Download className="h-4 w-4" />
-                Download Label
+                Label only
               </a>
             )}
             {existingTrackingUrl && (
@@ -212,15 +263,28 @@ export default function ShippingLabelGenerator({
             Tracking: <strong className="font-mono">{result.trackingNumber}</strong>
           </p>
           <div className="flex flex-wrap gap-2 mt-3">
+            <button
+              type="button"
+              onClick={downloadLabelWithSlip}
+              disabled={downloadingPdf}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#0b3d7a] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#09326a] disabled:opacity-50"
+            >
+              {downloadingPdf ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              Label + Packing Slip
+            </button>
             {result.labelUrl && (
               <a
                 href={result.labelUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-lg bg-[#0b3d7a] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#09326a]"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
               >
                 <Download className="h-4 w-4" />
-                Download Label
+                Label only
               </a>
             )}
             {result.trackingUrl && (

@@ -35,12 +35,12 @@ type RowResult =
   | { state: "success"; trackingNumber: string; labelUrl: string }
   | { state: "error"; message: string };
 
-async function downloadMergedLabels(labelUrls: string[]) {
-  if (labelUrls.length === 0) return;
+async function downloadMergedLabels(orderIds: string[]) {
+  if (orderIds.length === 0) return;
   const res = await fetch("/api/shipping/labels/merge", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ labelUrls }),
+    body: JSON.stringify({ orderIds, includePackingSlips: true }),
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
@@ -108,7 +108,7 @@ export default function OrdersBulkLabelTable({ orders }: { orders: OrderRow[] })
     const ids = Array.from(selected);
     setResults(Object.fromEntries(ids.map((id) => [id, { state: "pending" } as RowResult])));
 
-    const successUrls: string[] = [];
+    const successIds: string[] = [];
 
     for (const id of ids) {
       setResults((r) => ({ ...r, [id]: { state: "running" } }));
@@ -124,7 +124,7 @@ export default function OrdersBulkLabelTable({ orders }: { orders: OrderRow[] })
             typeof data.error === "string" ? data.error : JSON.stringify(data.error);
           setResults((r) => ({ ...r, [id]: { state: "error", message: msg || "Failed" } }));
         } else {
-          if (data.labelUrl) successUrls.push(data.labelUrl);
+          successIds.push(id);
           setResults((r) => ({
             ...r,
             [id]: {
@@ -145,11 +145,11 @@ export default function OrdersBulkLabelTable({ orders }: { orders: OrderRow[] })
     setRunning(false);
     router.refresh();
 
-    // Merge all successful labels into a single PDF and auto-download.
-    if (successUrls.length > 0) {
+    // Merge labels + packing slips into a single PDF and auto-download.
+    if (successIds.length > 0) {
       setDownloading(true);
       try {
-        await downloadMergedLabels(successUrls);
+        await downloadMergedLabels(successIds);
       } catch (e) {
         setDownloadError(e instanceof Error ? e.message : "Auto-download failed");
       } finally {
@@ -165,14 +165,14 @@ export default function OrdersBulkLabelTable({ orders }: { orders: OrderRow[] })
   }
 
   async function handleRedownload() {
-    const urls = Object.values(results)
-      .filter((r): r is Extract<RowResult, { state: "success" }> => r.state === "success")
-      .map((r) => r.labelUrl);
-    if (urls.length === 0) return;
+    const ids = Object.entries(results)
+      .filter(([, r]) => r.state === "success")
+      .map(([id]) => id);
+    if (ids.length === 0) return;
     setDownloading(true);
     setDownloadError(null);
     try {
-      await downloadMergedLabels(urls);
+      await downloadMergedLabels(ids);
     } catch (e) {
       setDownloadError(e instanceof Error ? e.message : "Download failed");
     } finally {
