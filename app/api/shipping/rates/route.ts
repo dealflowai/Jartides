@@ -136,6 +136,15 @@ export async function POST(request: NextRequest) {
         });
       }
 
+      // EEL/PFC: required for US-origin international exports.
+      // US -> CA: NOEEI_30_36; US -> other (typical < $2,500): NOEEI_30_37_a.
+      const eelPfc =
+        fromCountry === "US"
+          ? toCountry === "CA"
+            ? "NOEEI_30_36"
+            : "NOEEI_30_37_a"
+          : undefined;
+
       try {
         const customsDeclaration = await shippo.customsDeclarations.create({
           contentsType: "MERCHANDISE",
@@ -144,6 +153,7 @@ export async function POST(request: NextRequest) {
           certifySigner: process.env.SHIPPO_CUSTOMS_SIGNER || SHIPPO_FROM_ADDRESS.name,
           incoterm: "DDU",
           items: customsItems,
+          ...(eelPfc ? { eelPfc } : {}),
         });
         customsDeclarationId = customsDeclaration.objectId;
       } catch (e) {

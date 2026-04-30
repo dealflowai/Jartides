@@ -6,4 +6,6 @@ export const SHIPPO_FROM_ADDRESS = {
   state: process.env.SHIPPO_FROM_STATE || "TX",
   zip: process.env.SHIPPO_FROM_ZIP || "77450",
   country: process.env.SHIPPO_FROM_COUNTRY || "US",
+  phone: process.env.SHIPPO_FROM_PHONE || "",
+  email: process.env.SHIPPO_FROM_EMAIL || "",
 };
