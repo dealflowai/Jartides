@@ -175,12 +175,19 @@ export async function POST(request: NextRequest) {
 
       shipmentId = shipment.objectId;
 
-      // Pick the cheapest rate
-      if (shipment.rates.length > 0) {
-        const cheapest = shipment.rates.reduce((min, r) =>
-          parseFloat(r.amount) < parseFloat(min.amount) ? r : min
-        );
-        selectedRateId = cheapest.objectId;
+      // Pick the cheapest rate, but skip carriers that aren't activated in Shippo.
+      // Set SHIPPO_EXCLUDED_CARRIERS to a comma-separated list (e.g. "UPS,DHL Express").
+      const excludedCarriers = (process.env.SHIPPO_EXCLUDED_CARRIERS || "")
+        .split(",")
+        .map((s) => s.trim().toUpperCase())
+        .filter(Boolean);
+
+      const candidateRates = shipment.rates
+        .filter((r) => !excludedCarriers.includes((r.provider || "").toUpperCase()))
+        .sort((a, b) => parseFloat(a.amount) - parseFloat(b.amount));
+
+      if (candidateRates.length > 0) {
+        selectedRateId = candidateRates[0].objectId;
       }
     }
 

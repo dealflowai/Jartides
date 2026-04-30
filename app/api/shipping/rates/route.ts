@@ -172,17 +172,24 @@ export async function POST(request: NextRequest) {
       ratesCount: shipment.rates.length,
     });
 
-    const rates = shipment.rates.map((r) => ({
-      id: r.objectId,
-      carrier: r.provider,
-      service: r.servicelevel.name || "",
-      rate: parseFloat(r.amount),
-      currency: r.currency,
-      delivery_days: r.estimatedDays
-        ? `${r.estimatedDays} business days`
-        : "Varies",
-      shipment_id: shipment.objectId,
-    }));
+    const excludedCarriers = (process.env.SHIPPO_EXCLUDED_CARRIERS || "")
+      .split(",")
+      .map((s) => s.trim().toUpperCase())
+      .filter(Boolean);
+
+    const rates = shipment.rates
+      .filter((r) => !excludedCarriers.includes((r.provider || "").toUpperCase()))
+      .map((r) => ({
+        id: r.objectId,
+        carrier: r.provider,
+        service: r.servicelevel.name || "",
+        rate: parseFloat(r.amount),
+        currency: r.currency,
+        delivery_days: r.estimatedDays
+          ? `${r.estimatedDays} business days`
+          : "Varies",
+        shipment_id: shipment.objectId,
+      }));
 
     // Sort by price ascending
     rates.sort((a, b) => a.rate - b.rate);
