@@ -71,14 +71,15 @@ export default function ShippingLabelGenerator({
     setGenerating(true);
     setError(null);
 
+    // Don't pass the stored rateId — carrier rates expire after ~24h, so the API
+    // always creates a fresh shipment at label time.
+    void rateId;
+
     try {
       const res = await fetch("/api/shipping/label", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          orderId,
-          ...(rateId ? { rateId } : {}),
-        }),
+        body: JSON.stringify({ orderId }),
       });
 
       const data = await res.json();

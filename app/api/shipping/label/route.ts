@@ -50,9 +50,13 @@ export async function POST(request: NextRequest) {
 
     const shippo = new Shippo({ apiKeyHeader: process.env.SHIPPO_API_TOKEN! });
 
-    // When regenerating, ignore existing shipment/rate so a fresh one is created
-    let shipmentId = (rateId || regenerate) ? undefined : order.shippo_shipment_id;
-    let selectedRateId = regenerate ? undefined : (rateId || order.shippo_rate_id);
+    // Stored shipmentId/rateId from checkout expire after ~24h (carrier rates are
+    // time-bound). Always create a fresh shipment unless an explicit rateId is
+    // passed in the request body (e.g. from a freshly-quoted admin UI).
+    // The `regenerate` flag is kept for explicitness/back-compat but is now the default.
+    void regenerate;
+    let shipmentId: string | undefined = undefined;
+    let selectedRateId: string | undefined = rateId;
 
     // If no existing shipment/rate, create one with real product dimensions
     if (!shipmentId && !selectedRateId) {
