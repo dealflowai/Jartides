@@ -1,3 +1,9 @@
+// Build the from-address. Phone/email are only included when set — Shippo
+// rejects an explicitly empty string ("must not be empty") but accepts the
+// field being absent for shipments where the carrier doesn't require it.
+const phone = process.env.SHIPPO_FROM_PHONE?.trim() || undefined;
+const email = process.env.SHIPPO_FROM_EMAIL?.trim() || undefined;
+
 export const SHIPPO_FROM_ADDRESS = {
   name: process.env.SHIPPO_FROM_NAME || "Jartides",
   street1: process.env.SHIPPO_FROM_STREET1 || "565 S Mason Rd",
@@ -6,6 +12,6 @@ export const SHIPPO_FROM_ADDRESS = {
   state: process.env.SHIPPO_FROM_STATE || "TX",
   zip: process.env.SHIPPO_FROM_ZIP || "77450",
   country: process.env.SHIPPO_FROM_COUNTRY || "US",
-  phone: process.env.SHIPPO_FROM_PHONE || "",
-  email: process.env.SHIPPO_FROM_EMAIL || "",
+  ...(phone ? { phone } : {}),
+  ...(email ? { email } : {}),
 };
