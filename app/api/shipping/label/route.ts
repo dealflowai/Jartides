@@ -221,7 +221,22 @@ export async function POST(request: NextRequest) {
     // Purchase the label
     const transaction = await shippo.transactions.create({
       rate: selectedRateId,
-      labelFileType: "PDF",
+      // 4x6 thermal-printer format. Override via SHIPPO_LABEL_FILE_TYPE
+      // (e.g. ZPLII for Zebra, PNG, PDF_4x8, etc.). Avoid PDF/PDF_A4 —
+      // those are full-page and crop on a 100mm x 150mm thermal label.
+      labelFileType:
+        (process.env.SHIPPO_LABEL_FILE_TYPE as
+          | "PNG"
+          | "PNG_2.3x7.5"
+          | "PDF"
+          | "PDF_2.3x7.5"
+          | "PDF_4x6"
+          | "PDF_4x8"
+          | "PDF_A4"
+          | "PDF_A6"
+          | "ZPLII"
+          | "PDF_A5"
+          | undefined) || "PDF_4x6",
       async: false,
     });
 
