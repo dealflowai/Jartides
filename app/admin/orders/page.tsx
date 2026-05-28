@@ -11,7 +11,7 @@ export default async function AdminOrdersPage() {
   const supabase = createAdminClient();
 
   // Fulfillment users only see paid orders. Admins also see awaiting_payment so
-  // they can verify PayPal F&F payments and click "Mark as Paid".
+  // they can verify E-Transfer payments and click "Mark as Paid".
   const excludedStatuses = isAdmin
     ? "(pending)"
     : "(pending,awaiting_payment)";

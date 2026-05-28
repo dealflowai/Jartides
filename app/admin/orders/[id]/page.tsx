@@ -85,11 +85,11 @@ export default async function AdminOrderDetailPage({
         <div className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-5">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="font-semibold text-amber-900">Awaiting customer PayPal payment</p>
+              <p className="font-semibold text-amber-900">Awaiting customer E-Transfer payment</p>
               <p className="mt-1 text-sm text-amber-800">
-                Verify the F&amp;F payment came in for{" "}
+                Verify the Interac E-Transfer came in for{" "}
                 <span className="font-mono font-semibold">{formatPrice(order.total)} {order.currency.toUpperCase()}</span>{" "}
-                with note{" "}
+                from customer{" "}
                 <span className="font-mono font-semibold">{order.guest_email ?? "—"}</span>,
                 then click below to confirm. This decrements stock and emails the customer.
               </p>

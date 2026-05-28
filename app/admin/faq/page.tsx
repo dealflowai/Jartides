@@ -70,7 +70,8 @@ const DEFAULT_FAQ_DATA: FaqSection[] = [
       },
       {
         question: "What payment methods do you accept?",
-        answer: "We accept Visa, Mastercard, American Express, and PayPal.",
+        answer:
+          "Canadian customers pay by Interac E-Transfer. Send the full checkout amount to rayanwaleed7788@gmail.com, then text your order number to 226-344-6897 to confirm.",
       },
       {
         question: "What is your return/refund policy?",

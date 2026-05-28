@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Copy, ExternalLink, AlertTriangle } from "lucide-react";
+import { Check, Copy, AlertTriangle, Mail, Phone } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 
-const PAYPAL_USERNAME = "RayanElgarousha779";
+const ETRANSFER_EMAIL = "rayanwaleed7788@gmail.com";
+const CONFIRMATION_PHONE = "226-344-6897";
 
 interface Props {
   orderNumber: string;
@@ -54,7 +55,6 @@ function CopyButton({ value, label }: { value: string; label: string }) {
 
 export default function PaymentInstructions({ orderNumber, total, currency, email }: Props) {
   const totalString = total.toFixed(2);
-  const paypalMeUrl = `https://paypal.me/${PAYPAL_USERNAME}/${totalString}${currency.toUpperCase()}`;
 
   return (
     <div className="space-y-6">
@@ -70,6 +70,12 @@ export default function PaymentInstructions({ orderNumber, total, currency, emai
           </span>
         </div>
 
+        <div className="mb-4 rounded-lg border border-[#0b3d7a]/20 bg-[#0b3d7a]/5 p-3 text-center">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#0b3d7a]">
+            Canadian Customers — E-Transfer Payment Method
+          </p>
+        </div>
+
         <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
@@ -82,85 +88,73 @@ export default function PaymentInstructions({ orderNumber, total, currency, emai
           </div>
           <div className="flex items-center justify-between gap-3 border-t border-gray-200 pt-3">
             <div className="min-w-0">
-              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">PayPal username</p>
-              <p className="truncate font-mono text-sm font-semibold text-gray-900">{PAYPAL_USERNAME}</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Send E-Transfer to</p>
+              <p className="flex items-center gap-1.5 truncate font-mono text-sm font-semibold text-gray-900">
+                <Mail className="h-3.5 w-3.5 shrink-0 text-gray-500" />
+                {ETRANSFER_EMAIL}
+              </p>
             </div>
-            <CopyButton value={PAYPAL_USERNAME} label="PayPal username" />
+            <CopyButton value={ETRANSFER_EMAIL} label="E-Transfer email" />
           </div>
           <div className="flex items-center justify-between gap-3 border-t border-gray-200 pt-3">
             <div className="min-w-0">
-              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Required note (your email)</p>
-              <p className="truncate font-mono text-sm font-semibold text-gray-900">{email}</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Then text your order number to</p>
+              <p className="flex items-center gap-1.5 truncate font-mono text-sm font-semibold text-gray-900">
+                <Phone className="h-3.5 w-3.5 shrink-0 text-gray-500" />
+                {CONFIRMATION_PHONE}
+              </p>
             </div>
-            <CopyButton value={email} label="email" />
+            <CopyButton value={CONFIRMATION_PHONE} label="confirmation phone" />
+          </div>
+          <div className="flex items-center justify-between gap-3 border-t border-gray-200 pt-3">
+            <div className="min-w-0">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Your order number</p>
+              <p className="truncate font-mono text-sm font-semibold text-gray-900">{orderNumber}</p>
+            </div>
+            <CopyButton value={orderNumber} label="order number" />
           </div>
         </div>
-
-        <a
-          href={paypalMeUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-[#0070ba] px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#005ea6]"
-        >
-          Open PayPal to Pay
-          <ExternalLink className="h-4 w-4" />
-        </a>
-        <p className="mt-2 text-center text-xs text-gray-500">
-          Opens PayPal with the recipient and amount pre-filled. You&apos;ll still need to add the note and choose Friends &amp; Family.
-        </p>
       </div>
 
       {/* Steps */}
       <div className="rounded-xl bg-white p-6 shadow-sm sm:p-8">
         <h3 className="mb-1 text-lg font-bold text-[#0b3d7a]">How to complete your payment</h3>
         <p className="mb-6 text-sm text-gray-600">
-          Follow each step exactly. Incorrect payments will be declined and you&apos;ll need to place a new order.
+          Follow each step carefully. Your order will be processed once we confirm your E-Transfer.
         </p>
 
         <ol className="space-y-5">
-          <Step number={1} title="Copy your order total">
-            Use the <strong>{formatPrice(total)} {currency.toUpperCase()}</strong> amount above. Do not round.
+          <Step number={1} title="Open your online banking app">
+            Sign in to your Canadian bank&apos;s app or website and choose <strong>Interac E-Transfer</strong>.
           </Step>
 
-          <Step number={2} title="Open PayPal">
-            Tap <strong>Send/Receive</strong> at the bottom of the PayPal app, or use the
-            {" "}<a href={paypalMeUrl} target="_blank" rel="noopener noreferrer" className="text-[#1a6de3] underline">
-              direct link
-            </a>{" "}
-            above.
+          <Step number={2} title="Send the E-Transfer" highlight>
+            Send to:{" "}
+            <span className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-sm">{ETRANSFER_EMAIL}</span>
           </Step>
 
-          <Step number={3} title="Find our PayPal account">
-            In the search bar (&ldquo;Name, username, email, profile&rdquo;), enter:{" "}
-            <span className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-sm">{PAYPAL_USERNAME}</span>
+          <Step number={3} title="Send the exact amount" highlight>
+            Send the <strong>full {formatPrice(total)} {currency.toUpperCase()}</strong> displayed at
+            checkout to ensure your order can be processed without delays.
           </Step>
 
-          <Step number={4} title="Enter the exact amount" highlight>
-            Send <strong>{formatPrice(total)} {currency.toUpperCase()}</strong>. We must receive the
-            full amount <strong>after PayPal fees</strong> — if PayPal adds a fee, increase the amount
-            sent so the amount we receive matches exactly. Short payments will be declined.
+          <Step number={4} title="Text your order number" highlight>
+            After completing your E-Transfer, text your order number{" "}
+            <span className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-sm">{orderNumber}</span>{" "}
+            to{" "}
+            <span className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-sm">{CONFIRMATION_PHONE}</span>.
           </Step>
 
-          <Step number={5} title="Choose payment type" highlight>
-            When prompted, select <strong>&ldquo;For friends and family&rdquo;</strong> (not Goods and Services).
-          </Step>
-
-          <Step number={6} title="Add the required note" highlight>
-            In the &ldquo;Add a note&rdquo; field, paste only your email:{" "}
+          <Step number={5} title="Confirmation">
+            Once your payment has been confirmed, your order will be processed and prepared for shipment.
+            You&apos;ll receive a confirmation email at{" "}
             <span className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-sm">{email}</span>.
-            Do not include anything else (no website name, item, etc.).
-          </Step>
-
-          <Step number={7} title="Review & send">
-            Confirm the username, the exact amount, and that the note contains your email. Then tap{" "}
-            <strong>Send Payment</strong>.
-          </Step>
-
-          <Step number={8} title="Confirmation">
-            Once we verify your payment, you&apos;ll receive a confirmation email and your order will be
-            processed and shipped. This usually happens within 24 hours.
           </Step>
         </ol>
+
+        <p className="mt-6 text-center text-sm font-medium text-[#0b3d7a]">
+          Thank you for choosing Jartides.
+        </p>
       </div>
 
       {/* Warning footer */}
@@ -170,8 +164,8 @@ export default function PaymentInstructions({ orderNumber, total, currency, emai
           <div className="text-sm text-amber-800">
             <p className="font-semibold">Important</p>
             <ul className="mt-1.5 list-disc space-y-1 pl-5">
-              <li>Payments that are incorrect, missing details, or unmatched will be declined.</li>
-              <li>Orders are only shipped after successful payment verification.</li>
+              <li>You must send the full amount displayed at checkout — short payments will delay your order.</li>
+              <li>Orders are only shipped after the E-Transfer is received and confirmed.</li>
               <li>Keep this page bookmarked or check your account to find these instructions again.</li>
             </ul>
           </div>

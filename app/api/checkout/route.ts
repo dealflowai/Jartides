@@ -41,7 +41,7 @@ const CheckoutSchema = z.object({
   items: z.array(CartItemSchema).min(1, "Cart cannot be empty"),
   shipping: ShippingSchema,
   email: z.string().email(),
-  paymentMethod: z.literal("paypal_manual"),
+  paymentMethod: z.literal("etransfer"),
   researchDisclaimerAccepted: z.literal(true),
   ageVerified: z.literal(true),
   termsAccepted: z.literal(true),
@@ -176,8 +176,8 @@ export async function POST(request: NextRequest) {
     const orderNumber = generateOrderNumber();
 
     // Create order in database first.
-    // Status starts as `awaiting_payment` — payment is via manual PayPal F&F transfer.
-    // Admin manually flips to `processing` after verifying the PayPal payment.
+    // Status starts as `awaiting_payment` — payment is via manual Interac E-Transfer.
+    // Admin manually flips to `processing` after verifying the E-Transfer payment.
     const { data: order, error: orderError } = await supabase
       .from("orders")
       .insert({
@@ -245,7 +245,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // No payment session — customer pays manually via PayPal F&F.
+    // No payment session — customer pays manually via Interac E-Transfer.
     // The frontend redirects to /checkout/payment-instructions?order_id=...
     // Admin verifies the incoming payment and flips the status to processing.
 
