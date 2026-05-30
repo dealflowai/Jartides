@@ -90,7 +90,34 @@ export default function PaymentInstructions({ orderNumber, total, currency, emai
               </div>
               <CopyButton value={totalString} label="amount" />
             </div>
-            <div className="flex items-center justify-between gap-3 border-t border-gray-200 pt-3">
+          </div>
+
+          {/* Critical PayPal payment-type warning */}
+          <div className="mt-4 overflow-hidden rounded-lg border-2 border-red-500 bg-red-50 shadow-sm ring-4 ring-red-200/60">
+            <div className="bg-red-600 px-4 py-1.5 text-center">
+              <p className="text-xs font-bold uppercase tracking-widest text-white">
+                Critical &mdash; Read Before Sending
+              </p>
+            </div>
+            <div className="flex items-start gap-3 p-4">
+              <AlertTriangle className="mt-0.5 h-7 w-7 shrink-0 text-red-600" />
+              <div className="min-w-0">
+                <p className="text-base font-bold leading-snug text-red-900 sm:text-lg">
+                  SELECT &ldquo;For Friends and Family&rdquo;
+                </p>
+                <p className="mt-1 text-sm font-bold uppercase tracking-wide text-red-700 sm:text-base">
+                  NOT &ldquo;For Goods and Services&rdquo;
+                </p>
+                <p className="mt-2 text-xs text-red-800">
+                  Payments sent as &ldquo;Goods and Services&rdquo; will be refunded and your order
+                  will not be processed.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
+            <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-xs font-medium uppercase tracking-wide text-gray-500">PayPal username</p>
                 <p className="truncate font-mono text-sm font-semibold text-gray-900">{PAYPAL_USERNAME}</p>
