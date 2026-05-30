@@ -85,9 +85,9 @@ export default async function AdminOrderDetailPage({
         <div className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-5">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="font-semibold text-amber-900">Awaiting customer E-Transfer payment</p>
+              <p className="font-semibold text-amber-900">Awaiting customer payment</p>
               <p className="mt-1 text-sm text-amber-800">
-                Verify the Interac E-Transfer came in for{" "}
+                Verify a PayPal F&amp;F (US) or Interac E-Transfer (CA) payment came in for{" "}
                 <span className="font-mono font-semibold">{formatPrice(order.total)} {order.currency.toUpperCase()}</span>{" "}
                 from customer{" "}
                 <span className="font-mono font-semibold">{order.guest_email ?? "—"}</span>,

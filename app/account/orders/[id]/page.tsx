@@ -91,7 +91,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
         <div className="rounded-xl border border-amber-300 bg-amber-50 p-5">
           <p className="font-semibold text-amber-900">Payment required</p>
           <p className="mt-1 text-sm text-amber-800">
-            Your order is reserved but won&apos;t ship until payment is received via Interac E-Transfer. Follow the steps to complete your payment.
+            Your order is reserved but won&apos;t ship until payment is received. US buyers pay via PayPal; Canadian customers via Interac E-Transfer. Follow the steps to complete your payment.
           </p>
           <Link
             href={`/checkout/payment-instructions?order_id=${order.id}`}

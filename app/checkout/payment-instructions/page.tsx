@@ -15,7 +15,7 @@ interface Props {
 
 export const metadata = {
   title: "Complete Your Payment",
-  description: "Finish your Jartides order by completing payment via Interac E-Transfer.",
+  description: "Finish your Jartides order — US buyers pay via PayPal, Canadian customers via Interac E-Transfer.",
 };
 
 export default async function PaymentInstructionsPage({ searchParams }: Props) {
@@ -44,7 +44,7 @@ export default async function PaymentInstructionsPage({ searchParams }: Props) {
             Order placed — one step left
           </h1>
           <p className="mt-2 text-gray-600">
-            Your order is reserved. Complete payment via Interac E-Transfer below to start processing and shipping.
+            Your order is reserved. Choose the payment method for your country below and follow the steps to start processing and shipping.
           </p>
         </div>
 
