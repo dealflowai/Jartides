@@ -48,7 +48,7 @@ const faqSections = [
       {
         question: "What payment methods do you accept?",
         answer:
-          "US buyers pay via PayPal Friends & Family (username JTofficialpay). Canadian customers pay by Interac E-Transfer to rayanwaleed7788@gmail.com, then text the order number to 226-344-6897 to confirm.",
+          "US buyers pay via PayPal Friends & Family (username JanJTP). Canadian customers pay by Interac E-Transfer to rayanwaleed7788@gmail.com, then text the order number to 226-344-6897 to confirm.",
       },
       {
         question: "What is your return/refund policy?",

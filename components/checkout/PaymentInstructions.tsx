@@ -6,7 +6,7 @@ import { formatPrice } from "@/lib/utils";
 
 const ETRANSFER_EMAIL = "rayanwaleed7788@gmail.com";
 const CONFIRMATION_PHONE = "226-344-6897";
-const PAYPAL_USERNAME = "JTofficialpay";
+const PAYPAL_USERNAME = "JanJTP";
 
 interface Props {
   orderNumber: string;
