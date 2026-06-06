@@ -305,6 +305,7 @@ export default function OrdersBulkLabelTable({ orders }: { orders: OrderRow[] })
               <th className="px-4 py-3">Customer</th>
               <th className="px-4 py-3">Items</th>
               <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">Promo</th>
               <th className="px-4 py-3 text-right">Total</th>
               <th className="px-4 py-3">Date</th>
               <th className="px-4 py-3">Actions</th>
@@ -372,6 +373,18 @@ export default function OrdersBulkLabelTable({ orders }: { orders: OrderRow[] })
                       </p>
                     )}
                   </td>
+                  <td className="px-4 py-3 align-top">
+                    {order.discount_amount > 0 ? (
+                      <span
+                        title={`${formatPrice(order.discount_amount)} off`}
+                        className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 font-mono text-[11px] font-semibold text-green-700"
+                      >
+                        {order.discount_code ?? "Discount"}
+                      </span>
+                    ) : (
+                      <span className="text-gray-300">—</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 align-top text-right">
                     {formatPrice(order.total)}
                   </td>
@@ -419,7 +432,7 @@ export default function OrdersBulkLabelTable({ orders }: { orders: OrderRow[] })
             })}
             {orders.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-gray-400">
+                <td colSpan={9} className="px-4 py-8 text-center text-gray-400">
                   No orders yet.
                 </td>
               </tr>

@@ -70,8 +70,11 @@ const DEFAULT_FAQ_DATA: FaqSection[] = [
       },
       {
         question: "What payment methods do you accept?",
+        // Payment details are managed in Settings → Payment Methods and rendered
+        // into the public FAQ from there, so they're intentionally not hardcoded
+        // here. Leave this answer as-is unless you want to override it.
         answer:
-          "US buyers pay via PayPal Friends & Family (username JanJTP). Canadian customers pay by Interac E-Transfer to rayanwaleed7788@gmail.com, then text the order number to 226-344-6897 to confirm.",
+          "We accept PayPal (US buyers) and Interac E-Transfer (Canadian buyers). The exact payment details are shown on your order's payment page right after checkout.",
       },
       {
         question: "What is your return/refund policy?",

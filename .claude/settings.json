@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(node -e ' *)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code} %{size_download} bytes\\\\n\" \"https://oiaehuxbflhiwolrobxo.supabase.co/storage/v1/object/public/product-images/1775151403283-q6g56kz943.png\")",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code} %{size_download} bytes\\\\n\" \"https://oiaehuxbflhiwolrobxo.supabase.co/storage/v1/object/public/product-images/1775150984665-axnram3ngy.png\")",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" \"https://jartides.ca/_next/image?url=https%3A%2F%2Foiaehuxbflhiwolrobxo.supabase.co%2Fstorage%2Fv1%2Fobject%2Fpublic%2Fproduct-images%2F1775151403283-q6g56kz943.png&w=640&q=75\")",
+      "Bash(curl -sL -o /dev/null -w \"HTTP %{http_code} ctype=%{content_type}\\\\n\" \"https://jartides.ca/_next/image?url=https%3A%2F%2Foiaehuxbflhiwolrobxo.supabase.co%2Fstorage%2Fv1%2Fobject%2Fpublic%2Fproduct-images%2F1775151403283-q6g56kz943.png&w=640&q=75\")",
+      "Bash(npx next *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(git config *)",
+      "Bash(npm install *)",
+      "Bash(node -e \"console.log\\(require\\('pdf-lib/package.json'\\).version\\)\")",
+      "Bash(git restore *)"
+    ]
+  }
+}

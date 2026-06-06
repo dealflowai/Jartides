@@ -46,6 +46,7 @@ const CheckoutSchema = z.object({
   ageVerified: z.literal(true),
   termsAccepted: z.literal(true),
   shippingRate: ShippingRateSchema,
+  discountCode: z.string().trim().min(1).max(64).optional(),
   createAccount: z.boolean().optional(),
   password: z
     .string()
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { items, shipping, email, paymentMethod, researchDisclaimerAccepted, ageVerified, termsAccepted, shippingRate, createAccount, password } = parsed.data;
+    const { items, shipping, email, paymentMethod, researchDisclaimerAccepted, ageVerified, termsAccepted, shippingRate, discountCode, createAccount, password } = parsed.data;
     const supabase = createAdminClient();
 
     // Fetch actual prices from database — never trust client prices
@@ -169,9 +170,47 @@ export async function POST(request: NextRequest) {
       return sum + product.price * item.quantity;
     }, 0);
 
+    // Re-validate the discount code server-side and recompute the discount from
+    // DB values — never trust the client for the amount. If a code was applied at
+    // checkout but is no longer valid (expired, maxed out, min no longer met),
+    // reject so we never silently charge full price for an order the customer
+    // thought was discounted.
+    let appliedCode: string | null = null;
+    let discountAmount = 0;
+    if (discountCode) {
+      const normalizedCode = discountCode.toUpperCase().trim();
+      const { data: dc } = await supabase
+        .from("discount_codes")
+        .select("code, type, value, min_order_amount, max_uses, used_count, active, expires_at")
+        .eq("code", normalizedCode)
+        .single();
+
+      const codeUnusable =
+        !dc ||
+        !dc.active ||
+        (dc.expires_at && new Date(dc.expires_at) < new Date()) ||
+        (dc.max_uses !== null && dc.used_count >= dc.max_uses) ||
+        subtotal < Number(dc.min_order_amount);
+
+      if (codeUnusable) {
+        return NextResponse.json(
+          { error: "The discount code is no longer valid. Please remove it and try again." },
+          { status: 400 }
+        );
+      }
+
+      if (dc.type === "percentage") {
+        discountAmount = Math.round(subtotal * (Number(dc.value) / 100) * 100) / 100;
+      } else {
+        discountAmount = Math.min(Number(dc.value), subtotal);
+      }
+      appliedCode = dc.code;
+    }
+
+    const discountedSubtotal = Math.max(0, subtotal - discountAmount);
     const shippingCost = shippingRate.rate;
-    const tax = Math.round(subtotal * TAX_RATE * 100) / 100;
-    const total = Math.round((subtotal + shippingCost + tax) * 100) / 100;
+    const tax = Math.round(discountedSubtotal * TAX_RATE * 100) / 100;
+    const total = Math.round((discountedSubtotal + shippingCost + tax) * 100) / 100;
 
     const orderNumber = generateOrderNumber();
 
@@ -185,6 +224,8 @@ export async function POST(request: NextRequest) {
         guest_email: email,
         status: "awaiting_payment",
         subtotal,
+        discount_code: appliedCode,
+        discount_amount: discountAmount,
         shipping_cost: shippingCost,
         tax,
         total,
@@ -243,6 +284,22 @@ export async function POST(request: NextRequest) {
         { error: "Failed to create order items" },
         { status: 500 }
       );
+    }
+
+    // Record the redemption so the admin "Uses" count reflects reality. The
+    // order is already placed at this point, so a failure here shouldn't fail
+    // the checkout — just log it.
+    if (appliedCode) {
+      const { error: usageError } = await supabase.rpc("increment_discount_usage", {
+        p_code: appliedCode,
+      });
+      if (usageError) {
+        log.warn("Failed to increment discount usage", {
+          orderId: order.id,
+          code: appliedCode,
+          error: usageError.message,
+        });
+      }
     }
 
     // No payment session — customer pays manually via Interac E-Transfer.

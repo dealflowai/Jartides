@@ -44,3 +44,6 @@ next-env.d.ts
 
 # test/debug files
 shippo_*.json
+
+# claude code local settings
+.claude/settings.local.json

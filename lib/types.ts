@@ -131,6 +131,8 @@ export interface Order {
   guest_email: string | null;
   status: OrderStatus;
   subtotal: number;
+  discount_code: string | null;
+  discount_amount: number;
   shipping_cost: number;
   tax: number;
   total: number;

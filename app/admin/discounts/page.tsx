@@ -7,6 +7,9 @@ import {
   Loader2,
   ToggleLeft,
   ToggleRight,
+  Ticket,
+  Users,
+  TrendingDown,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -41,6 +44,10 @@ const SELECT_CLS =
 export default function AdminDiscountsPage() {
   const supabase = createClient();
   const [codes, setCodes] = useState<DiscountCode[]>([]);
+  // Per-code revenue impact, keyed by UPPERCASE code → total dollars discounted
+  // across all orders. Aggregated from orders since the dollar amount isn't
+  // stored on the code row itself (only used_count is).
+  const [revenue, setRevenue] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -55,14 +62,32 @@ export default function AdminDiscountsPage() {
 
   /* ---------- Load ---------- */
   const loadCodes = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("discount_codes")
-      .select("*")
-      .order("created_at", { ascending: false });
+    const [codesRes, ordersRes] = await Promise.all([
+      supabase
+        .from("discount_codes")
+        .select("*")
+        .order("created_at", { ascending: false }),
+      // Actual dollars discounted, summed per code from real orders.
+      supabase
+        .from("orders")
+        .select("discount_code, discount_amount")
+        .not("discount_code", "is", null),
+    ]);
 
-    if (!error && data) {
-      setCodes(data);
+    if (!codesRes.error && codesRes.data) {
+      setCodes(codesRes.data);
     }
+
+    if (!ordersRes.error && ordersRes.data) {
+      const totals: Record<string, number> = {};
+      for (const row of ordersRes.data) {
+        if (!row.discount_code) continue;
+        const key = row.discount_code.toUpperCase();
+        totals[key] = (totals[key] ?? 0) + (Number(row.discount_amount) || 0);
+      }
+      setRevenue(totals);
+    }
+
     setLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -156,6 +181,11 @@ export default function AdminDiscountsPage() {
     );
   }
 
+  /* ---------- Summary totals ---------- */
+  const totalRedemptions = codes.reduce((sum, c) => sum + c.used_count, 0);
+  const activeCount = codes.filter((c) => c.active).length;
+  const totalDiscounted = Object.values(revenue).reduce((sum, v) => sum + v, 0);
+
   /* ---------- Render ---------- */
   return (
     <div className="mx-auto max-w-5xl pb-12">
@@ -177,6 +207,46 @@ export default function AdminDiscountsPage() {
           </button>
         )}
       </div>
+
+      {/* Summary cards */}
+      {codes.length > 0 && (
+        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
+              <Ticket className="h-5 w-5 text-[#1a6de3]" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-gray-500">Active Codes</p>
+              <p className="text-xl font-bold text-gray-900">
+                {activeCount}
+                <span className="ml-1 text-sm font-normal text-gray-400">
+                  / {codes.length}
+                </span>
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50">
+              <Users className="h-5 w-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-gray-500">Total Redemptions</p>
+              <p className="text-xl font-bold text-gray-900">{totalRedemptions}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50">
+              <TrendingDown className="h-5 w-5 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-gray-500">Total Discounted</p>
+              <p className="text-xl font-bold text-gray-900">
+                ${totalDiscounted.toFixed(2)}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Create Form */}
       {showForm && (
@@ -309,6 +379,9 @@ export default function AdminDiscountsPage() {
                 </th>
                 <th className="px-4 py-3 font-semibold text-gray-600">Uses</th>
                 <th className="px-4 py-3 font-semibold text-gray-600">
+                  Discounted
+                </th>
+                <th className="px-4 py-3 font-semibold text-gray-600">
                   Expires
                 </th>
                 <th className="px-4 py-3 font-semibold text-gray-600">
@@ -350,6 +423,11 @@ export default function AdminDiscountsPage() {
                     <td className="px-4 py-3 text-gray-600">
                       {code.used_count}
                       {code.max_uses !== null ? ` / ${code.max_uses}` : " / --"}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {revenue[code.code.toUpperCase()]
+                        ? `$${revenue[code.code.toUpperCase()].toFixed(2)}`
+                        : "--"}
                     </td>
                     <td className="px-4 py-3 text-gray-600">
                       {code.expires_at

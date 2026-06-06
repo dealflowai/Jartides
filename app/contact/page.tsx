@@ -1,8 +1,7 @@
-"use client";
-
 import PageHeader from "@/components/ui/PageHeader";
 import ContactForm from "@/components/layout/ContactForm";
 import EditableText from "@/components/admin/EditableText";
+import PageSections from "@/components/sections/PageSections";
 import { Mail, MapPin, Clock, Package } from "lucide-react";
 import {
   CONTACT_EMAIL,
@@ -18,6 +17,8 @@ export default function ContactPage() {
         description="We're here to help with any questions."
         breadcrumbs={[{ label: "Contact" }]}
       />
+
+      <PageSections page="contact" />
 
       <section className="mx-auto max-w-7xl px-6 py-16">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">

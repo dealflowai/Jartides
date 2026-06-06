@@ -1,12 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
 import PageHeader from "@/components/ui/PageHeader";
 import ShopContent from "@/components/shop/ShopContent";
+import PageSections from "@/components/sections/PageSections";
 import type { Product, Category, ProductTag } from "@/lib/types";
 
 export const metadata = {
   title: "Shop All Products",
   description:
     "Browse our complete collection of research peptides, blends, nasal sprays, and laboratory supplies.",
+  alternates: { canonical: "/shop" },
 };
 
 export default async function ShopPage() {
@@ -59,6 +61,8 @@ export default async function ShopPage() {
         titleKey="shop_title"
         descriptionKey="shop_description"
       />
+
+      <PageSections page="shop" />
 
       <ShopContent products={products} categories={categories} tags={tags} />
     </>

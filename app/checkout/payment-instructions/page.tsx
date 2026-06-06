@@ -4,6 +4,7 @@ import { CheckCircle, ShoppingBag } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import ClearCart from "@/components/checkout/ClearCart";
 import PaymentInstructions from "@/components/checkout/PaymentInstructions";
+import { getPaymentSettings } from "@/lib/payment-settings";
 import type { Order } from "@/lib/types";
 
 interface Props {
@@ -30,6 +31,10 @@ export default async function PaymentInstructionsPage({ searchParams }: Props) {
     .single<Order>();
 
   if (!order) notFound();
+
+  // Admin-editable payment details (PayPal username, E-Transfer email, phone,
+  // and per-method on/off toggles) from /admin/settings.
+  const payment = await getPaymentSettings();
 
   return (
     <main className="min-h-screen bg-[#f8f9fc] py-8 sm:py-12">
@@ -66,6 +71,11 @@ export default async function PaymentInstructionsPage({ searchParams }: Props) {
           total={order.total}
           currency={order.currency}
           email={order.guest_email ?? ""}
+          paypalUsername={payment.paypalUsername}
+          etransferEmail={payment.etransferEmail}
+          confirmationPhone={payment.confirmationPhone}
+          paypalEnabled={payment.paypalEnabled}
+          etransferEnabled={payment.etransferEnabled}
         />
 
         {/* Footer actions */}

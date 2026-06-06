@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/admin";
 import { verifyCsrf } from "@/lib/csrf";
+import { writeAuditLog } from "@/lib/audit";
+import { PAYMENT_SETTING_KEYS, validatePaymentFields } from "@/lib/payment-config";
 
 const ALLOWED_KEY_PREFIXES = [
   "hero_",
@@ -24,6 +26,7 @@ const ALLOWED_KEY_PREFIXES = [
   "meta_",
   "social_",
   "seo_",
+  "payment_",
 ];
 
 export async function GET() {
@@ -56,9 +59,32 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
+  const payload = body as Record<string, unknown>;
+
+  // Validate payment fields if any are present, so checkout can never end up
+  // with a malformed email / blank PayPal username / junk phone number.
+  const touchesPayment = Object.values(PAYMENT_SETTING_KEYS).some(
+    (k) => k in payload
+  );
+  if (touchesPayment) {
+    const paymentErrors = validatePaymentFields({
+      paypalUsername: payload[PAYMENT_SETTING_KEYS.paypalUsername] as string,
+      etransferEmail: payload[PAYMENT_SETTING_KEYS.etransferEmail] as string,
+      confirmationPhone: payload[PAYMENT_SETTING_KEYS.confirmationPhone] as string,
+      paypalEnabled: payload[PAYMENT_SETTING_KEYS.paypalEnabled] as boolean,
+      etransferEnabled: payload[PAYMENT_SETTING_KEYS.etransferEnabled] as boolean,
+    });
+    if (Object.keys(paymentErrors).length > 0) {
+      return NextResponse.json(
+        { error: Object.values(paymentErrors)[0], fieldErrors: paymentErrors },
+        { status: 400 }
+      );
+    }
+  }
+
   const db = createAdminClient();
 
-  const entries = Object.entries(body as Record<string, unknown>);
+  const entries = Object.entries(payload);
   for (const [key, value] of entries) {
     if (!ALLOWED_KEY_PREFIXES.some((prefix) => key.startsWith(prefix))) {
       return NextResponse.json(
@@ -75,6 +101,15 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
   }
+
+  // Record who changed which settings. Payment-detail changes in particular
+  // control where customer money is sent, so an audit trail matters.
+  writeAuditLog({
+    admin_id: admin.id,
+    action: "settings.update",
+    entity_type: "site_settings",
+    details: { keys: entries.map(([key]) => key) },
+  });
 
   return NextResponse.json({ success: true });
 }

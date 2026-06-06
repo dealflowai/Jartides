@@ -3,16 +3,20 @@
 import { useState } from "react";
 import { Check, Copy, AlertTriangle, Mail, Phone } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
-
-const ETRANSFER_EMAIL = "rayanwaleed7788@gmail.com";
-const CONFIRMATION_PHONE = "226-344-6897";
-const PAYPAL_USERNAME = "JanJTP";
+import { PAYMENT_DEFAULTS } from "@/lib/payment-config";
 
 interface Props {
   orderNumber: string;
   total: number;
   currency: string;
   email: string;
+  /** Admin-editable payment details (from site_settings). */
+  paypalUsername?: string;
+  etransferEmail?: string;
+  confirmationPhone?: string;
+  /** Per-method on/off toggles (from site_settings). Default on. */
+  paypalEnabled?: boolean;
+  etransferEnabled?: boolean;
 }
 
 function CopyButton({ value, label }: { value: string; label: string }) {
@@ -54,14 +58,30 @@ function CopyButton({ value, label }: { value: string; label: string }) {
   );
 }
 
-export default function PaymentInstructions({ orderNumber, total, currency, email }: Props) {
+export default function PaymentInstructions({
+  orderNumber,
+  total,
+  currency,
+  email,
+  paypalUsername,
+  etransferEmail,
+  confirmationPhone,
+  paypalEnabled = true,
+  etransferEnabled = true,
+}: Props) {
   const totalString = total.toFixed(2);
+
+  const PAYPAL_USERNAME = paypalUsername || PAYMENT_DEFAULTS.paypalUsername;
+  const ETRANSFER_EMAIL = etransferEmail || PAYMENT_DEFAULTS.etransferEmail;
+  const CONFIRMATION_PHONE =
+    confirmationPhone || PAYMENT_DEFAULTS.confirmationPhone;
 
   return (
     <div className="space-y-10">
       {/* ============================== */}
       {/* US BUYERS — PAYPAL */}
       {/* ============================== */}
+      {paypalEnabled && (
       <section className="space-y-6">
         <div className="rounded-xl bg-white p-6 shadow-sm sm:p-8">
           <div className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500">
@@ -198,8 +218,10 @@ export default function PaymentInstructions({ orderNumber, total, currency, emai
           </div>
         </div>
       </section>
+      )}
 
-      {/* Divider */}
+      {/* Divider — only shown when both methods are offered */}
+      {paypalEnabled && etransferEnabled && (
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-gray-300" />
@@ -210,10 +232,12 @@ export default function PaymentInstructions({ orderNumber, total, currency, emai
           </span>
         </div>
       </div>
+      )}
 
       {/* ============================== */}
       {/* CANADIAN BUYERS — E-TRANSFER */}
       {/* ============================== */}
+      {etransferEnabled && (
       <section className="space-y-6">
         <div className="rounded-xl bg-white p-6 shadow-sm sm:p-8">
           <div className="mb-4 rounded-lg border border-[#0b3d7a]/20 bg-[#0b3d7a]/5 p-3 text-center">
@@ -318,6 +342,14 @@ export default function PaymentInstructions({ orderNumber, total, currency, emai
           </div>
         </div>
       </section>
+      )}
+
+      {!paypalEnabled && !etransferEnabled && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center text-sm text-amber-800">
+          Online payment instructions are temporarily unavailable. Please contact
+          us to complete your order.
+        </div>
+      )}
     </div>
   );
 }

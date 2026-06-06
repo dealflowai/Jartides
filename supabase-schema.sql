@@ -105,6 +105,8 @@ create table orders (
   guest_email text,
   status text default 'pending' check (status in ('pending','processing','shipped','delivered','cancelled','refunded')),
   subtotal numeric(10,2) not null,
+  discount_code text,
+  discount_amount numeric(10,2) default 0,
   shipping_cost numeric(10,2) default 0,
   tax numeric(10,2) default 0,
   total numeric(10,2) not null,
@@ -336,6 +338,17 @@ CREATE TABLE discount_codes (
 ALTER TABLE discount_codes ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Public read active codes" ON discount_codes FOR SELECT USING (active = true);
 CREATE POLICY "Admin manage codes" ON discount_codes FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'));
+
+-- Atomically bump used_count when a code is redeemed at checkout (avoids
+-- read-modify-write races between concurrent checkouts).
+CREATE OR REPLACE FUNCTION increment_discount_usage(p_code text)
+RETURNS void AS $$
+BEGIN
+  UPDATE discount_codes
+  SET used_count = used_count + 1
+  WHERE upper(code) = upper(p_code);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ===== Storage Buckets =====
 -- Run these in Supabase Dashboard > Storage:

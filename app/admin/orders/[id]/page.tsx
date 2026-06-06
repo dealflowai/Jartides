@@ -190,6 +190,16 @@ export default async function AdminOrderDetailPage({
                 {formatPrice(order.subtotal)}
               </td>
             </tr>
+            {order.discount_amount > 0 && (
+              <tr className="text-green-600">
+                <td colSpan={3} className="px-5 py-2 text-right">
+                  Discount{order.discount_code ? ` (${order.discount_code})` : ""}
+                </td>
+                <td className="px-5 py-2 text-right">
+                  -{formatPrice(order.discount_amount)}
+                </td>
+              </tr>
+            )}
             <tr>
               <td colSpan={3} className="px-5 py-2 text-right text-gray-500">
                 Shipping

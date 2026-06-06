@@ -2,16 +2,13 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { sortInStockFirst } from "@/lib/utils";
 import type { Product } from "@/lib/types";
-import Hero from "@/components/home/Hero";
-import TrustStrip from "@/components/home/TrustStrip";
-import FeaturedProducts from "@/components/home/FeaturedProducts";
-import HowPeptidesWork from "@/components/home/HowPeptidesWork";
-import CTABanner from "@/components/home/CTABanner";
+import PageSections from "@/components/sections/PageSections";
 
 export const metadata: Metadata = {
   title: "Jartides | Premium Research Peptides",
   description:
     "Shop 99%+ purity research peptides with third-party COAs. Same-day processing, 3-8 business day delivery. Worldwide shipping.",
+  alternates: { canonical: "/" },
   openGraph: {
     title: "Jartides | Premium Research Peptides",
     description:
@@ -37,13 +34,5 @@ export default async function HomePage() {
     // Supabase may not be connected yet — fall back to empty array
   }
 
-  return (
-    <>
-      <Hero />
-      <TrustStrip />
-      <FeaturedProducts products={products} />
-      <HowPeptidesWork />
-      <CTABanner />
-    </>
-  );
+  return <PageSections page="home" products={products} />;
 }

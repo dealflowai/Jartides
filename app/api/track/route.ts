@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Redis } from "@upstash/redis";
+import { trafficChannel } from "@/lib/redis";
 
 function getRedis(): Redis | null {
   const url = process.env.UPSTASH_REDIS_REST_URL;
@@ -61,6 +62,21 @@ export async function POST(request: NextRequest) {
     // Increment total daily visitor count (using a set for unique visitors)
     await redis.sadd(`visitors:${today}`, sessionId);
     await redis.expire(`visitors:${today}`, 60 * 60 * 24 * 90);
+
+    // Record traffic source once per session per day (dedupe via NX key).
+    // This is what reveals organic-search vs social vs direct over time.
+    const selfHost = request.headers.get("host") ?? "";
+    const channel = trafficChannel(referrer, selfHost);
+    if (channel) {
+      const seen = await redis.set(`srcseen:${today}:${sessionId}`, "1", {
+        nx: true,
+        ex: 60 * 60 * 24,
+      });
+      if (seen) {
+        await redis.hincrby(`sources:${today}`, channel, 1);
+        await redis.expire(`sources:${today}`, 60 * 60 * 24 * 90);
+      }
+    }
 
     return NextResponse.json({ ok: true });
   } catch {

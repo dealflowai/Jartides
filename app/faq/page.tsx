@@ -1,10 +1,14 @@
-"use client";
-
 import PageHeader from "@/components/ui/PageHeader";
 import Button from "@/components/ui/Button";
 import FaqAccordion from "@/components/faq/FaqAccordion";
 import EditableText from "@/components/admin/EditableText";
 import { MessageCircle } from "lucide-react";
+import { getPaymentSettings } from "@/lib/payment-settings";
+import { buildPaymentMethodsAnswer } from "@/lib/payment-config";
+
+/** The payment FAQ answer is generated from live settings (see below), so this
+ *  question is matched by text rather than carrying hardcoded credentials. */
+const PAYMENT_QUESTION = "What payment methods do you accept?";
 
 const faqSections = [
   {
@@ -46,9 +50,10 @@ const faqSections = [
           "Yes, all orders ship in plain, unmarked packaging. Your privacy is important to us.",
       },
       {
-        question: "What payment methods do you accept?",
+        question: PAYMENT_QUESTION,
+        // Filled in at render time from the live payment settings.
         answer:
-          "US buyers pay via PayPal Friends & Family (username JanJTP). Canadian customers pay by Interac E-Transfer to rayanwaleed7788@gmail.com, then text the order number to 226-344-6897 to confirm.",
+          "The exact payment details are shown on your order's payment page right after checkout.",
       },
       {
         question: "What is your return/refund policy?",
@@ -74,7 +79,22 @@ const faqSections = [
   },
 ];
 
-export default function FaqPage() {
+export default async function FaqPage() {
+  // Keep the "What payment methods do you accept?" answer in lockstep with the
+  // admin-editable payment settings (and the per-method on/off toggles), so the
+  // FAQ never drifts from the live checkout details.
+  const payment = await getPaymentSettings();
+  const paymentAnswer = buildPaymentMethodsAnswer(payment);
+
+  const sections = faqSections.map((section) => ({
+    ...section,
+    items: section.items.map((item) =>
+      item.question === PAYMENT_QUESTION
+        ? { ...item, answer: paymentAnswer }
+        : item
+    ),
+  }));
+
   return (
     <>
       <PageHeader
@@ -86,7 +106,7 @@ export default function FaqPage() {
       />
 
       <section className="mx-auto max-w-3xl px-6 py-16">
-        <FaqAccordion sections={faqSections} useDynamic />
+        <FaqAccordion sections={sections} useDynamic />
 
         {/* CTA */}
         <div className="mt-16 rounded-xl border border-[#dde2ea] bg-[#0b3d7a]/5 p-8 text-center">

@@ -27,12 +27,22 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: "Product Not Found" };
   }
 
+  const cleanDescription =
+    product.meta_description ||
+    product.description?.replace(/<[^>]*>/g, "").slice(0, 160) ||
+    `Shop ${product.name} — premium research peptide with 99%+ purity.`;
+
   return {
     title: product.meta_title || product.name,
-    description:
-      product.meta_description ||
-      product.description?.replace(/<[^>]*>/g, "").slice(0, 160) ||
-      `Shop ${product.name} — premium research peptide with 99%+ purity.`,
+    description: cleanDescription,
+    alternates: { canonical: `/shop/${slug}` },
+    openGraph: {
+      title: product.meta_title || product.name,
+      description: cleanDescription,
+      url: `/shop/${slug}`,
+      type: "website",
+      images: product.images?.length ? [product.images[0]] : undefined,
+    },
   };
 }
 

@@ -13,7 +13,9 @@ import {
   CheckCircle2,
   XCircle,
   X,
+  CreditCard,
 } from "lucide-react";
+import { PAYMENT_DEFAULTS, validatePaymentFields } from "@/lib/payment-config";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -29,6 +31,11 @@ interface SettingsState {
   business_address: string;
   site_title: string;
   meta_description: string;
+  payment_paypal_username: string;
+  payment_etransfer_email: string;
+  payment_confirmation_phone: string;
+  payment_paypal_enabled: string;
+  payment_etransfer_enabled: string;
 }
 
 type ToastType = "success" | "error";
@@ -49,6 +56,11 @@ const DEFAULTS: SettingsState = {
   business_address: "",
   site_title: "",
   meta_description: "",
+  payment_paypal_username: PAYMENT_DEFAULTS.paypalUsername,
+  payment_etransfer_email: PAYMENT_DEFAULTS.etransferEmail,
+  payment_confirmation_phone: PAYMENT_DEFAULTS.confirmationPhone,
+  payment_paypal_enabled: PAYMENT_DEFAULTS.paypalEnabled ? "true" : "false",
+  payment_etransfer_enabled: PAYMENT_DEFAULTS.etransferEnabled ? "true" : "false",
 };
 
 /* ------------------------------------------------------------------ */
@@ -164,6 +176,48 @@ function Field({
   );
 }
 
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return <p className="mt-1 text-xs font-medium text-red-600">{message}</p>;
+}
+
+function ToggleRow({
+  label,
+  description,
+  checked,
+  onChange,
+}: {
+  label: string;
+  description?: string;
+  checked: boolean;
+  onChange: (next: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-gray-700">{label}</p>
+        {description && <p className="text-xs text-gray-400">{description}</p>}
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-label={label}
+        onClick={() => onChange(!checked)}
+        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
+          checked ? "bg-[#1a6de3]" : "bg-gray-300"
+        }`}
+      >
+        <span
+          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+            checked ? "translate-x-5" : "translate-x-0.5"
+          }`}
+        />
+      </button>
+    </div>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
@@ -175,6 +229,7 @@ export default function AdminSettingsPage() {
   const [dirty, setDirty] = useState(false);
   const [revalidating, setRevalidating] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [paymentErrors, setPaymentErrors] = useState<Record<string, string>>({});
   const toastIdRef = useRef(0);
 
   // Keep a snapshot of the last-saved state to detect unsaved changes
@@ -225,6 +280,19 @@ export default function AdminSettingsPage() {
           business_address: map.business_address ?? "",
           site_title: map.site_title ?? "",
           meta_description: map.meta_description ?? "",
+          payment_paypal_username:
+            map.payment_paypal_username || PAYMENT_DEFAULTS.paypalUsername,
+          payment_etransfer_email:
+            map.payment_etransfer_email || PAYMENT_DEFAULTS.etransferEmail,
+          payment_confirmation_phone:
+            map.payment_confirmation_phone ||
+            PAYMENT_DEFAULTS.confirmationPhone,
+          payment_paypal_enabled:
+            map.payment_paypal_enabled ||
+            (PAYMENT_DEFAULTS.paypalEnabled ? "true" : "false"),
+          payment_etransfer_enabled:
+            map.payment_etransfer_enabled ||
+            (PAYMENT_DEFAULTS.etransferEnabled ? "true" : "false"),
         };
 
         setForm(loaded);
@@ -242,6 +310,7 @@ export default function AdminSettingsPage() {
 
   /* ---------- Helpers ---------- */
   function updateField(field: keyof SettingsState, value: string) {
+    if (String(field).startsWith("payment_")) setPaymentErrors({});
     setForm((prev) => {
       const next = { ...prev, [field]: value };
       const changed = (Object.keys(next) as (keyof SettingsState)[]).some(
@@ -254,6 +323,21 @@ export default function AdminSettingsPage() {
 
   async function handleSave(e?: React.FormEvent) {
     e?.preventDefault();
+
+    // Block saving malformed payment details before they reach checkout.
+    const pErrors = validatePaymentFields({
+      paypalUsername: form.payment_paypal_username,
+      etransferEmail: form.payment_etransfer_email,
+      confirmationPhone: form.payment_confirmation_phone,
+      paypalEnabled: form.payment_paypal_enabled === "true",
+      etransferEnabled: form.payment_etransfer_enabled === "true",
+    });
+    setPaymentErrors(pErrors);
+    if (Object.keys(pErrors).length > 0) {
+      addToast("error", "Please fix the payment details before saving.");
+      return;
+    }
+
     setSaving(true);
 
     const settings: Record<string, unknown> = {
@@ -270,6 +354,11 @@ export default function AdminSettingsPage() {
       business_address: form.business_address,
       site_title: form.site_title,
       meta_description: form.meta_description,
+      payment_paypal_username: form.payment_paypal_username.trim(),
+      payment_etransfer_email: form.payment_etransfer_email.trim(),
+      payment_confirmation_phone: form.payment_confirmation_phone.trim(),
+      payment_paypal_enabled: form.payment_paypal_enabled === "true",
+      payment_etransfer_enabled: form.payment_etransfer_enabled === "true",
     };
 
     try {
@@ -491,6 +580,81 @@ export default function AdminSettingsPage() {
                   updateField("business_address", e.target.value)
                 }
               />
+            </Field>
+          </div>
+        </SectionCard>
+
+        {/* ---- Payment Methods ---- */}
+        <SectionCard
+          title="Payment Methods"
+          description="Shown to customers on the checkout payment-instructions page. Update these whenever your PayPal or E-Transfer details change."
+          icon={CreditCard}
+        >
+          <div className="space-y-5">
+            {/* Which methods to offer at checkout */}
+            <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <ToggleRow
+                label="Accept PayPal (US buyers)"
+                description="Show the PayPal Friends & Family option at checkout."
+                checked={form.payment_paypal_enabled === "true"}
+                onChange={(v) =>
+                  updateField("payment_paypal_enabled", v ? "true" : "false")
+                }
+              />
+              <div className="border-t border-gray-200" />
+              <ToggleRow
+                label="Accept Interac E-Transfer (Canadian buyers)"
+                description="Show the E-Transfer option at checkout."
+                checked={form.payment_etransfer_enabled === "true"}
+                onChange={(v) =>
+                  updateField("payment_etransfer_enabled", v ? "true" : "false")
+                }
+              />
+            </div>
+
+            <Field
+              label="PayPal Username (US buyers)"
+              hint="The PayPal username US customers search for to send a Friends & Family payment."
+            >
+              <input
+                className={INPUT_CLS}
+                placeholder={PAYMENT_DEFAULTS.paypalUsername}
+                value={form.payment_paypal_username}
+                onChange={(e) =>
+                  updateField("payment_paypal_username", e.target.value)
+                }
+              />
+              <FieldError message={paymentErrors.paypalUsername} />
+            </Field>
+            <Field
+              label="E-Transfer Email (Canadian buyers)"
+              hint="The email address Canadian customers send their Interac E-Transfer to."
+            >
+              <input
+                className={INPUT_CLS}
+                type="email"
+                placeholder={PAYMENT_DEFAULTS.etransferEmail}
+                value={form.payment_etransfer_email}
+                onChange={(e) =>
+                  updateField("payment_etransfer_email", e.target.value)
+                }
+              />
+              <FieldError message={paymentErrors.etransferEmail} />
+            </Field>
+            <Field
+              label="Confirmation Phone (E-Transfer)"
+              hint="The number customers text their order number to after sending an E-Transfer."
+            >
+              <input
+                className={INPUT_CLS}
+                type="tel"
+                placeholder={PAYMENT_DEFAULTS.confirmationPhone}
+                value={form.payment_confirmation_phone}
+                onChange={(e) =>
+                  updateField("payment_confirmation_phone", e.target.value)
+                }
+              />
+              <FieldError message={paymentErrors.confirmationPhone} />
             </Field>
           </div>
         </SectionCard>

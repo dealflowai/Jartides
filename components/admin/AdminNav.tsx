@@ -10,6 +10,7 @@ import {
   Warehouse,
   MessageCircleQuestion,
   Ticket,
+  LayoutTemplate,
   Settings,
   ArrowLeft,
   ShieldCheck,
@@ -17,6 +18,7 @@ import {
   Star,
   Mail,
   Bell,
+  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { StaffRole } from "@/lib/admin";
@@ -39,8 +41,10 @@ const navItems: NavItem[] = [
   { label: "Back-in-Stock", href: "/admin/back-in-stock", icon: Bell },
   { label: "COA Documents", href: "/admin/coa", icon: FileCheck },
   { label: "Reviews", href: "/admin/reviews", icon: Star },
+  { label: "SEO", href: "/admin/seo", icon: Search },
   { label: "Discounts", href: "/admin/discounts", icon: Ticket },
   { label: "FAQ Manager", href: "/admin/faq", icon: MessageCircleQuestion },
+  { label: "Page Sections", href: "/admin/sections", icon: LayoutTemplate },
   { label: "Compliance", href: "/admin/compliance", icon: ShieldCheck },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
