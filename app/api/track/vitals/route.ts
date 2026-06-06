@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRedis } from "@/lib/redis";
 
-// Google's Core Web Vitals thresholds. [goodMax, poorMin] — between is
+// Google's Core Web Vitals thresholds. [goodMax, poorMin] - between is
 // "needs improvement". CLS is unitless; the rest are milliseconds.
 const THRESHOLDS: Record<string, [number, number]> = {
   LCP: [2500, 4000],

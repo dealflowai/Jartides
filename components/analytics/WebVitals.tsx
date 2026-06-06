@@ -17,7 +17,7 @@ export default function WebVitals() {
       });
     }
 
-    // Collect anonymous field data for the admin SEO dashboard. No PII —
+    // Collect anonymous field data for the admin SEO dashboard. No PII -
     // just the metric name, value, and pathname. Uses sendBeacon so it
     // survives page unload.
     try {
@@ -31,7 +31,7 @@ export default function WebVitals() {
         navigator.sendBeacon("/api/track/vitals", new Blob([body], { type: "application/json" }));
       }
     } catch {
-      // ignore — metrics are best-effort
+      // ignore - metrics are best-effort
     }
 
     // Log in development for debugging

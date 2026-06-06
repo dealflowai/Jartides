@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    // Vercel optimizes images automatically — serve modern formats and let
+    // Vercel optimizes images automatically - serve modern formats and let
     // Next generate responsive sizes. Big LCP / Core Web Vitals win.
     formats: ["image/avif", "image/webp"],
     remotePatterns: [

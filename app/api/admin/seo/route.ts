@@ -24,8 +24,8 @@ const TITLE_MIN = 30;
 const TITLE_MAX = 60;
 const DESC_MIN = 120;
 const DESC_MAX = 160;
-const CONTENT_THIN = 50; // words — below this is "thin content" (critical)
-const CONTENT_SHALLOW = 150; // words — below this is "could be deeper" (warning)
+const CONTENT_THIN = 50; // words - below this is "thin content" (critical)
+const CONTENT_SHALLOW = 150; // words - below this is "could be deeper" (warning)
 
 const PENALTY: Record<Severity, number> = {
   critical: 22,
@@ -48,14 +48,14 @@ const ISSUE_META: Record<string, IssueMeta> = {
   title_missing: {
     severity: "critical",
     label: "Missing page title",
-    description: "The page has no title at all — neither a custom meta title nor a product name.",
+    description: "The page has no title at all - neither a custom meta title nor a product name.",
     fix: "Add a product name (and ideally a custom Meta Title) on the product editor.",
   },
   title_short: {
     severity: "warning",
     label: "Title too short",
     description: `The title is under ${TITLE_MIN} characters, so it isn't using the space Google gives you.`,
-    fix: `Expand the Meta Title to ${TITLE_MIN}–${TITLE_MAX} characters with the peptide name + a key benefit or descriptor.`,
+    fix: `Expand the Meta Title to ${TITLE_MIN}-${TITLE_MAX} characters with the peptide name + a key benefit or descriptor.`,
   },
   title_long: {
     severity: "warning",
@@ -72,20 +72,20 @@ const ISSUE_META: Record<string, IssueMeta> = {
   desc_missing: {
     severity: "critical",
     label: "No description",
-    description: "There's no meta description and no body description to fall back on — Google will invent a snippet.",
+    description: "There's no meta description and no body description to fall back on - Google will invent a snippet.",
     fix: "Write a product description; the first ~160 characters become the search snippet.",
   },
   meta_desc_auto: {
     severity: "info",
     label: "Auto-generated meta description",
-    description: "No custom meta description set — the first 160 chars of the body are used instead.",
+    description: "No custom meta description set - the first 160 chars of the body are used instead.",
     fix: "Write a dedicated Meta Description with a clear value proposition and the main keyword.",
   },
   desc_short: {
     severity: "warning",
     label: "Meta description too short",
     description: `The description is under ${DESC_MIN} characters, wasting snippet real estate.`,
-    fix: `Aim for ${DESC_MIN}–${DESC_MAX} characters that summarise the product and invite a click.`,
+    fix: `Aim for ${DESC_MIN}-${DESC_MAX} characters that summarise the product and invite a click.`,
   },
   desc_long: {
     severity: "warning",
@@ -96,7 +96,7 @@ const ISSUE_META: Record<string, IssueMeta> = {
   thin_content: {
     severity: "critical",
     label: "Thin content",
-    description: `Under ${CONTENT_THIN} words of body content. This is the #1 reason peptide product pages get "Crawled – not indexed".`,
+    description: `Under ${CONTENT_THIN} words of body content. This is the #1 reason peptide product pages get "Crawled - not indexed".`,
     fix: "Write a substantive description: what it is, research context, mechanism, the COA, and references.",
   },
   content_shallow: {
@@ -126,19 +126,19 @@ const ISSUE_META: Record<string, IssueMeta> = {
   no_sku: {
     severity: "info",
     label: "No SKU",
-    description: "No SKU set — the structured data falls back to the slug.",
+    description: "No SKU set - the structured data falls back to the slug.",
     fix: "Add a SKU on the product editor for cleaner Product structured data.",
   },
   no_purity: {
     severity: "info",
     label: "No purity value",
-    description: "No purity specified — a useful structured-data property and trust signal for peptides.",
+    description: "No purity specified - a useful structured-data property and trust signal for peptides.",
     fix: "Set the purity (e.g. \"99%+\") on the product editor.",
   },
   no_research_desc: {
     severity: "info",
     label: "No research description",
-    description: "The extra research-description field is empty — a missed chance for unique, indexable content.",
+    description: "The extra research-description field is empty - a missed chance for unique, indexable content.",
     fix: "Add a research summary to deepen the page and target informational searches.",
   },
   dup_title: {
@@ -260,7 +260,7 @@ export async function GET() {
         }
       }
 
-      // Traffic sources — totals + daily series
+      // Traffic sources - totals + daily series
       const srcMap = new Map<string, number>();
       trafficSeries = dates14.map((d, i) => {
         const h = srcHashes[i] || {};
@@ -305,7 +305,7 @@ export async function GET() {
         .map((d, i) => ({ date: d, score: snaps[i]?.score ?? null }))
         .filter((x): x is { date: string; score: number } => x.score != null);
     } catch {
-      // Redis hiccup — fall back to on-site-only audit
+      // Redis hiccup - fall back to on-site-only audit
     }
   }
 
@@ -450,9 +450,9 @@ export async function GET() {
 
   // ─── Content depth distribution ───────────────────────────────────────────
   const buckets = [
-    { bucket: "0–49", min: 0, max: 49, count: 0 },
-    { bucket: "50–149", min: 50, max: 149, count: 0 },
-    { bucket: "150–299", min: 150, max: 299, count: 0 },
+    { bucket: "0-49", min: 0, max: 49, count: 0 },
+    { bucket: "50-149", min: 50, max: 149, count: 0 },
+    { bucket: "150-299", min: 150, max: 299, count: 0 },
     { bucket: "300+", min: 300, max: Infinity, count: 0 },
   ];
   for (const p of audited) {
@@ -469,7 +469,7 @@ export async function GET() {
       status: process.env.NEXT_PUBLIC_SITE_URL ? "pass" : "warn",
       detail: process.env.NEXT_PUBLIC_SITE_URL
         ? `Using ${process.env.NEXT_PUBLIC_SITE_URL}`
-        : "NEXT_PUBLIC_SITE_URL not set — falling back to https://jartides.ca. Set it to guarantee correct canonical URLs.",
+        : "NEXT_PUBLIC_SITE_URL not set - falling back to https://jartides.ca. Set it to guarantee correct canonical URLs.",
     },
     {
       id: "ga",
@@ -477,15 +477,15 @@ export async function GET() {
       status: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ? "pass" : "fail",
       detail: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
         ? "GA measurement ID is set."
-        : "NEXT_PUBLIC_GA_MEASUREMENT_ID is missing — you have no traffic analytics.",
+        : "NEXT_PUBLIC_GA_MEASUREMENT_ID is missing - you have no traffic analytics.",
     },
     {
       id: "service_role",
       label: "Sitemap can read products",
       status: process.env.SUPABASE_SERVICE_ROLE_KEY ? "pass" : "fail",
       detail: process.env.SUPABASE_SERVICE_ROLE_KEY
-        ? "Service role key present — sitemap.xml includes all active products."
-        : "SUPABASE_SERVICE_ROLE_KEY missing — sitemap.xml will NOT list product pages, so Google may not discover them.",
+        ? "Service role key present - sitemap.xml includes all active products."
+        : "SUPABASE_SERVICE_ROLE_KEY missing - sitemap.xml will NOT list product pages, so Google may not discover them.",
     },
     {
       id: "sitemap",
@@ -513,7 +513,7 @@ export async function GET() {
       status: count("thin_content") === 0 ? "pass" : count("thin_content") <= 2 ? "warn" : "fail",
       detail: count("thin_content") === 0
         ? "No active product is under the thin-content threshold."
-        : `${count("thin_content")} active product(s) have under ${CONTENT_THIN} words — high deindex risk.`,
+        : `${count("thin_content")} active product(s) have under ${CONTENT_THIN} words - high deindex risk.`,
     },
   ];
 

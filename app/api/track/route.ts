@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       ts: now,
     });
 
-    // Store session with 60s TTL — if no heartbeat within 60s, considered offline
+    // Store session with 60s TTL - if no heartbeat within 60s, considered offline
     await redis.set(`visitor:${sessionId}`, sessionData, { ex: 60 });
 
     // Increment page view counter for today

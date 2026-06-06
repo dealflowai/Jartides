@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const cleanDescription =
     product.meta_description ||
     product.description?.replace(/<[^>]*>/g, "").slice(0, 160) ||
-    `Shop ${product.name} — premium research peptide with 99%+ purity.`;
+    `Shop ${product.name} - premium research peptide with 99%+ purity.`;
 
   return {
     title: product.meta_title || product.name,
@@ -74,7 +74,7 @@ export default async function ProductPage({ params }: PageProps) {
     coaDocuments = [];
   }
 
-  // Fetch related products — use manually linked ones first, fall back to same category
+  // Fetch related products - use manually linked ones first, fall back to same category
   let relatedProducts: Product[] = [];
   try {
     // Check for manually linked related products

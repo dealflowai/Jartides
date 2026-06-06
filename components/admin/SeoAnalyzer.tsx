@@ -136,11 +136,11 @@ type TabId = "health" | "traffic" | "products" | "issues" | "growth";
 
 // Google Core Web Vitals display config
 const VITAL_META: Record<string, { label: string; unit: "ms" | "s" | "" ; help: string }> = {
-  LCP: { label: "Largest Contentful Paint", unit: "ms", help: "Loading — good ≤ 2.5s" },
-  INP: { label: "Interaction to Next Paint", unit: "ms", help: "Responsiveness — good ≤ 200ms" },
-  CLS: { label: "Cumulative Layout Shift", unit: "", help: "Visual stability — good ≤ 0.1" },
-  FCP: { label: "First Contentful Paint", unit: "ms", help: "First paint — good ≤ 1.8s" },
-  TTFB: { label: "Time to First Byte", unit: "ms", help: "Server speed — good ≤ 0.8s" },
+  LCP: { label: "Largest Contentful Paint", unit: "ms", help: "Loading - good ≤ 2.5s" },
+  INP: { label: "Interaction to Next Paint", unit: "ms", help: "Responsiveness - good ≤ 200ms" },
+  CLS: { label: "Cumulative Layout Shift", unit: "", help: "Visual stability - good ≤ 0.1" },
+  FCP: { label: "First Contentful Paint", unit: "ms", help: "First paint - good ≤ 1.8s" },
+  TTFB: { label: "Time to First Byte", unit: "ms", help: "Server speed - good ≤ 0.8s" },
 };
 
 const VITAL_RATING_STYLE: Record<"good" | "ni" | "poor", { color: string; bg: string; label: string }> = {
@@ -334,7 +334,7 @@ function HealthTab({ data }: { data: SeoData }) {
       </Card>
 
       {/* Content depth */}
-      <Card title="Content depth distribution" subtitle="Word count per product page — thin pages get deindexed in this niche">
+      <Card title="Content depth distribution" subtitle="Word count per product page - thin pages get deindexed in this niche">
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data.contentDistribution}>
@@ -386,10 +386,10 @@ function TrafficTab({ data }: { data: SeoData }) {
   return (
     <div className="space-y-6">
       {/* Traffic sources */}
-      <Card title="Traffic sources" subtitle="Where your visitors come from — last 14 days (collected going forward)">
+      <Card title="Traffic sources" subtitle="Where your visitors come from - last 14 days (collected going forward)">
         {totalSourced === 0 ? (
           <p className="py-8 text-center text-sm text-gray-400">
-            No traffic recorded yet. Sources are tracked from now on — check back in a day or two.
+            No traffic recorded yet. Sources are tracked from now on - check back in a day or two.
           </p>
         ) : (
           <>
@@ -426,8 +426,8 @@ function TrafficTab({ data }: { data: SeoData }) {
               <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
               <p className="text-sm text-blue-800">
                 {organic >= social
-                  ? "Organic search is currently your biggest channel — protect it by fixing the critical on-page issues, and watch this trend after Google updates."
-                  : "Social is currently driving more than organic search — if your month-1 spike was social, that explains a fast fade. Build organic + content to diversify."}
+                  ? "Organic search is currently your biggest channel - protect it by fixing the critical on-page issues, and watch this trend after Google updates."
+                  : "Social is currently driving more than organic search - if your month-1 spike was social, that explains a fast fade. Build organic + content to diversify."}
               </p>
             </div>
           </>
@@ -438,7 +438,7 @@ function TrafficTab({ data }: { data: SeoData }) {
       <Card title="Core Web Vitals" subtitle="Real measurements from your actual visitors, vs Google's thresholds">
         {!hasVitals ? (
           <p className="py-8 text-center text-sm text-gray-400">
-            No Web Vitals collected yet — they stream in as real visitors browse. Check back soon.
+            No Web Vitals collected yet - they stream in as real visitors browse. Check back soon.
           </p>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -466,10 +466,10 @@ function TrafficTab({ data }: { data: SeoData }) {
       </Card>
 
       {/* SEO score trend */}
-      <Card title="SEO score history" subtitle="Your overall score over time — watch it climb as you fix issues">
+      <Card title="SEO score history" subtitle="Your overall score over time - watch it climb as you fix issues">
         {!hasTrend ? (
           <p className="py-8 text-center text-sm text-gray-400">
-            Building history — a point is saved each time you open this dashboard. Come back tomorrow to see the trend.
+            Building history - a point is saved each time you open this dashboard. Come back tomorrow to see the trend.
           </p>
         ) : (
           <div className="h-64">
@@ -700,11 +700,11 @@ function GrowthTab() {
         <div className="flex gap-4">
           <TrendingDown className="h-8 w-8 shrink-0 text-amber-500" />
           <div>
-            <h3 className="text-base font-bold text-gray-900">&ldquo;Amazing first month, then downhill&rdquo; — what it usually means</h3>
+            <h3 className="text-base font-bold text-gray-900">&ldquo;Amazing first month, then downhill&rdquo; - what it usually means</h3>
             <p className="mt-1 text-sm text-gray-600">
               New sites get a temporary <strong>honeymoon boost</strong>: Google ranks you high to test engagement, then
               re-ranks based on real authority (backlinks, E-E-A-T, content depth) after a few weeks. For a new store with
-              thin pages and few backlinks, settling down is normal — the fix is building authority, not chasing the spike.
+              thin pages and few backlinks, settling down is normal - the fix is building authority, not chasing the spike.
               Confirm in Search Console: a <em>gradual</em> slide = honeymoon; a <em>cliff on one date</em> = a core update.
             </p>
             <a
@@ -723,41 +723,22 @@ function GrowthTab() {
         <Card title="Win the peptide niche (E-E-A-T)">
           <ul className="space-y-3 text-sm text-gray-600">
             <li className="flex gap-2"><FileText className="mt-0.5 h-4 w-4 shrink-0 text-[#1a6de3]" /><span><strong>Thicken every product page.</strong> Unique research summary, mechanism, the COA, references. Thin pages are the #1 deindex cause here.</span></li>
-            <li className="flex gap-2"><Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-[#1a6de3]" /><span><strong>Build an education hub.</strong> Target informational searches (&ldquo;what is BPC-157&rdquo;, &ldquo;TB-500 vs BPC-157&rdquo;) — traffic Google will actually rank.</span></li>
+            <li className="flex gap-2"><Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-[#1a6de3]" /><span><strong>Build an education hub.</strong> Target informational searches (&ldquo;what is BPC-157&rdquo;, &ldquo;TB-500 vs BPC-157&rdquo;) - traffic Google will actually rank.</span></li>
             <li className="flex gap-2"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#1a6de3]" /><span><strong>Show trust signals.</strong> COAs on every product, third-party testing, clear policies, a real address.</span></li>
             <li className="flex gap-2"><Star className="mt-0.5 h-4 w-4 shrink-0 text-[#1a6de3]" /><span><strong>Collect reviews.</strong> They unlock star rich-results and lift click-through.</span></li>
+            <li className="flex gap-2"><Rocket className="mt-0.5 h-4 w-4 shrink-0 text-[#1a6de3]" /><span><strong>Diversify beyond Google.</strong> Reddit, niche communities, and TikTok often out-perform organic search here.</span></li>
           </ul>
         </Card>
 
         <Card title="Technical status">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-green-600">Recently shipped</p>
           <ul className="space-y-2.5 text-sm text-gray-600">
-            <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" /><span><strong>Image optimization on</strong> (AVIF/WebP) — watch LCP improve in the Traffic &amp; Speed tab.</span></li>
+            <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" /><span><strong>Image optimization on</strong> (AVIF/WebP) - watch LCP improve in the Traffic &amp; Speed tab.</span></li>
             <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" /><span><strong>Canonical URLs</strong> added on home, shop, and every product page.</span></li>
-            <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" /><span><strong>Open Graph image</strong> — a branded social/search preview card.</span></li>
-          </ul>
-          <p className="mb-3 mt-5 text-xs font-semibold uppercase tracking-wide text-[#1a6de3]">Next up</p>
-          <ul className="space-y-2.5 text-sm text-gray-600">
-            <li className="flex gap-2"><ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-[#1a6de3]" /><span><strong>noindex the <code className="rounded bg-gray-100 px-1 text-xs">/shop?q=</code> search URLs</strong> so filtered views don&rsquo;t create duplicates.</span></li>
-            <li className="flex gap-2"><FileText className="mt-0.5 h-4 w-4 shrink-0 text-[#1a6de3]" /><span><strong>Connect Google Search Console</strong> for live rankings &amp; queries in this dashboard.</span></li>
-            <li className="flex gap-2"><Rocket className="mt-0.5 h-4 w-4 shrink-0 text-[#1a6de3]" /><span><strong>Don&rsquo;t rely on Google alone.</strong> Reddit, niche communities, and your TikTok often out-perform organic search here.</span></li>
+            <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" /><span><strong>Open Graph image</strong> - a branded social/search preview card.</span></li>
           </ul>
         </Card>
       </div>
-
-      <Card className="border-dashed">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h3 className="flex items-center gap-2 text-base font-bold text-gray-900">
-              <Gauge className="h-5 w-5 text-[#1a6de3]" /> Coming next: live Search Console data
-            </h3>
-            <p className="mt-1 text-sm text-gray-600">
-              I can wire in real impressions, clicks, average position, and your top queries directly into this dashboard —
-              so you see ranking drops the day they happen. It needs a Google API connection (OAuth/service account) we set up together.
-            </p>
-          </div>
-        </div>
-      </Card>
     </div>
   );
 }
