@@ -45,9 +45,13 @@ export default function AdminDiscountsPage() {
   const supabase = createClient();
   const [codes, setCodes] = useState<DiscountCode[]>([]);
   // Per-code revenue impact, keyed by UPPERCASE code → total dollars discounted
-  // across all orders. Aggregated from orders since the dollar amount isn't
+  // across paid orders. Aggregated from orders since the dollar amount isn't
   // stored on the code row itself (only used_count is).
   const [revenue, setRevenue] = useState<Record<string, number>>({});
+  // Per-code count of *completed* (paid) purchases. used_count bumps the moment
+  // a code is applied at checkout — before the customer has paid — so it can
+  // overcount. This counts only orders that actually went through.
+  const [completedUses, setCompletedUses] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -67,10 +71,10 @@ export default function AdminDiscountsPage() {
         .from("discount_codes")
         .select("*")
         .order("created_at", { ascending: false }),
-      // Actual dollars discounted, summed per code from real orders.
+      // Dollars discounted + completed-purchase counts, aggregated per code.
       supabase
         .from("orders")
-        .select("discount_code, discount_amount")
+        .select("discount_code, discount_amount, status")
         .not("discount_code", "is", null),
     ]);
 
@@ -79,13 +83,22 @@ export default function AdminDiscountsPage() {
     }
 
     if (!ordersRes.error && ordersRes.data) {
+      // A "completed" purchase is one the customer actually paid for. Orders
+      // start at awaiting_payment; admin flips them to processing once paid.
+      const PAID_STATUSES = new Set(["processing", "shipped", "delivered"]);
       const totals: Record<string, number> = {};
+      const completed: Record<string, number> = {};
       for (const row of ordersRes.data) {
         if (!row.discount_code) continue;
         const key = row.discount_code.toUpperCase();
-        totals[key] = (totals[key] ?? 0) + (Number(row.discount_amount) || 0);
+        if (PAID_STATUSES.has(row.status)) {
+          completed[key] = (completed[key] ?? 0) + 1;
+          // Only count money actually collected toward the discounted total.
+          totals[key] = (totals[key] ?? 0) + (Number(row.discount_amount) || 0);
+        }
       }
       setRevenue(totals);
+      setCompletedUses(completed);
     }
 
     setLoading(false);
@@ -184,6 +197,7 @@ export default function AdminDiscountsPage() {
   /* ---------- Summary totals ---------- */
   const totalRedemptions = codes.reduce((sum, c) => sum + c.used_count, 0);
   const activeCount = codes.filter((c) => c.active).length;
+  const totalCompleted = Object.values(completedUses).reduce((sum, v) => sum + v, 0);
   const totalDiscounted = Object.values(revenue).reduce((sum, v) => sum + v, 0);
 
   /* ---------- Render ---------- */
@@ -210,7 +224,7 @@ export default function AdminDiscountsPage() {
 
       {/* Summary cards */}
       {codes.length > 0 && (
-        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
               <Ticket className="h-5 w-5 text-[#1a6de3]" />
@@ -226,12 +240,21 @@ export default function AdminDiscountsPage() {
             </div>
           </div>
           <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100">
+              <Users className="h-5 w-5 text-gray-500" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-gray-500">Times Applied</p>
+              <p className="text-xl font-bold text-gray-900">{totalRedemptions}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50">
               <Users className="h-5 w-5 text-green-600" />
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-500">Total Redemptions</p>
-              <p className="text-xl font-bold text-gray-900">{totalRedemptions}</p>
+              <p className="text-xs font-medium text-gray-500">Completed Purchases</p>
+              <p className="text-xl font-bold text-gray-900">{totalCompleted}</p>
             </div>
           </div>
           <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -377,7 +400,10 @@ export default function AdminDiscountsPage() {
                 <th className="px-4 py-3 font-semibold text-gray-600">
                   Min Order
                 </th>
-                <th className="px-4 py-3 font-semibold text-gray-600">Uses</th>
+                <th className="px-4 py-3 font-semibold text-gray-600" title="Times applied at checkout (before payment)">Uses</th>
+                <th className="px-4 py-3 font-semibold text-gray-600" title="Orders that were actually paid for">
+                  Completed
+                </th>
                 <th className="px-4 py-3 font-semibold text-gray-600">
                   Discounted
                 </th>
@@ -423,6 +449,9 @@ export default function AdminDiscountsPage() {
                     <td className="px-4 py-3 text-gray-600">
                       {code.used_count}
                       {code.max_uses !== null ? ` / ${code.max_uses}` : " / --"}
+                    </td>
+                    <td className="px-4 py-3 font-medium text-gray-900">
+                      {completedUses[code.code.toUpperCase()] ?? 0}
                     </td>
                     <td className="px-4 py-3 text-gray-600">
                       {revenue[code.code.toUpperCase()]
