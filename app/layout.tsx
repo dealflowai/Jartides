@@ -61,6 +61,20 @@ export const metadata: Metadata = {
     icon: "/favicon.ico",
     apple: "/icon.png",
   },
+  // Domain ownership verification — done via meta tags in code so it works on
+  // deploy, with no DNS / Vercel panel access required.
+  verification: {
+    // GridinSoft website security scan
+    other: {
+      "gridinsoft-key":
+        "w9awq951aq4kshtzxn8oqyvu48gfz6b0h1nf35grh1ytp0ok1h2hn6cj0d0hye72",
+    },
+    // Google Search Console — paste the token into GOOGLE_SITE_VERIFICATION to
+    // verify by meta tag instead of DNS.
+    ...(process.env.GOOGLE_SITE_VERIFICATION
+      ? { google: process.env.GOOGLE_SITE_VERIFICATION }
+      : {}),
+  },
   other: {
     "theme-color": "#0b3d7a",
   },
