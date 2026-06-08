@@ -74,7 +74,7 @@ const DEFAULT_FAQ_DATA: FaqSection[] = [
         // into the public FAQ from there, so they're intentionally not hardcoded
         // here. Leave this answer as-is unless you want to override it.
         answer:
-          "We accept PayPal (US buyers) and Interac E-Transfer (Canadian buyers). The exact payment details are shown on your order's payment page right after checkout.",
+          "We accept PayPal (worldwide) and Interac E-Transfer (Canadian buyers). The exact payment details are shown on your order's payment page right after checkout.",
       },
       {
         question: "What is your return/refund policy?",

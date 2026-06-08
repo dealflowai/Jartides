@@ -594,7 +594,7 @@ export default function AdminSettingsPage() {
             {/* Which methods to offer at checkout */}
             <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
               <ToggleRow
-                label="Accept PayPal (US buyers)"
+                label="Accept PayPal (worldwide)"
                 description="Show the PayPal Friends & Family option at checkout."
                 checked={form.payment_paypal_enabled === "true"}
                 onChange={(v) =>
@@ -613,8 +613,8 @@ export default function AdminSettingsPage() {
             </div>
 
             <Field
-              label="PayPal Username (US buyers)"
-              hint="The PayPal username US customers search for to send a Friends & Family payment."
+              label="PayPal Username (worldwide)"
+              hint="The PayPal username customers search for to send a Friends & Family payment."
             >
               <input
                 className={INPUT_CLS}

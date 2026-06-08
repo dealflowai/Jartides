@@ -15,7 +15,7 @@ export interface PaymentSettings {
   paypalUsername: string;
   etransferEmail: string;
   confirmationPhone: string;
-  /** Whether the PayPal (US buyers) method is offered at checkout. */
+  /** Whether the PayPal (worldwide) method is offered at checkout. */
   paypalEnabled: boolean;
   /** Whether the Interac E-Transfer (Canadian buyers) method is offered. */
   etransferEnabled: boolean;
@@ -97,7 +97,7 @@ export function buildPaymentMethodsAnswer(p: PaymentSettings): string {
 
   if (p.paypalEnabled) {
     parts.push(
-      `US buyers pay via PayPal Friends & Family (username ${p.paypalUsername}).`
+      `Buyers worldwide pay via PayPal Friends & Family (username ${p.paypalUsername}).`
     );
   }
   if (p.etransferEnabled) {

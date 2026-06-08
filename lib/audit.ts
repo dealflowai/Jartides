@@ -15,6 +15,9 @@ export type AuditAction =
   | "coa.create"
   | "coa.update"
   | "coa.delete"
+  | "blog.create"
+  | "blog.update"
+  | "blog.delete"
   | "settings.update"
   | "upload.file"
   | "back_in_stock.notify";

@@ -903,7 +903,7 @@ export default function CheckoutPage() {
                       )}
                     </button>
                     <p className="mt-2 text-center text-xs text-gray-500">
-                      US buyers pay via PayPal, Canadian customers via Interac E-Transfer — full instructions on the next step.
+                      Buyers worldwide pay via PayPal, Canadian customers via Interac E-Transfer — full instructions on the next step.
                     </p>
                   </div>
                 </div>
@@ -1042,7 +1042,7 @@ export default function CheckoutPage() {
                 </div>
                 <div className="flex items-center gap-2 text-xs text-gray-500">
                   <Shield className="h-3.5 w-3.5 text-green-500" />
-                  PayPal (US) or Interac E-Transfer (CA)
+                  PayPal (Worldwide) or Interac E-Transfer (CA)
                 </div>
                 <div className="flex items-center gap-2 text-xs text-gray-500">
                   <Truck className="h-3.5 w-3.5 text-[#1a6de3]" />

@@ -79,7 +79,7 @@ export default function PaymentInstructions({
   return (
     <div className="space-y-10">
       {/* ============================== */}
-      {/* US BUYERS — PAYPAL */}
+      {/* WORLDWIDE — PAYPAL */}
       {/* ============================== */}
       {paypalEnabled && (
       <section className="space-y-6">
@@ -96,7 +96,7 @@ export default function PaymentInstructions({
 
           <div className="mb-4 rounded-lg border border-[#0b3d7a]/20 bg-[#0b3d7a]/5 p-3 text-center">
             <p className="text-xs font-semibold uppercase tracking-wide text-[#0b3d7a]">
-              US Buyers Only — PayPal Payment Method
+              Worldwide — PayPal Payment Method
             </p>
           </div>
 
