@@ -70,7 +70,7 @@ async function getAccessToken(): Promise<string> {
       // body not JSON
     }
     throw new Error(
-      `GSC auth failed (${res.status})${detail ? `: ${detail}` : ""}. Check GSC_CLIENT_EMAIL / GSC_PRIVATE_KEY.`
+      `GSC auth failed (${res.status})${detail ? `: ${detail}` : ""}. Using GSC_CLIENT_EMAIL="${clientEmail || "(empty)"}" — confirm this exactly matches your service account.`
     );
   }
   const data = (await res.json()) as { access_token: string; expires_in?: number };
