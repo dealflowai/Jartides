@@ -28,9 +28,6 @@ import {
   AlertCircle,
   ExternalLink,
   Search,
-  FileText,
-  Star,
-  ShieldCheck,
   ArrowRight,
   Lightbulb,
   TrendingDown,
@@ -879,54 +876,219 @@ function GscRowsTable({
   );
 }
 
-// ─── Growth Tab ──────────────────────────────────────────────────────────────
+// ─── Growth Tab (generated from real data) ────────────────────────────────────
 
-function GrowthTab() {
+interface Rec {
+  key: string;
+  severity: Severity;
+  title: string;
+  detail: string;
+  products: { id: string; name: string; slug: string }[];
+}
+
+function buildRecs(data: SeoData): Rec[] {
+  const recs: Rec[] = [];
+  const group = (id: string) => data.issueGroups.find((g) => g.id === id);
+  const s = (n: number) => (n === 1 ? "" : "s");
+
+  const addGroup = (id: string, title: (n: number) => string) => {
+    const g = group(id);
+    if (!g || g.products.length === 0) return;
+    recs.push({ key: id, severity: g.severity, title: title(g.products.length), detail: g.fix, products: g.products });
+  };
+
+  addGroup("thin_content", (n) => `Expand ${n} thin-content page${s(n)}`);
+  addGroup("no_image", (n) => `Add an image to ${n} product${s(n)}`);
+  addGroup("desc_missing", (n) => `Write a description for ${n} page${s(n)}`);
+  addGroup("dup_title", (n) => `Fix ${n} duplicate title${s(n)}`);
+  addGroup("dup_desc", (n) => `Fix ${n} duplicate meta description${s(n)}`);
+  addGroup("no_coa", (n) => `Attach a COA to ${n} product${s(n)}`);
+  addGroup("meta_desc_auto", (n) => `Write a meta description for ${n} page${s(n)}`);
+  addGroup("title_short", (n) => `Lengthen ${n} short title${s(n)}`);
+  addGroup("title_long", (n) => `Shorten ${n} long title${s(n)}`);
+  addGroup("no_reviews", (n) => `Collect reviews on ${n} product${s(n)}`);
+
+  // Real Core Web Vitals problems (field data)
+  for (const v of data.webVitals) {
+    if (v.rating !== "good") {
+      recs.push({
+        key: `vital_${v.name}`,
+        severity: v.rating === "poor" ? "warning" : "info",
+        title: `Improve ${v.name} (now ${formatVital(v.name, v.avg)})`,
+        detail: `Only ${v.goodPct}% of real visits hit Google's "good" range for ${VITAL_META[v.name]?.label ?? v.name}.`,
+        products: [],
+      });
+    }
+  }
+
+  // Failing site-config checks
+  for (const c of data.siteChecks) {
+    if (c.status === "fail") {
+      recs.push({ key: `check_${c.id}`, severity: "warning", title: c.label, detail: c.detail, products: [] });
+    }
+  }
+
+  const rank: Record<Severity, number> = { critical: 0, warning: 1, info: 2 };
+  return recs.sort((a, b) => rank[a.severity] - rank[b.severity] || b.products.length - a.products.length);
+}
+
+function GrowthTab({ data }: { data: SeoData }) {
+  const recs = useMemo(() => buildRecs(data), [data]);
+  const topImpact = useMemo(
+    () => data.products.filter((p) => p.issues.length > 0).slice().sort((a, b) => b.impact - a.impact).slice(0, 5),
+    [data.products]
+  );
+
+  const k = data.kpis;
+  const totalSourced = data.trafficSources.reduce((sum, c) => sum + c.count, 0);
+  const organic = data.trafficSources.find((c) => c.channel === "Organic Search")?.count ?? 0;
+  const organicPct = totalSourced > 0 ? Math.round((organic / totalSourced) * 100) : 0;
+  const worstVital = data.webVitals.filter((v) => v.rating !== "good").sort((a, b) => a.goodPct - b.goodPct)[0];
+  const trendDelta = data.scoreTrend.length > 1 ? data.scoreTrend[data.scoreTrend.length - 1].score - data.scoreTrend[0].score : 0;
+  const hasTraffic = totalSourced > 0;
+  const hasInsights = data.scoreTrend.length > 1 || hasTraffic || data.webVitals.length > 0;
+
+  const summary =
+    k.criticalCount > 0
+      ? `${k.criticalCount} critical issue${k.criticalCount > 1 ? "s are" : " is"} holding your pages back. Clear the action plan below first.`
+      : k.warningCount > 0
+        ? `No critical issues. Resolve ${k.warningCount} warning${k.warningCount > 1 ? "s" : ""} to push your score higher.`
+        : `On-page SEO is clean. Put your energy into content depth and earning links.`;
+
   return (
     <div className="space-y-6">
-      <Card className="border-amber-200 bg-amber-50/40">
-        <div className="flex gap-4">
-          <TrendingDown className="h-8 w-8 shrink-0 text-amber-500" />
-          <div>
-            <h3 className="text-base font-bold text-gray-900">&ldquo;Amazing first month, then downhill&rdquo; - what it usually means</h3>
-            <p className="mt-1 text-sm text-gray-600">
-              New sites get a temporary <strong>honeymoon boost</strong>: Google ranks you high to test engagement, then
-              re-ranks based on real authority (backlinks, E-E-A-T, content depth) after a few weeks. For a new store with
-              thin pages and few backlinks, settling down is normal - the fix is building authority, not chasing the spike.
-              Confirm in Search Console: a <em>gradual</em> slide = honeymoon; a <em>cliff on one date</em> = a core update.
-            </p>
-            <a
-              href="https://search.google.com/search-console"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#0b3d7a] px-3 py-2 text-sm font-semibold text-white hover:bg-[#1a6de3]"
-            >
-              Open Google Search Console <ExternalLink className="h-3.5 w-3.5" />
-            </a>
+      {/* Situation summary (computed) */}
+      <Card>
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-3">
+            <GradePill grade={data.grade} score={data.overallScore} />
+            <div>
+              <p className="text-sm font-semibold text-gray-900">Grade {data.grade} · {data.overallScore}/100 across {data.productCount} pages</p>
+              <p className="text-sm text-gray-600">{summary}</p>
+            </div>
           </div>
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Card title="Win the peptide niche (E-E-A-T)">
-          <ul className="space-y-3 text-sm text-gray-600">
-            <li className="flex gap-2"><FileText className="mt-0.5 h-4 w-4 shrink-0 text-[#1a6de3]" /><span><strong>Thicken every product page.</strong> Unique research summary, mechanism, the COA, references. Thin pages are the #1 deindex cause here.</span></li>
-            <li className="flex gap-2"><Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-[#1a6de3]" /><span><strong>Build an education hub.</strong> Target informational searches (&ldquo;what is BPC-157&rdquo;, &ldquo;TB-500 vs BPC-157&rdquo;) - traffic Google will actually rank.</span></li>
-            <li className="flex gap-2"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#1a6de3]" /><span><strong>Show trust signals.</strong> COAs on every product, third-party testing, clear policies, a real address.</span></li>
-            <li className="flex gap-2"><Star className="mt-0.5 h-4 w-4 shrink-0 text-[#1a6de3]" /><span><strong>Collect reviews.</strong> They unlock star rich-results and lift click-through.</span></li>
-            <li className="flex gap-2"><Rocket className="mt-0.5 h-4 w-4 shrink-0 text-[#1a6de3]" /><span><strong>Diversify beyond Google.</strong> Reddit, niche communities, and TikTok often out-perform organic search here.</span></li>
-          </ul>
-        </Card>
+      {/* Data-driven insight cards */}
+      {hasInsights && (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          {data.scoreTrend.length > 1 && (
+            <div className="rounded-xl border border-gray-200 bg-white p-4">
+              <div className="flex items-center gap-2 text-gray-500">
+                {trendDelta >= 0 ? <TrendingUp className="h-4 w-4 text-green-500" /> : <TrendingDown className="h-4 w-4 text-red-500" />}
+                <span className="text-xs font-medium uppercase tracking-wide">Score trend</span>
+              </div>
+              <p className="mt-1 text-sm text-gray-700">
+                {trendDelta === 0
+                  ? "Flat since tracking began."
+                  : `${trendDelta > 0 ? "Up" : "Down"} ${Math.abs(trendDelta)} pts over ${data.scoreTrend.length} days.`}
+              </p>
+            </div>
+          )}
+          {hasTraffic && (
+            <div className="rounded-xl border border-gray-200 bg-white p-4">
+              <div className="flex items-center gap-2 text-gray-500">
+                <Activity className="h-4 w-4 text-[#1a6de3]" />
+                <span className="text-xs font-medium uppercase tracking-wide">Organic share</span>
+              </div>
+              <p className="mt-1 text-sm text-gray-700">
+                Organic search is <strong>{organicPct}%</strong> of visits ({organic.toLocaleString()} of {totalSourced.toLocaleString()}, 14d).
+              </p>
+            </div>
+          )}
+          {data.webVitals.length > 0 && (
+            <div className="rounded-xl border border-gray-200 bg-white p-4">
+              <div className="flex items-center gap-2 text-gray-500">
+                <Gauge className="h-4 w-4 text-[#1a6de3]" />
+                <span className="text-xs font-medium uppercase tracking-wide">Speed</span>
+              </div>
+              <p className="mt-1 text-sm text-gray-700">
+                {worstVital
+                  ? <>{worstVital.name} needs work ({formatVital(worstVital.name, worstVital.avg)}), {worstVital.goodPct}% good.</>
+                  : "All Core Web Vitals are in the good range."}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
-        <Card title="Technical status">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-green-600">Recently shipped</p>
-          <ul className="space-y-2.5 text-sm text-gray-600">
-            <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" /><span><strong>Image optimization on</strong> (AVIF/WebP) - watch LCP improve in the Traffic &amp; Speed tab.</span></li>
-            <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" /><span><strong>Canonical URLs</strong> added on home, shop, and every product page.</span></li>
-            <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" /><span><strong>Open Graph image</strong> - a branded social/search preview card.</span></li>
-          </ul>
+      {/* Fix-first list, ranked by real traffic impact */}
+      {topImpact.length > 0 && (
+        <Card title="Fix these first" subtitle={hasTraffic ? "Lowest-scoring pages weighted by real traffic" : "Lowest-scoring pages (add traffic data to weight by visits)"}>
+          <div className="divide-y divide-gray-100">
+            {topImpact.map((p) => {
+              const crit = p.issues.filter((i) => i.severity === "critical").length;
+              const warn = p.issues.filter((i) => i.severity === "warning").length;
+              return (
+                <div key={p.id} className="flex items-center gap-3 py-2.5">
+                  <GradePill grade={p.grade} score={p.score} />
+                  <div className="min-w-0 flex-1">
+                    <a href={p.url} target="_blank" rel="noopener noreferrer" className="font-medium text-gray-900 hover:text-[#1a6de3] hover:underline">{p.name}</a>
+                    <p className="text-xs text-gray-400">
+                      {crit > 0 && `${crit} critical `}{warn > 0 && `${warn} warning${warn > 1 ? "s" : ""} `}
+                      {hasTraffic && <span className="inline-flex items-center gap-0.5"><Eye className="h-3 w-3" /> {p.views.toLocaleString()} views</span>}
+                    </p>
+                  </div>
+                  <Link href={p.adminUrl} className="inline-flex items-center gap-1 text-xs font-medium text-[#1a6de3] hover:underline">
+                    Edit <ArrowRight className="h-3 w-3" />
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
         </Card>
-      </div>
+      )}
+
+      {/* Generated action plan */}
+      <Card title="Your action plan" subtitle="Generated from this audit, your traffic, and real Core Web Vitals">
+        {recs.length === 0 ? (
+          <div className="flex flex-col items-center py-10 text-center">
+            <CheckCircle2 className="h-10 w-10 text-green-500" />
+            <p className="mt-2 font-semibold text-gray-900">Nothing urgent on-page.</p>
+            <p className="text-sm text-gray-500">Shift focus to content depth, reviews, and earning backlinks.</p>
+          </div>
+        ) : (
+          <ol className="space-y-3">
+            {recs.map((r, i) => {
+              const style = SEVERITY_STYLE[r.severity];
+              return (
+                <li key={r.key} className={cn("rounded-lg border p-3", style.border)}>
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-100 text-xs font-bold text-gray-500">{i + 1}</span>
+                    <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold", style.bg, style.text)}>
+                      <span className={cn("h-1.5 w-1.5 rounded-full", style.dot)} />
+                      {style.label}
+                    </span>
+                    <span className="font-semibold text-gray-900">{r.title}</span>
+                  </div>
+                  <p className="mt-1.5 pl-7 text-sm text-gray-600">{r.detail}</p>
+                  {r.products.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5 pl-7">
+                      {r.products.slice(0, 8).map((p) => (
+                        <a key={p.id} href={`/admin/products/${p.id}`} className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2 py-0.5 text-xs text-gray-600 hover:border-[#1a6de3] hover:text-[#1a6de3]">
+                          {p.name}<ArrowRight className="h-3 w-3" />
+                        </a>
+                      ))}
+                      {r.products.length > 8 && <span className="self-center text-xs text-gray-400">+{r.products.length - 8} more</span>}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        )}
+      </Card>
+
+      {/* The one thing the on-site audit can't measure */}
+      <Card className="border-dashed">
+        <div className="flex gap-3">
+          <Lightbulb className="mt-0.5 h-5 w-5 shrink-0 text-[#1a6de3]" />
+          <p className="text-sm text-gray-600">
+            <strong>Beyond this audit:</strong> backlinks and topical authority can&rsquo;t be measured on-page, but they decide rankings in this niche. Build an education hub for informational searches and earn links from communities. Track the payoff in the <strong>Search Console</strong> tab.
+          </p>
+        </div>
+      </Card>
     </div>
   );
 }
@@ -1012,7 +1174,7 @@ export default function SeoAnalyzer() {
       {tab === "traffic" && <TrafficTab data={data} />}
       {tab === "products" && <ProductsTab data={data} />}
       {tab === "issues" && <IssuesTab data={data} />}
-      {tab === "growth" && <GrowthTab />}
+      {tab === "growth" && <GrowthTab data={data} />}
     </div>
   );
 }
