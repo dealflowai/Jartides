@@ -37,6 +37,7 @@ import {
   ChevronDown,
   Activity,
   Eye,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -132,7 +133,7 @@ interface SeoData {
   contentDistribution: { bucket: string; count: number }[];
 }
 
-type TabId = "health" | "traffic" | "products" | "issues" | "growth";
+type TabId = "health" | "gsc" | "traffic" | "products" | "issues" | "growth";
 
 // Google Core Web Vitals display config
 const VITAL_META: Record<string, { label: string; unit: "ms" | "s" | "" ; help: string }> = {
@@ -691,6 +692,193 @@ function IssuesTab({ data }: { data: SeoData }) {
   );
 }
 
+// ─── Search Console Tab (live Google data) ───────────────────────────────────
+
+interface GscData {
+  configured: boolean;
+  error?: string;
+  property?: string;
+  range?: { startDate: string; endDate: string };
+  kpis?: {
+    clicks: number;
+    impressions: number;
+    ctr: number;
+    position: number;
+    clicksChange: number;
+    impressionsChange: number;
+    ctrChange: number;
+    positionChange: number;
+  };
+  series?: { date: string; clicks: number; impressions: number; position: number }[];
+  queries?: { query: string; clicks: number; impressions: number; ctr: number; position: number }[];
+  pages?: { page: string; clicks: number; impressions: number; ctr: number; position: number }[];
+}
+
+function Delta({ value, invert = false, suffix = "%" }: { value: number; invert?: boolean; suffix?: string }) {
+  if (!value) return <span className="text-xs text-gray-400">no change</span>;
+  // invert=true means lower is better (e.g. average position)
+  const good = invert ? value < 0 : value > 0;
+  const Icon = value > 0 ? TrendingUp : TrendingDown;
+  return (
+    <span className={cn("inline-flex items-center gap-0.5 text-xs font-medium", good ? "text-green-600" : "text-red-600")}>
+      <Icon className="h-3 w-3" />
+      {value > 0 ? "+" : ""}{value}{suffix}
+    </span>
+  );
+}
+
+function GscKpi({ label, value, delta }: { label: string; value: string; delta: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-5">
+      <p className="text-sm font-medium text-gray-500">{label}</p>
+      <p className="mt-1 text-2xl font-bold text-gray-900">{value}</p>
+      <div className="mt-1">{delta}</div>
+    </div>
+  );
+}
+
+function GscTab() {
+  const [data, setData] = useState<GscData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/admin/seo/gsc")
+      .then((r) => r.json())
+      .then(setData)
+      .catch(() => setData({ configured: true, error: "Failed to reach Search Console." }))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-6 w-6 animate-spin text-[#0b3d7a]" />
+        <span className="ml-2 text-gray-500">Loading Search Console data…</span>
+      </div>
+    );
+  }
+
+  if (!data || !data.configured) {
+    return (
+      <div className="rounded-xl border border-amber-200 bg-amber-50 p-8">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="mt-0.5 h-6 w-6 shrink-0 text-amber-500" />
+          <div>
+            <h3 className="text-lg font-semibold text-amber-800">Connect Google Search Console</h3>
+            <p className="mt-1 text-sm text-amber-700">
+              Add a Google service account and these environment variables to show live rankings, clicks, impressions, and your top queries here:
+            </p>
+            <ul className="mt-2 space-y-1 text-sm text-amber-800">
+              <li><code className="rounded bg-amber-100 px-1.5 py-0.5 font-mono text-xs">GSC_CLIENT_EMAIL</code></li>
+              <li><code className="rounded bg-amber-100 px-1.5 py-0.5 font-mono text-xs">GSC_PRIVATE_KEY</code></li>
+              <li><code className="rounded bg-amber-100 px-1.5 py-0.5 font-mono text-xs">GSC_SITE_URL</code> (e.g. <code className="font-mono text-xs">sc-domain:jartides.ca</code>)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (data.error) {
+    return (
+      <div className="rounded-xl border border-red-200 bg-red-50 p-6">
+        <div className="flex items-start gap-3">
+          <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
+          <div>
+            <p className="font-semibold text-red-800">Search Console error</p>
+            <p className="mt-1 text-sm text-red-700">{data.error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const k = data.kpis!;
+  return (
+    <div className="space-y-6">
+      <p className="text-xs text-gray-400">
+        Property <span className="font-mono">{data.property}</span> · {data.range?.startDate} to {data.range?.endDate} (vs previous 28 days)
+      </p>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <GscKpi label="Clicks" value={k.clicks.toLocaleString()} delta={<Delta value={k.clicksChange} />} />
+        <GscKpi label="Impressions" value={k.impressions.toLocaleString()} delta={<Delta value={k.impressionsChange} />} />
+        <GscKpi label="Avg CTR" value={`${k.ctr}%`} delta={<Delta value={k.ctrChange} suffix="pt" />} />
+        <GscKpi label="Avg Position" value={`${k.position}`} delta={<Delta value={k.positionChange} invert suffix="" />} />
+      </div>
+
+      <Card title="Clicks & impressions" subtitle="Daily — last 28 days">
+        <div className="h-72">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data.series}>
+              <defs>
+                <linearGradient id="gscClicks" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#0b3d7a" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#0b3d7a" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey="date" tickFormatter={formatDateShort} tick={{ fontSize: 11, fill: "#9ca3af" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+              <YAxis yAxisId="clicks" tick={{ fontSize: 11, fill: "#9ca3af" }} tickLine={false} axisLine={false} width={40} />
+              <YAxis yAxisId="impr" orientation="right" tick={{ fontSize: 11, fill: "#9ca3af" }} tickLine={false} axisLine={false} width={48} />
+              <Tooltip />
+              <Area yAxisId="clicks" type="monotone" dataKey="clicks" name="Clicks" stroke="#0b3d7a" strokeWidth={2} fill="url(#gscClicks)" />
+              <Line yAxisId="impr" type="monotone" dataKey="impressions" name="Impressions" stroke="#1a6de3" strokeWidth={2} dot={false} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </Card>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <Card title="Top queries" subtitle="What people search to find you">
+          <GscRowsTable rows={data.queries ?? []} labelKey="query" labelHead="Query" />
+        </Card>
+        <Card title="Top pages" subtitle="Your best-performing pages in search">
+          <GscRowsTable rows={data.pages ?? []} labelKey="page" labelHead="Page" />
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function GscRowsTable({
+  rows,
+  labelKey,
+  labelHead,
+}: {
+  rows: { clicks: number; impressions: number; ctr: number; position: number; [k: string]: string | number }[];
+  labelKey: string;
+  labelHead: string;
+}) {
+  if (rows.length === 0) return <p className="py-8 text-center text-sm text-gray-400">No data yet.</p>;
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left text-sm">
+        <thead className="border-b bg-gray-50/50 text-xs uppercase text-gray-500">
+          <tr>
+            <th className="px-3 py-2.5 font-medium">{labelHead}</th>
+            <th className="px-3 py-2.5 text-right font-medium">Clicks</th>
+            <th className="px-3 py-2.5 text-right font-medium">Impr</th>
+            <th className="px-3 py-2.5 text-right font-medium">CTR</th>
+            <th className="px-3 py-2.5 text-right font-medium">Pos</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y">
+          {rows.map((r, i) => (
+            <tr key={i} className="hover:bg-gray-50/50">
+              <td className="max-w-[220px] truncate px-3 py-2 text-gray-800" title={String(r[labelKey])}>{r[labelKey]}</td>
+              <td className="px-3 py-2 text-right font-semibold text-gray-900">{r.clicks.toLocaleString()}</td>
+              <td className="px-3 py-2 text-right text-gray-600">{r.impressions.toLocaleString()}</td>
+              <td className="px-3 py-2 text-right text-gray-600">{r.ctr}%</td>
+              <td className="px-3 py-2 text-right text-gray-600">{r.position}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 // ─── Growth Tab ──────────────────────────────────────────────────────────────
 
 function GrowthTab() {
@@ -747,6 +935,7 @@ function GrowthTab() {
 
 const TABS: { id: TabId; label: string; icon: typeof Gauge }[] = [
   { id: "health", label: "Health", icon: Gauge },
+  { id: "gsc", label: "Search Console", icon: TrendingUp },
   { id: "traffic", label: "Traffic & Speed", icon: Activity },
   { id: "products", label: "Product Audit", icon: ListChecks },
   { id: "issues", label: "Issues", icon: AlertTriangle },
@@ -819,6 +1008,7 @@ export default function SeoAnalyzer() {
       </div>
 
       {tab === "health" && <HealthTab data={data} />}
+      {tab === "gsc" && <GscTab />}
       {tab === "traffic" && <TrafficTab data={data} />}
       {tab === "products" && <ProductsTab data={data} />}
       {tab === "issues" && <IssuesTab data={data} />}
