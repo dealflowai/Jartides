@@ -25,6 +25,7 @@ import {
   ShieldCheck,
   Package,
   BookOpen,
+  Newspaper,
   Lock,
 } from "lucide-react";
 import {
@@ -51,6 +52,7 @@ const SECTION_ICONS: Record<SectionType, React.ComponentType<{ className?: strin
   trust_strip: ShieldCheck,
   featured_products: Package,
   how_it_works: BookOpen,
+  blog_strip: Newspaper,
   cta_banner: Megaphone,
   rich_text: Type,
   image_banner: ImageIcon,

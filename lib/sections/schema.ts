@@ -56,6 +56,7 @@ export type SectionType =
   | "trust_strip"
   | "featured_products"
   | "how_it_works"
+  | "blog_strip"
   | "cta_banner"
   // Custom, admin-authored blocks (usable on any page)
   | "rich_text"
@@ -187,6 +188,15 @@ export const SECTION_META: Record<SectionType, SectionMeta> = {
   how_it_works: {
     label: "How Peptides Work",
     description: "The four-step explainer cards.",
+    group: "builtin",
+    deletable: false,
+    defaultProps: {},
+    fields: [],
+  },
+  blog_strip: {
+    label: "Blog Posts",
+    description:
+      "A strip of your three latest blog posts with a link to the full blog. Hidden automatically until you publish a post.",
     group: "builtin",
     deletable: false,
     defaultProps: {},
@@ -328,6 +338,7 @@ export const BUILTIN_HOME_ORDER: SectionType[] = [
   "trust_strip",
   "featured_products",
   "how_it_works",
+  "blog_strip",
   "cta_banner",
 ];
 
@@ -485,12 +496,40 @@ export function normalizeLayout(page: PageKey, raw: unknown): PageSection[] {
     const present = new Set(
       sections.filter((s) => SECTION_META[s.type].group === "builtin").map((s) => s.type)
     );
-    for (const type of BUILTIN_HOME_ORDER) {
-      if (!present.has(type)) {
-        // A built-in was missing from saved data — append it, switched off,
-        // so nothing visually changes but the admin can turn it back on.
-        sections.push({ id: `builtin-${type}`, type, enabled: false, props: {} });
+    for (let i = 0; i < BUILTIN_HOME_ORDER.length; i++) {
+      const type = BUILTIN_HOME_ORDER[i];
+      if (present.has(type)) continue;
+
+      // A built-in is missing from the saved layout — this happens when a new
+      // built-in section ships after the admin already saved their homepage.
+      // Insert it at its canonical position (right after the nearest earlier
+      // built-in that's present, otherwise before the nearest later one) and
+      // leave it enabled so the new section is visible out of the box. Admins
+      // can still hide or reorder it from the Page Sections manager.
+      let insertAt = sections.length;
+      let anchored = false;
+      for (let j = i - 1; j >= 0 && !anchored; j--) {
+        const idx = sections.findIndex((s) => s.type === BUILTIN_HOME_ORDER[j]);
+        if (idx !== -1) {
+          insertAt = idx + 1;
+          anchored = true;
+        }
       }
+      for (let j = i + 1; j < BUILTIN_HOME_ORDER.length && !anchored; j++) {
+        const idx = sections.findIndex((s) => s.type === BUILTIN_HOME_ORDER[j]);
+        if (idx !== -1) {
+          insertAt = idx;
+          anchored = true;
+        }
+      }
+
+      sections.splice(insertAt, 0, {
+        id: `builtin-${type}`,
+        type,
+        enabled: true,
+        props: {},
+      });
+      present.add(type);
     }
   }
 

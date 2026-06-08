@@ -6,6 +6,7 @@ import Hero from "@/components/home/Hero";
 import TrustStrip from "@/components/home/TrustStrip";
 import FeaturedProducts from "@/components/home/FeaturedProducts";
 import HowPeptidesWork from "@/components/home/HowPeptidesWork";
+import BlogStrip from "@/components/home/BlogStrip";
 import CTABanner from "@/components/home/CTABanner";
 
 /**
@@ -37,6 +38,8 @@ export default async function PageSections({
               return <FeaturedProducts key={section.id} products={products} />;
             case "how_it_works":
               return <HowPeptidesWork key={section.id} />;
+            case "blog_strip":
+              return <BlogStrip key={section.id} />;
             case "cta_banner":
               return <CTABanner key={section.id} />;
             default:

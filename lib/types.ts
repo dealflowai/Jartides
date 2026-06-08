@@ -187,3 +187,20 @@ export interface SiteSetting {
   key: string;
   value: unknown;
 }
+
+export interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  /** Rich-text HTML produced by the admin editor. */
+  content: string;
+  cover_image: string | null;
+  author: string;
+  meta_title: string | null;
+  meta_description: string | null;
+  published: boolean;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}

@@ -20,6 +20,7 @@ const shopLinks = [
 
 const companyLinks = [
   { label: "Certificates of Analysis", href: "/coa" },
+  { label: "Blog", href: "/blog" },
   { label: "FAQ", href: "/faq" },
   { label: "FDA Disclaimer", href: "/fda" },
 ];

@@ -19,6 +19,7 @@ import {
   Mail,
   Bell,
   Search,
+  Newspaper,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { StaffRole } from "@/lib/admin";
@@ -44,6 +45,7 @@ const navItems: NavItem[] = [
   { label: "SEO", href: "/admin/seo", icon: Search },
   { label: "Discounts", href: "/admin/discounts", icon: Ticket },
   { label: "FAQ Manager", href: "/admin/faq", icon: MessageCircleQuestion },
+  { label: "Blog", href: "/admin/blog", icon: Newspaper },
   { label: "Page Sections", href: "/admin/sections", icon: LayoutTemplate },
   { label: "Compliance", href: "/admin/compliance", icon: ShieldCheck },
   { label: "Settings", href: "/admin/settings", icon: Settings },
