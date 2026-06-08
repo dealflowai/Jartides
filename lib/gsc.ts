@@ -29,9 +29,18 @@ async function getAccessToken(): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
   if (cachedToken && cachedToken.exp > now + 60) return cachedToken.token;
 
-  const clientEmail = process.env.GSC_CLIENT_EMAIL!;
-  // Vercel/.env store the PEM with literal "\n" — turn them back into newlines.
-  const privateKey = (process.env.GSC_PRIVATE_KEY ?? "").replace(/\\n/g, "\n");
+  const clientEmail = (process.env.GSC_CLIENT_EMAIL ?? "").trim();
+  // Vercel/.env store the PEM with literal "\n" - turn those back into real
+  // newlines, and defensively strip accidental wrapping quotes / whitespace
+  // (a common copy-paste mistake that breaks the JWT signature).
+  let privateKey = (process.env.GSC_PRIVATE_KEY ?? "").trim();
+  if (
+    (privateKey.startsWith('"') && privateKey.endsWith('"')) ||
+    (privateKey.startsWith("'") && privateKey.endsWith("'"))
+  ) {
+    privateKey = privateKey.slice(1, -1);
+  }
+  privateKey = privateKey.replace(/\\n/g, "\n");
 
   const header = b64url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
   const claim = b64url(
@@ -53,7 +62,16 @@ async function getAccessToken(): Promise<string> {
     }),
   });
   if (!res.ok) {
-    throw new Error(`GSC auth failed (${res.status}). Check GSC_CLIENT_EMAIL / GSC_PRIVATE_KEY.`);
+    let detail = "";
+    try {
+      const j = (await res.json()) as { error?: string; error_description?: string };
+      detail = j.error_description || j.error || "";
+    } catch {
+      // body not JSON
+    }
+    throw new Error(
+      `GSC auth failed (${res.status})${detail ? `: ${detail}` : ""}. Check GSC_CLIENT_EMAIL / GSC_PRIVATE_KEY.`
+    );
   }
   const data = (await res.json()) as { access_token: string; expires_in?: number };
   cachedToken = { token: data.access_token, exp: now + (data.expires_in ?? 3600) };
