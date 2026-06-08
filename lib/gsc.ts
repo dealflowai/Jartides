@@ -1,18 +1,27 @@
 import crypto from "crypto";
 
-// Google Search Console (Search Analytics API) client using a service account.
-// Signs a JWT with the service account key, exchanges it for an access token,
-// and queries the Search Analytics endpoint. No external SDK needed.
+// Google Search Console (Search Analytics API) client. Supports two auth modes:
+//   1. OAuth refresh token (the property owner's own Google account) — preferred,
+//      because it avoids adding a service account as a Search Console user.
+//   2. Service account (JWT signed with the key) — fallback.
 
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const SCOPE = "https://www.googleapis.com/auth/webmasters.readonly";
 
-export function gscConfigured(): boolean {
+function hasOAuth(): boolean {
   return !!(
-    process.env.GSC_CLIENT_EMAIL &&
-    process.env.GSC_PRIVATE_KEY &&
-    process.env.GSC_SITE_URL
+    process.env.GSC_OAUTH_CLIENT_ID &&
+    process.env.GSC_OAUTH_CLIENT_SECRET &&
+    process.env.GSC_OAUTH_REFRESH_TOKEN
   );
+}
+
+function hasServiceAccount(): boolean {
+  return !!(process.env.GSC_CLIENT_EMAIL && process.env.GSC_PRIVATE_KEY);
+}
+
+export function gscConfigured(): boolean {
+  return !!process.env.GSC_SITE_URL && (hasOAuth() || hasServiceAccount());
 }
 
 export function gscSiteUrl(): string {
@@ -29,6 +38,34 @@ async function getAccessToken(): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
   if (cachedToken && cachedToken.exp > now + 60) return cachedToken.token;
 
+  // Mode 1: OAuth refresh token (acts as the property owner — no GSC user add needed).
+  if (hasOAuth()) {
+    const res = await fetch(TOKEN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: process.env.GSC_OAUTH_CLIENT_ID!,
+        client_secret: process.env.GSC_OAUTH_CLIENT_SECRET!,
+        refresh_token: (process.env.GSC_OAUTH_REFRESH_TOKEN ?? "").trim(),
+        grant_type: "refresh_token",
+      }),
+    });
+    if (!res.ok) {
+      let detail = "";
+      try {
+        const j = (await res.json()) as { error?: string; error_description?: string };
+        detail = j.error_description || j.error || "";
+      } catch {
+        // body not JSON
+      }
+      throw new Error(`GSC OAuth refresh failed (${res.status})${detail ? `: ${detail}` : ""}. Check GSC_OAUTH_* vars.`);
+    }
+    const data = (await res.json()) as { access_token: string; expires_in?: number };
+    cachedToken = { token: data.access_token, exp: now + (data.expires_in ?? 3600) };
+    return cachedToken.token;
+  }
+
+  // Mode 2: Service account JWT.
   const clientEmail = (process.env.GSC_CLIENT_EMAIL ?? "").trim();
   // Vercel/.env store the PEM with literal "\n" - turn those back into real
   // newlines, and defensively strip accidental wrapping quotes / whitespace
