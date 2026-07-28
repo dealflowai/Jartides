@@ -9,7 +9,7 @@ export default function Hero() {
     <section className="relative overflow-hidden flex items-center mx-4 sm:mx-6 lg:mx-8 my-4 rounded-2xl min-h-[320px] md:min-h-[420px]">
       {/* Hero background image */}
       <Image
-        src="/images/hero-banner.jpg"
+        src="/images/hero-banner.webp"
         alt=""
         fill
         priority

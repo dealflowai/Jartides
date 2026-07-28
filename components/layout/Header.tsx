@@ -152,7 +152,7 @@ export default function Header() {
           <div className="flex h-16 items-center justify-between gap-4">
             {/* Logo */}
             <Link href="/" className="flex-shrink-0 group flex items-center -ml-8">
-              <Image src="/images/logo.png" alt="Jartides" width={128} height={128} className="h-28 w-28 flex-shrink-0 object-contain -my-6 -mr-4" unoptimized />
+              <Image src="/images/logo.webp" alt="Jartides" width={128} height={128} className="h-28 w-28 flex-shrink-0 object-contain -my-6 -mr-4" unoptimized />
               <div className="flex flex-col leading-none">
                 <span className="font-[family-name:var(--font-heading)] text-[1.35rem] sm:text-[1.6rem] font-extrabold tracking-tight text-[#0b3d7a]">
                   JARTIDES

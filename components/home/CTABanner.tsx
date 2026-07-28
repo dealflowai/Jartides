@@ -11,7 +11,7 @@ export default function CTABanner() {
   return (
     <section ref={animRef} className="relative overflow-hidden mx-4 sm:mx-6 lg:mx-8 my-4 rounded-2xl">
       <Image
-        src="/images/galaxy-bg.jpg"
+        src="/images/galaxy-bg.webp"
         alt=""
         fill
         className="object-cover rounded-2xl"

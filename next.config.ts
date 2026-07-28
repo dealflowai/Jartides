@@ -2,14 +2,16 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    // Vercel optimizes images automatically - serve modern formats and let
-    // Next generate responsive sizes. Big LCP / Core Web Vitals win.
-    formats: ["image/avif", "image/webp"],
+    // Resize via Supabase Storage instead of Vercel's optimizer — see
+    // lib/image-loader.ts. Vercel's Hobby transformation quota runs out mid-month
+    // and then serves 402s in place of every product image.
+    loader: "custom",
+    loaderFile: "./lib/image-loader.ts",
     remotePatterns: [
       {
         protocol: "https",
         hostname: "*.supabase.co",
-        pathname: "/storage/v1/object/public/**",
+        pathname: "/storage/v1/**",
       },
     ],
   },
