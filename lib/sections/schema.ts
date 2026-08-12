@@ -87,6 +87,8 @@ export type FieldType =
   | "image"
   | "select"
   | "boolean"
+  | "number"
+  | "products"
   | "faqItems";
 
 export interface SelectOption {
@@ -104,11 +106,30 @@ export interface FieldDef {
   options?: SelectOption[];
   /** Max characters for text/textarea/url (server-enforced). */
   maxLength?: number;
+  /** Only for `number` (all server-enforced). */
+  min?: number;
+  max?: number;
+  defaultValue?: number;
 }
 
 export interface FaqEntry {
   question: string;
   answer: string;
+}
+
+/**
+ * A product as shown in the admin's product picker. Deliberately tiny — the
+ * picker only needs enough to recognise a product, and this list is sent to
+ * the browser with every load of the Page Sections screen.
+ */
+export interface PickerProduct {
+  id: string;
+  name: string;
+  slug: string;
+  image: string | null;
+  price: number;
+  featured: boolean;
+  active: boolean;
 }
 
 /* ------------------------------------------------------------------ */
@@ -159,6 +180,11 @@ const SIZE_OPTIONS: SelectOption[] = [
   { label: "Large", value: "large" },
 ];
 
+/** Most products an admin can hand-pick for a single grid. */
+export const MAX_PICKED_PRODUCTS = 24;
+/** Products shown when the Featured grid falls back to the `featured` flag. */
+export const DEFAULT_FEATURED_LIMIT = 6;
+
 export const SECTION_META: Record<SectionType, SectionMeta> = {
   /* ---- Built-ins (homepage) ---- */
   hero: {
@@ -179,11 +205,27 @@ export const SECTION_META: Record<SectionType, SectionMeta> = {
   },
   featured_products: {
     label: "Featured Products",
-    description: "Grid of your featured products with a 'View All' button.",
+    description: "Hand-pick the products shown on the homepage, in your own order.",
     group: "builtin",
     deletable: false,
-    defaultProps: {},
-    fields: [],
+    defaultProps: { productIds: [], limit: DEFAULT_FEATURED_LIMIT },
+    fields: [
+      {
+        key: "productIds",
+        label: "Products to show",
+        type: "products",
+        hint: "These appear on the homepage in exactly this order. Leave the list empty to fall back to every product ticked “Featured” on its product page.",
+      },
+      {
+        key: "limit",
+        label: "How many to show automatically",
+        type: "number",
+        min: 1,
+        max: MAX_PICKED_PRODUCTS,
+        defaultValue: DEFAULT_FEATURED_LIMIT,
+        hint: "Only used when you haven't picked any products above.",
+      },
+    ],
   },
   how_it_works: {
     label: "How Peptides Work",
@@ -345,16 +387,14 @@ export const BUILTIN_HOME_ORDER: SectionType[] = [
 /* ------------------------------------------------------------------ */
 /*  Default layouts                                                    */
 /* ------------------------------------------------------------------ */
-export const DEFAULT_LAYOUTS: Record<PageKey, PageSection[]> = {
-  home: BUILTIN_HOME_ORDER.map((type) => ({
-    id: `builtin-${type}`,
-    type,
-    enabled: true,
-    props: {},
-  })),
-  shop: [],
-  contact: [],
-};
+/**
+ * A page's out-of-the-box layout. Returns a fresh deep copy every call so
+ * callers can never mutate the defaults (built-in props now hold arrays).
+ */
+export function defaultLayout(page: PageKey): PageSection[] {
+  if (page !== "home") return [];
+  return BUILTIN_HOME_ORDER.map((type) => makeSection(type));
+}
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -393,6 +433,8 @@ const MAX_SECTIONS = 60;
 const MAX_FAQ_ITEMS = 30;
 const FAQ_Q_MAX = 300;
 const FAQ_A_MAX = 3000;
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function asString(value: unknown, max: number): string {
   if (typeof value !== "string") return "";
@@ -401,7 +443,6 @@ function asString(value: unknown, max: number): string {
 
 function sanitizeProps(type: SectionType, raw: unknown): Record<string, unknown> {
   const meta = SECTION_META[type];
-  if (meta.group === "builtin") return {};
 
   const input = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   const out: Record<string, unknown> = {};
@@ -418,6 +459,32 @@ function sanitizeProps(type: SectionType, raw: unknown): Record<string, unknown>
       }
       case "boolean": {
         out[field.key] = value === true;
+        break;
+      }
+      case "number": {
+        const fallback = field.defaultValue ?? field.min ?? 0;
+        const parsed =
+          typeof value === "number" ? value : parseInt(String(value ?? ""), 10);
+        let num = Number.isFinite(parsed) ? Math.round(parsed) : fallback;
+        if (field.min !== undefined) num = Math.max(field.min, num);
+        if (field.max !== undefined) num = Math.min(field.max, num);
+        out[field.key] = num;
+        break;
+      }
+      case "products": {
+        // Ordered list of product ids. Must be uuids — anything else would
+        // blow up the `in (...)` lookup when the page renders.
+        const list = Array.isArray(value) ? value : [];
+        const seen = new Set<string>();
+        const ids: string[] = [];
+        for (const item of list) {
+          if (ids.length >= MAX_PICKED_PRODUCTS) break;
+          if (typeof item !== "string" || !UUID_RE.test(item)) continue;
+          if (seen.has(item)) continue;
+          seen.add(item);
+          ids.push(item);
+        }
+        out[field.key] = ids;
         break;
       }
       case "select": {
@@ -491,7 +558,7 @@ export function normalizeLayout(page: PageKey, raw: unknown): PageSection[] {
 
   if (page === "home") {
     if (sections.length === 0) {
-      return DEFAULT_LAYOUTS.home.map((s) => ({ ...s, props: { ...s.props } }));
+      return defaultLayout("home");
     }
     const present = new Set(
       sections.filter((s) => SECTION_META[s.type].group === "builtin").map((s) => s.type)
@@ -523,12 +590,7 @@ export function normalizeLayout(page: PageKey, raw: unknown): PageSection[] {
         }
       }
 
-      sections.splice(insertAt, 0, {
-        id: `builtin-${type}`,
-        type,
-        enabled: true,
-        props: {},
-      });
+      sections.splice(insertAt, 0, makeSection(type));
       present.add(type);
     }
   }

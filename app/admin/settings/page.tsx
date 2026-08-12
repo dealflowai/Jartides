@@ -24,7 +24,6 @@ interface SettingsState {
   hero_heading: string;
   hero_subheading: string;
   ticker_items: string;
-  featured_product_count: string;
   instagram_url: string;
   tiktok_url: string;
   contact_email: string;
@@ -49,7 +48,6 @@ const DEFAULTS: SettingsState = {
   hero_heading: "",
   hero_subheading: "",
   ticker_items: "",
-  featured_product_count: "4",
   instagram_url: "",
   tiktok_url: "",
   contact_email: "",
@@ -273,7 +271,6 @@ export default function AdminSettingsPage() {
           hero_heading: map.hero_heading ?? "",
           hero_subheading: map.hero_subheading ?? "",
           ticker_items: map.ticker_items ?? "",
-          featured_product_count: map.featured_product_count ?? "4",
           instagram_url: map.instagram_url ?? "",
           tiktok_url: map.tiktok_url ?? "",
           contact_email: map.contact_email ?? "",
@@ -347,7 +344,6 @@ export default function AdminSettingsPage() {
         .split("\n")
         .map((s) => s.trim())
         .filter(Boolean),
-      featured_product_count: parseInt(form.featured_product_count) || 4,
       instagram_url: form.instagram_url,
       tiktok_url: form.tiktok_url,
       contact_email: form.contact_email,
@@ -510,21 +506,18 @@ export default function AdminSettingsPage() {
           description="Control what appears on the homepage."
           icon={Settings}
         >
-          <Field
-            label="Featured Product Count"
-            hint="Number of products shown in the featured section (1–24)."
-          >
-            <input
-              type="number"
-              min={1}
-              max={24}
-              className={INPUT_CLS + " max-w-[120px]"}
-              value={form.featured_product_count}
-              onChange={(e) =>
-                updateField("featured_product_count", e.target.value)
-              }
-            />
-          </Field>
+          <p className="text-sm text-gray-600">
+            Homepage sections — including exactly which products appear in the{" "}
+            <span className="font-semibold">Featured Products</span> grid, and
+            the order they show in — are managed under{" "}
+            <a
+              href="/admin/sections"
+              className="font-semibold text-[#1a6de3] hover:underline"
+            >
+              Page Sections
+            </a>
+            .
+          </p>
         </SectionCard>
 
         {/* ---- Social Media ---- */}

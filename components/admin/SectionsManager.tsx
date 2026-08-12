@@ -27,19 +27,24 @@ import {
   BookOpen,
   Newspaper,
   Lock,
+  Search,
+  Star,
 } from "lucide-react";
 import {
   PAGE_KEYS,
   PAGE_META,
   SECTION_META,
   CUSTOM_SECTION_TYPES,
+  MAX_PICKED_PRODUCTS,
   makeSection,
   type PageKey,
   type PageSection,
   type SectionType,
   type FieldDef,
   type FaqEntry,
+  type PickerProduct,
 } from "@/lib/sections/schema";
+import { formatPrice } from "@/lib/utils";
 
 /* ------------------------------------------------------------------ */
 /*  Constants / small helpers                                          */
@@ -293,6 +298,253 @@ function FaqItemsEditor({
 }
 
 /* ------------------------------------------------------------------ */
+/*  Product picker                                                     */
+/* ------------------------------------------------------------------ */
+function ProductThumb({ product }: { product: PickerProduct | undefined }) {
+  if (product?.image) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={product.image}
+        alt=""
+        className="h-10 w-10 shrink-0 rounded-md border border-gray-200 object-cover"
+      />
+    );
+  }
+  return (
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-dashed border-gray-300 bg-gray-50 text-gray-300">
+      <Package className="h-4 w-4" />
+    </div>
+  );
+}
+
+/**
+ * Ordered, hand-picked list of products. The saved value is an array of
+ * product ids — the order of that array is the order they appear on the site.
+ */
+function ProductPicker({
+  value,
+  products,
+  onChange,
+}: {
+  value: string[];
+  products: PickerProduct[];
+  onChange: (ids: string[]) => void;
+}) {
+  const [search, setSearch] = useState("");
+
+  const byId = useMemo(
+    () => new Map(products.map((p) => [p.id, p])),
+    [products]
+  );
+  const selectedIds = useMemo(() => new Set(value), [value]);
+  const atLimit = value.length >= MAX_PICKED_PRODUCTS;
+
+  const query = search.trim().toLowerCase();
+  const matches = useMemo(() => {
+    if (!query) return [];
+    return products
+      .filter(
+        (p) =>
+          !selectedIds.has(p.id) &&
+          (p.name.toLowerCase().includes(query) ||
+            p.slug.toLowerCase().includes(query))
+      )
+      .slice(0, 8);
+  }, [products, query, selectedIds]);
+
+  const flagged = useMemo(
+    () => products.filter((p) => p.featured && p.active),
+    [products]
+  );
+
+  function add(id: string) {
+    if (atLimit || selectedIds.has(id)) return;
+    onChange([...value, id]);
+    setSearch("");
+  }
+
+  function remove(id: string) {
+    onChange(value.filter((v) => v !== id));
+  }
+
+  function move(index: number, dir: -1 | 1) {
+    const target = index + dir;
+    if (target < 0 || target >= value.length) return;
+    const next = [...value];
+    [next[index], next[target]] = [next[target], next[index]];
+    onChange(next);
+  }
+
+  return (
+    <div className="space-y-3">
+      {/* Picked products, in display order */}
+      {value.length > 0 ? (
+        <ul className="space-y-1.5">
+          {value.map((id, index) => {
+            const product = byId.get(id);
+            return (
+              <li
+                key={id}
+                className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2"
+              >
+                <span className="w-5 shrink-0 text-center text-xs font-semibold text-gray-400">
+                  {index + 1}
+                </span>
+                <ProductThumb product={product} />
+                <div className="min-w-0 flex-1">
+                  {product ? (
+                    <>
+                      <p className="truncate text-sm font-medium text-gray-900">
+                        {product.name}
+                      </p>
+                      <p className="flex items-center gap-1.5 text-xs text-gray-500">
+                        {formatPrice(product.price)}
+                        {!product.active && (
+                          <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                            Hidden — won&apos;t show
+                          </span>
+                        )}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="truncate text-sm font-medium text-gray-500 italic">
+                        Product no longer exists
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        It will be skipped on the homepage.
+                      </p>
+                    </>
+                  )}
+                </div>
+                <div className="flex shrink-0 items-center gap-0.5">
+                  <button
+                    type="button"
+                    onClick={() => move(index, -1)}
+                    disabled={index === 0}
+                    className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-30 disabled:hover:bg-transparent"
+                    aria-label={`Move ${product?.name ?? "product"} up`}
+                  >
+                    <ChevronUp className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => move(index, 1)}
+                    disabled={index === value.length - 1}
+                    className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-30 disabled:hover:bg-transparent"
+                    aria-label={`Move ${product?.name ?? "product"} down`}
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => remove(id)}
+                    className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500"
+                    aria-label={`Remove ${product?.name ?? "product"}`}
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-xs text-gray-500">
+          <p className="font-semibold text-gray-600">
+            Nothing picked — running on autopilot
+          </p>
+          <p className="mt-0.5">
+            The homepage is showing whichever products are ticked{" "}
+            <span className="font-medium">Featured</span> on their own product
+            page{flagged.length > 0 ? ` (${flagged.length} right now)` : ""}.
+            Search below to take control and choose them yourself.
+          </p>
+          {flagged.length > 0 && (
+            <button
+              type="button"
+              onClick={() =>
+                onChange(flagged.slice(0, MAX_PICKED_PRODUCTS).map((p) => p.id))
+              }
+              className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:border-[#1a6de3] hover:text-[#1a6de3]"
+            >
+              <Star className="h-3.5 w-3.5 text-amber-400" />
+              Start from the {flagged.length} currently featured
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Search to add */}
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+        <input
+          className={`${INPUT_CLS} pl-9`}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={
+            atLimit
+              ? `Limit reached (${MAX_PICKED_PRODUCTS} products)`
+              : "Search products to add…"
+          }
+          disabled={atLimit}
+        />
+      </div>
+
+      {query && !atLimit && (
+        <div className="max-h-56 divide-y divide-gray-100 overflow-y-auto rounded-lg border border-gray-200">
+          {matches.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => add(p.id)}
+              className="flex w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-blue-50"
+            >
+              <ProductThumb product={p} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-gray-900">
+                  {p.name}
+                </p>
+                <p className="flex items-center gap-1.5 text-xs text-gray-500">
+                  {formatPrice(p.price)}
+                  {p.featured && <Star className="h-3 w-3 text-amber-400" />}
+                  {!p.active && (
+                    <span className="text-amber-600">Hidden</span>
+                  )}
+                </p>
+              </div>
+              <Plus className="h-4 w-4 shrink-0 text-[#1a6de3]" />
+            </button>
+          ))}
+          {matches.length === 0 && (
+            <p className="px-3 py-2 text-xs text-gray-400">
+              No matching products
+            </p>
+          )}
+        </div>
+      )}
+
+      {value.length > 0 && (
+        <div className="flex items-center justify-between text-xs text-gray-500">
+          <span>
+            {value.length} product{value.length === 1 ? "" : "s"} — shown in this
+            order
+          </span>
+          <button
+            type="button"
+            onClick={() => onChange([])}
+            className="font-medium text-gray-400 hover:text-red-500"
+          >
+            Clear all
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Generic field renderer                                             */
 /* ------------------------------------------------------------------ */
 function SectionField({
@@ -300,11 +552,13 @@ function SectionField({
   value,
   onChange,
   notify,
+  products,
 }: {
   field: FieldDef;
   value: unknown;
   onChange: (value: unknown) => void;
   notify: (type: ToastType, message: string) => void;
+  products: PickerProduct[];
 }) {
   const strVal = typeof value === "string" ? value : "";
 
@@ -355,6 +609,32 @@ function SectionField({
           />
           <span className="text-sm font-medium text-gray-700">{field.label}</span>
         </label>
+      ) : field.type === "number" ? (
+        <input
+          type="number"
+          className={`${INPUT_CLS} max-w-[120px]`}
+          min={field.min}
+          max={field.max}
+          value={
+            typeof value === "number"
+              ? value
+              : field.defaultValue ?? field.min ?? 0
+          }
+          onChange={(e) => {
+            const parsed = parseInt(e.target.value, 10);
+            onChange(
+              Number.isFinite(parsed)
+                ? parsed
+                : field.defaultValue ?? field.min ?? 0
+            );
+          }}
+        />
+      ) : field.type === "products" ? (
+        <ProductPicker
+          value={Array.isArray(value) ? (value as string[]) : []}
+          products={products}
+          onChange={onChange}
+        />
       ) : field.type === "faqItems" ? (
         <FaqItemsEditor
           items={Array.isArray(value) ? (value as FaqEntry[]) : []}
@@ -370,6 +650,36 @@ function SectionField({
 /* ------------------------------------------------------------------ */
 /*  Section card                                                       */
 /* ------------------------------------------------------------------ */
+/**
+ * One-line summary shown under a section's title. Built-ins fall back to their
+ * static description; the Featured grid reports what it will actually render,
+ * which is the whole point of the picker.
+ */
+function summarise(section: PageSection, products: PickerProduct[]): string {
+  const meta = SECTION_META[section.type];
+  if (section.type !== "featured_products") return meta.description;
+
+  const picked = Array.isArray(section.props.productIds)
+    ? (section.props.productIds as string[])
+    : [];
+
+  if (picked.length > 0) {
+    const live = new Set(
+      products.filter((p) => p.active).map((p) => p.id)
+    );
+    const showing = picked.filter((id) => live.has(id)).length;
+    const skipped = picked.length - showing;
+    return `${showing} hand-picked product${showing === 1 ? "" : "s"}${
+      skipped > 0 ? ` (${skipped} unavailable, skipped)` : ""
+    }`;
+  }
+
+  const limit =
+    typeof section.props.limit === "number" ? section.props.limit : 6;
+  const flagged = products.filter((p) => p.featured && p.active).length;
+  return `Automatic — up to ${limit} products ticked “Featured” (${flagged} available)`;
+}
+
 function SectionCard({
   section,
   index,
@@ -381,6 +691,7 @@ function SectionCard({
   onDelete,
   onUpdateProp,
   notify,
+  products,
 }: {
   section: PageSection;
   index: number;
@@ -392,6 +703,7 @@ function SectionCard({
   onDelete: () => void;
   onUpdateProp: (key: string, value: unknown) => void;
   notify: (type: ToastType, message: string) => void;
+  products: PickerProduct[];
 }) {
   const meta = SECTION_META[section.type];
   const Icon = SECTION_ICONS[section.type];
@@ -456,7 +768,9 @@ function SectionCard({
                 </span>
               )}
             </div>
-            <p className="truncate text-xs text-gray-500">{meta.description}</p>
+            <p className="truncate text-xs text-gray-500">
+              {summarise(section, products)}
+            </p>
           </div>
         </button>
 
@@ -502,6 +816,7 @@ function SectionCard({
               value={section.props[field.key]}
               onChange={(v) => onUpdateProp(field.key, v)}
               notify={notify}
+              products={products}
             />
           ))}
         </div>
@@ -511,7 +826,7 @@ function SectionCard({
       {expanded && isBuiltin && (
         <div className="border-t border-gray-100 bg-gray-50/40 p-4 text-xs text-gray-500">
           This is a built-in section. You can show, hide and reorder it here. Its
-          text content is managed under{" "}
+          heading and body text are edited inline on the page itself, or under{" "}
           <a href="/admin/settings" className="font-medium text-[#1a6de3] hover:underline">
             Settings
           </a>
@@ -582,8 +897,11 @@ function AddSectionMenu({ onAdd }: { onAdd: (type: SectionType) => void }) {
 /* ------------------------------------------------------------------ */
 export default function SectionsManager({
   initialLayouts,
+  products = [],
 }: {
   initialLayouts: Record<PageKey, PageSection[]>;
+  /** Catalogue for the Featured Products picker. */
+  products?: PickerProduct[];
 }) {
   const [layouts, setLayouts] = useState<Record<PageKey, PageSection[]>>(
     () => clone(initialLayouts)
@@ -792,6 +1110,7 @@ export default function SectionsManager({
             onDelete={() => remove(section.id)}
             onUpdateProp={(key, value) => updateProp(section.id, key, value)}
             notify={notify}
+            products={products}
           />
         ))}
       </div>

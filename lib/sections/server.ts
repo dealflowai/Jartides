@@ -3,7 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import {
   type PageKey,
   type PageSection,
-  DEFAULT_LAYOUTS,
+  PAGE_KEYS,
+  defaultLayout,
   normalizeLayout,
   settingsKeyForPage,
 } from "./schema";
@@ -23,7 +24,7 @@ export async function getPageSections(page: PageKey): Promise<PageSection[]> {
       .maybeSingle();
 
     if (data?.value == null) {
-      return DEFAULT_LAYOUTS[page].map((s) => ({ ...s, props: { ...s.props } }));
+      return defaultLayout(page);
     }
 
     // Values are stored as jsonb; some legacy rows may be JSON strings.
@@ -32,17 +33,15 @@ export async function getPageSections(page: PageKey): Promise<PageSection[]> {
 
     return normalizeLayout(page, value);
   } catch {
-    return DEFAULT_LAYOUTS[page].map((s) => ({ ...s, props: { ...s.props } }));
+    return defaultLayout(page);
   }
 }
 
 /** Load every managed page's layout in one round-trip (for the admin manager). */
 export async function getAllPageSections(): Promise<Record<PageKey, PageSection[]>> {
-  const result = {
-    home: DEFAULT_LAYOUTS.home,
-    shop: DEFAULT_LAYOUTS.shop,
-    contact: DEFAULT_LAYOUTS.contact,
-  } as Record<PageKey, PageSection[]>;
+  const result = Object.fromEntries(
+    PAGE_KEYS.map((page) => [page, defaultLayout(page)])
+  ) as Record<PageKey, PageSection[]>;
 
   try {
     const supabase = await createClient();
